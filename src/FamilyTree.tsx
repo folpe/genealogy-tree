@@ -396,8 +396,8 @@ export const FamilyTree = () => {
   }, [])
 
   return (
-    <div className="flex flex-col md:flex-row w-full p-4">
-      <div className="w-full md:w-3/4 p-4">
+    <div className="flex flex-col w-full p-4">
+      <div className="w-full p-4">
         <h1 className="text-2xl font-bold mb-6">Arbre Généalogique Familial</h1>
 
         <div className="relative w-full h-[600px] border border-gray-300 rounded-lg overflow-hidden">
@@ -408,7 +408,7 @@ export const FamilyTree = () => {
         </div>
       </div>
 
-      <div className="flex md:w-1/4 p-4 w-full">
+      <div className="flex align-center justify-center p-4 w-full">
         {!selectedPerson && <SynthesisCard people={familyTree} />}
         {selectedPerson && (
           <PersonCard

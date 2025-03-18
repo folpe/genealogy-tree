@@ -16,7 +16,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
     man: 'https://pub-6bf412fb662a4a30862ad50d3544b0c6.r2.dev/imagen-3420.jpg',
   }
   return (
-    <div className="w-full ">
+    <div className="w-1/4 ">
       <div className="p-6 bg-gray-100 rounded-lg shadow-md sticky top-4">
         <h2 className="text-xl text-center font-bold mb-4">
           {selectedPerson.firstName} {selectedPerson.lastName}

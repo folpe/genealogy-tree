@@ -66,7 +66,7 @@ export const familyTree: Person[] = [
   {
     id: 'LAYCHHO1',
     firstName: 'Chhor',
-    lastName: 'Lay',
+    lastName: 'LAY',
     birthDate: '1972-05-14',
     gender: 'male',
     photo: '',
