@@ -1,0 +1,45 @@
+export const oncle01Family = [
+  //PARENTS
+  {
+    id: 'ONCLE01',
+    firstName: 'Oncle01',
+    lastName: 'KHAU',
+    birthDate: '1950-01-01',
+    gender: 'male',
+    photo: '',
+    partnersIds: ['FEMMEONCLE01'],
+    childrenIds: ['KHACHEW1', 'KHANATH1'],
+  },
+  {
+    id: 'FEMMEONCLE01',
+    firstName: 'femmeOncle01',
+    lastName: 'KHAU',
+    maidenName: '',
+    birthDate: '1950-01-01',
+    gender: 'female',
+    photo: '',
+    partnersIds: ['ONCLE01'],
+    childrenIds: ['KHACHEW1', 'KHANATH1'],
+  },
+  //ENFANTS
+  {
+    id: 'KHACHEW1',
+    firstName: 'Chewan',
+    lastName: 'KHAU',
+    birthDate: '1985-01-01',
+    gender: 'male',
+    photo: '',
+    partnersIds: [],
+    childrenIds: [],
+  },
+  {
+    id: 'KHANATH1',
+    firstName: 'Nathalie',
+    lastName: 'KHAU',
+    birthDate: '1985-01-01',
+    gender: 'female',
+    photo: '',
+    partnersIds: [],
+    childrenIds: [],
+  },
+]
