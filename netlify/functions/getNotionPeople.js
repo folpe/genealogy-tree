@@ -1,4 +1,3 @@
-// netlify/functions/getNotionPeople.js
 import { Client } from '@notionhq/client'
 import 'dotenv/config'
 
@@ -46,7 +45,7 @@ async function getAllPagesFromDatabase(useCache = false) {
   return pages
 }
 
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
   // Configurer CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -112,7 +111,9 @@ exports.handler = async (event, context) => {
         birthLocation: props.birthLocation?.rich_text[0]?.plain_text ?? null,
         deathDate: props.deathDate?.date?.start ?? null,
         gender: props.gender?.select?.name ?? '',
-        photo: props.photo?.files[0]?.name ?? '',
+        photo: props.photo?.files[0]?.external
+          ? props.photo?.files[0]?.external?.url
+          : props.photo?.files[0]?.file?.url ?? '',
         partnerId: partnerIds,
         childrenIds: childrenIds,
       }

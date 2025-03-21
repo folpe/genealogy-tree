@@ -8,7 +8,8 @@
     "build": "farm build",
     "preview": "farm preview",
     "clean": "farm clean",
-    "server": "node server.js"
+    "server": "node server.js",
+    "netlify:dev": "netlify dev"
   },
   "dependencies": {
     "@notionhq/client": "^2.3.0",
