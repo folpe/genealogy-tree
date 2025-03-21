@@ -551,7 +551,9 @@ export const FamilyTree = () => {
       height / 2 - 250
     )
 
-    svg.call(zoomBehavior).call(zoomBehavior.transform, initialTransform)
+    const g = svg
+      .append('g')
+      .attr('transform', `translate(${margin.left + width / 2},${margin.top})`)
 
     // Réappliquer la surbrillance si nécessaire
     if (highlightedNodes.length > 0) {
