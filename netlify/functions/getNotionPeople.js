@@ -1,6 +1,6 @@
 // netlify/functions/getNotionPeople.js
-const { Client } = require('@notionhq/client')
-require('dotenv').config()
+import { Client } from '@notionhq/client'
+import 'dotenv/config'
 
 // Mémoire cache simple
 let memoryCache = {
