@@ -1,0 +1,10 @@
+[build]
+  publish = "dist" # ou le dossier où se trouve votre application frontend compilée
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200

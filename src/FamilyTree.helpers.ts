@@ -25,20 +25,20 @@ export const findPersonById = (
   return people.find((person) => person.id === id)
 }
 
-// Calculer l'âge
-export const calculateAge = (birthDate: string, deathDate?: string): number => {
-  const birth = new Date(birthDate)
-  const end = deathDate ? new Date(deathDate) : new Date()
+// // Calculer l'âge
+// export const calculateAge = (birthDate: string, deathDate?: string): number => {
+//   const birth = new Date(birthDate)
+//   const end = deathDate ? new Date(deathDate) : new Date()
 
-  let age = end.getFullYear() - birth.getFullYear()
-  const monthDiff = end.getMonth() - birth.getMonth()
+//   let age = end.getFullYear() - birth.getFullYear()
+//   const monthDiff = end.getMonth() - birth.getMonth()
 
-  if (monthDiff < 0 || (monthDiff === 0 && end.getDate() < birth.getDate())) {
-    age--
-  }
+//   if (monthDiff < 0 || (monthDiff === 0 && end.getDate() < birth.getDate())) {
+//     age--
+//   }
 
-  return age
-}
+//   return age
+// }
 
 // Vérifier si une personne est un enfant de n'importe qui dans le tableau
 export const isChildOfAnyone = (person: Person, people: Person[]): boolean => {
@@ -90,8 +90,8 @@ export const createHierarchy = (
     }
 
     // Ajouter le partenaire principal s'il existe
-    if (person.partnersIds.length > 0) {
-      const partnerId = person.partnersIds[0]
+    if (person.partnerId.length > 0) {
+      const partnerId = person.partnerId[0]
       const partner = findPersonById(people, partnerId)
 
       if (partner) {
@@ -207,4 +207,60 @@ export const findNodeById = (root: TreeNode, id: string): TreeNode | null => {
   }
 
   return null
+}
+
+export const getMatchingIds = (people: Person[], query: string): string[] => {
+  if (!people || !query) return []
+
+  const queryLower = query.toLowerCase()
+
+  return people
+    .filter((person) => {
+      const firstName = (person.firstName || '').toLowerCase()
+      const lastName = (person.lastName || '').toLowerCase()
+      const maidenName = (person.maidenName || '').toLowerCase()
+      const fullName = `${firstName} ${lastName}`
+
+      return [firstName, lastName, fullName, maidenName].some((item) =>
+        item.includes(queryLower)
+      )
+    })
+    .map((person) => person.id)
+}
+
+export const getPersonNameById = (people: Person[], id: string): string => {
+  const person = people.find((p) => p.id === id)
+  return person ? `${person.firstName} ${person.lastName}` : 'Inconnu'
+}
+
+export const getPersonGenderById = (people: Person[], id: string): string => {
+  const person = people.find((p) => p.id === id)
+  return person ? person.gender : ''
+}
+
+export const handleSelectPersonById = (
+  people: Person[],
+  id: string,
+  setSelectedPerson: (person: Person) => void
+) => {
+  const person = people.find((p) => p.id === id)
+  if (person) {
+    setSelectedPerson(person) // à adapter selon ton state
+  }
+}
+
+export const calculateAge = (birthDate: string, deathDate?: string): number => {
+  const birth = new Date(birthDate)
+  const end = deathDate ? new Date(deathDate) : new Date()
+
+  let age = end.getFullYear() - birth.getFullYear()
+  const hasHadBirthdayThisYear =
+    end.getMonth() > birth.getMonth() ||
+    (end.getMonth() === birth.getMonth() && end.getDate() >= birth.getDate())
+
+  if (!hasHadBirthdayThisYear) {
+    age--
+  }
+
+  return age
 }

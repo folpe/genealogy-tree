@@ -6,12 +6,20 @@
     "start": "farm start",
     "build": "farm build",
     "preview": "farm preview",
-    "clean": "farm clean"
+    "clean": "farm clean",
+    "server": "node server.js"
   },
   "dependencies": {
+    "@notionhq/client": "^2.3.0",
+    "cors": "^2.8.5",
     "d3": "^7.9.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "lucide-react": "^0.483.0",
+    "node-cache": "^5.1.2",
     "react": "18",
-    "react-dom": "18"
+    "react-dom": "18",
+    "react-router-dom": "^7.4.0"
   },
   "devDependencies": {
     "@farmfe/cli": "^1.0.4",
