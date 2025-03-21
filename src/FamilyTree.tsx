@@ -436,7 +436,7 @@ export const FamilyTree = () => {
     // Dimensions et marges
     const margin = { top: 50, right: 120, bottom: 50, left: 120 }
     const width = 1600 - margin.left - margin.right
-    const height = 1000 - margin.top - margin.bottom
+    const height = 800 - margin.top - margin.bottom
 
     // Créer le conteneur SVG principal
     const svg = select(svgRef.current)
@@ -751,7 +751,7 @@ export const FamilyTree = () => {
           {/* <ZoomControls svgRef={svgRef} /> */}
         </div>
 
-        <div className="relative w-full h-[1000px] border border-gray-300 rounded-lg overflow-hidden">
+        <div className="relative w-full h-[800px] border border-gray-300 rounded-lg overflow-hidden">
           <p className="absolute bottom-2 right-2 text-sm text-gray-500">
             Utilisez la souris pour déplacer et zoomer (molette)
           </p>
