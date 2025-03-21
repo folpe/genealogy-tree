@@ -11,6 +11,9 @@ importers:
       '@notionhq/client':
         specifier: ^2.3.0
         version: 2.3.0
+      clone:
+        specifier: ^2.1.2
+        version: 2.1.2
       cors:
         specifier: ^2.8.5
         version: 2.8.5
