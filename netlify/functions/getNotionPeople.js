@@ -12,7 +12,7 @@ let memoryCache = {
 const notion = new Client({ auth: process.env.NOTION_TOKEN })
 const databaseId = process.env.NOTION_DATABASE_ID
 
-async function getAllPagesFromDatabase(useCache = true) {
+async function getAllPagesFromDatabase(useCache = false) {
   // Vérifier le cache si useCache est true
   if (useCache) {
     const now = Date.now()
@@ -86,6 +86,14 @@ exports.handler = async (event, context) => {
           return childPage?.properties.id?.title[0]?.plain_text || null
         })
         .filter(Boolean)
+        .sort((a, b) => {
+          if (!a.birthDate?.date?.start) return 1
+          if (!b.birthDate?.date?.start) return -1
+          return (
+            new Date(a.birthDate?.date?.start).getTime() -
+            new Date(b.birthDate?.date?.start).getTime()
+          )
+        })
 
       // Récupérer les IDs des partenaires via l'index
       const partnerIds = (props.partnerId?.relation || [])

@@ -264,3 +264,171 @@ export const calculateAge = (birthDate: string, deathDate?: string): number => {
 
   return age
 }
+
+// Fonction pour centrer les enfants sous leurs parents
+export const centerChildrenUnderParents = (nodes) => {
+  // Créer un dictionnaire des nœuds par ID pour un accès facile
+  const nodeById = {}
+  nodes.forEach((node) => {
+    if (node.data.id !== 'root') {
+      nodeById[node.data.id] = node
+    }
+  })
+
+  // Traiter les nœuds par niveaux (profondeur), du plus proche de la racine au plus éloigné
+  const nodesByDepth = {}
+  nodes.forEach((node) => {
+    if (node.data.id === 'root') return
+    const depth = node.depth
+    if (!nodesByDepth[depth]) {
+      nodesByDepth[depth] = []
+    }
+    nodesByDepth[depth].push(node)
+  })
+
+  // Traiter chaque niveau en commençant par le plus proche de la racine
+  const depths = Object.keys(nodesByDepth)
+    .map(Number)
+    .sort((a, b) => a - b)
+
+  for (let i = 1; i < depths.length; i++) {
+    // Commencer à 1 pour ignorer la racine
+    const depthNodes = nodesByDepth[depths[i]]
+
+    // Regrouper les enfants par parent
+    const childrenByParentId = {}
+    depthNodes.forEach((node) => {
+      if (!node.parent || node.parent.data.id === 'root') return
+
+      const parentId = node.parent.data.id
+      if (!childrenByParentId[parentId]) {
+        childrenByParentId[parentId] = []
+      }
+      childrenByParentId[parentId].push(node)
+    })
+
+    // Centrer chaque groupe d'enfants sous leur parent
+    Object.entries(childrenByParentId).forEach(([parentId, children]) => {
+      const parent = nodeById[parentId]
+      if (!parent || children.length === 0) return
+
+      // Déterminer si le parent a un partenaire
+      const hasPartner = !!parent.data.partner
+
+      // Calculer le centre du parent (ou du couple)
+      let parentCenterX = parent.x
+      if (hasPartner) {
+        // Si le parent a un partenaire, centrer les enfants entre les deux
+        parentCenterX += PARTNER_DISTANCE / 2
+      }
+
+      // Trier les enfants par position X
+      children.sort((a, b) => a.x - b.x)
+
+      // Calculer le centre actuel des enfants
+      const leftmostChild = children[0]
+      const rightmostChild = children[children.length - 1]
+      const childrenCenterX = (leftmostChild.x + rightmostChild.x) / 2
+
+      // Calculer le décalage nécessaire
+      const offset = parentCenterX - childrenCenterX
+
+      // Appliquer le décalage à tous les enfants
+      children.forEach((child) => {
+        child.x += offset
+      })
+    })
+  }
+
+  // Dernière étape : vérifier et résoudre les chevauchements après centrage
+  preventOverlaps(nodes)
+}
+
+// Fonction pour détecter et résoudre les chevauchements horizontaux après centrage
+export const preventOverlaps = (nodes) => {
+  // Regrouper les nœuds par niveau (y)
+  const nodesByLevel = {}
+  nodes.forEach((node) => {
+    if (node.data.id === 'root') return
+
+    const y = node.y
+    if (!nodesByLevel[y]) {
+      nodesByLevel[y] = []
+    }
+    nodesByLevel[y].push(node)
+  })
+
+  // Pour chaque niveau, vérifier et résoudre les chevauchements
+  Object.values(nodesByLevel).forEach((levelNodes) => {
+    // Trier les nœuds par position X
+    levelNodes.sort((a, b) => a.x - b.x)
+
+    // Vérifier les chevauchements
+    for (let i = 0; i < levelNodes.length - 1; i++) {
+      const current = levelNodes[i]
+      const next = levelNodes[i + 1]
+
+      // Espace minimal requis (2.5 fois le rayon du nœud + espace supplémentaire)
+      const minSpace = NODE_RADIUS * 3 + 20
+
+      // Espace actuel entre les centres des nœuds
+      const actualSpace = next.x - current.x
+
+      if (actualSpace < minSpace) {
+        // Calculer le décalage nécessaire
+        const offset = minSpace - actualSpace
+
+        // Décaler tous les nœuds suivants
+        for (let j = i + 1; j < levelNodes.length; j++) {
+          levelNodes[j].x += offset
+        }
+      }
+    }
+  })
+}
+
+// Fonction améliorée pour générer des chemins pour les liens
+export const generateImprovedPath = (d) => {
+  const sourceX = d.source.x
+  const sourceY = d.source.y
+  const targetX = d.target.x
+  const targetY = d.target.y
+
+  // Position de départ du lien
+  let startX = sourceX
+
+  // Si le lien provient du nœud racine (premier nœud invisible)
+  if (d.source.data.id === 'root') {
+    return `M${startX},${targetY} H${targetX}`
+  }
+
+  // Si c'est un enfant d'une autre union, le lien part d'un parent spécifique
+  if (d.target.data.isFromOtherUnion && d.target.data.parentId) {
+    const partnerId = d.source.data.partner?.id
+    if (d.target.data.parentId === partnerId) {
+      startX = sourceX + PARTNER_DISTANCE
+    }
+  } else if (d.source.data.partner) {
+    // Pour les enfants communs, partir du milieu entre les partenaires
+    startX = sourceX + PARTNER_DISTANCE / 2
+  }
+
+  // Point intermédiaire pour le chemin vertical
+  const midY = (sourceY + targetY) / 2
+
+  // Si l'enfant est directement sous le parent (ou presque)
+  const isAlmostAligned = Math.abs(targetX - startX) < NODE_RADIUS * 0.5
+
+  if (isAlmostAligned) {
+    // Chemin direct vertical si l'enfant est presque aligné avec le parent
+    return `M${startX},${sourceY} V${targetY}`
+  }
+
+  // Chemin normal en forme de Γ inversé avec coins arrondis
+  return `M${startX},${sourceY}
+          V${midY}
+          Q${startX},${midY + 10} ${startX + 10},${midY + 10}
+          H${targetX - 10}
+          Q${targetX},${midY + 10} ${targetX},${midY + 20}
+          V${targetY}`
+}
