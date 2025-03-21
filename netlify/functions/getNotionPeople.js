@@ -1,51 +1,30 @@
+// netlify/functions/getNotionPeople.js
 const { Client } = require('@notionhq/client')
 require('dotenv').config()
-let NodeCache = null
-try {
-  NodeCache = require('node-cache')
-} catch (error) {
-  // Le module n'est pas disponible
-}
 
-// Cache temporaire en mémoire pour les environnements sans gestionnaire de cache persistant
+// Mémoire cache simple
 let memoryCache = {
   data: null,
   timestamp: 0,
-  ttl: 10 * 60 * 1000, // 10 minutes en millisecondes
+  ttl: 10 * 60 * 1000, // 10 minutes
 }
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN })
 const databaseId = process.env.NOTION_DATABASE_ID
 
-// Initialiser le cache si disponible
-const resultsCache = NodeCache ? new NodeCache({ stdTTL: 10 * 60 }) : null
-
 async function getAllPagesFromDatabase(useCache = true) {
-  const cacheKey = 'all_notion_pages'
-
   // Vérifier le cache si useCache est true
   if (useCache) {
-    // Si node-cache est disponible
-    if (resultsCache) {
-      const cachedPages = resultsCache.get(cacheKey)
-      if (cachedPages) {
-        console.log('Utilisation des pages en cache (NodeCache)')
-        return cachedPages
-      }
-    }
-    // Sinon, utiliser le cache en mémoire simple
-    else {
-      const now = Date.now()
-      if (memoryCache.data && now - memoryCache.timestamp < memoryCache.ttl) {
-        console.log('Utilisation des pages en cache (mémoire)')
-        return memoryCache.data
-      }
+    const now = Date.now()
+    if (memoryCache.data && now - memoryCache.timestamp < memoryCache.ttl) {
+      console.log('Utilisation des pages en cache (mémoire)')
+      return memoryCache.data
     }
   } else {
     console.log('Cache ignoré par choix')
   }
 
-  console.log('Récupération de toutes les pages depuis Notion')
+  console.log('Récupération des pages depuis Notion')
   const pages = []
   let cursor = undefined
 
@@ -60,13 +39,9 @@ async function getAllPagesFromDatabase(useCache = true) {
     cursor = response.next_cursor
   } while (cursor)
 
-  // Mettre en cache pour les requêtes futures
-  if (resultsCache) {
-    resultsCache.set(cacheKey, pages)
-  } else {
-    memoryCache.data = pages
-    memoryCache.timestamp = Date.now()
-  }
+  // Mettre en cache
+  memoryCache.data = pages
+  memoryCache.timestamp = Date.now()
 
   return pages
 }
@@ -79,7 +54,7 @@ exports.handler = async (event, context) => {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   }
 
-  // Pour les requêtes OPTIONS (pré-vol CORS)
+  // Pour les requêtes OPTIONS
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -89,11 +64,9 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Extraire les paramètres de la requête
     const params = event.queryStringParameters || {}
     const useCache = params.useCache !== 'false'
 
-    // Récupérer toutes les pages
     const allPages = await getAllPagesFromDatabase(useCache)
 
     // Créer un index pour un accès rapide
@@ -139,21 +112,10 @@ exports.handler = async (event, context) => {
 
     // Tri par date de naissance
     const sortedPeople = people.sort((a, b) => {
-      // Si une personne n'a pas de date de naissance, la placer à la fin
       if (!a.birthDate) return 1
       if (!b.birthDate) return -1
-
-      // Comparer les dates de naissance
       return new Date(a.birthDate).getTime() - new Date(b.birthDate).getTime()
     })
-
-    console.log(
-      `Renvoi de ${
-        sortedPeople.length
-      } personnes, triées par date de naissance (cache ${
-        useCache ? 'utilisé' : 'ignoré'
-      })`
-    )
 
     return {
       statusCode: 200,
