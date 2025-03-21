@@ -278,12 +278,14 @@ export const FamilyTree = () => {
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`)
 
+    const zoomHandler = (event) => {
+      // Appliquer la transformation de zoom directement à l'élément g
+      g.attr('transform', event.transform)
+    }
     // Ajouter le comportement de zoom
     const zoomBehavior = zoom()
       .scaleExtent([0.1, 3])
-      .on('zoom', (event) => {
-        g.transition().duration(250).attr('transform', event.transform)
-      })
+      .on('zoom', zoomHandler)
       .filter((event) => {
         // Désactiver le zoom par double-clic
         if (event.type === 'dblclick') {

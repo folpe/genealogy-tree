@@ -8,14 +8,26 @@ export const Login = () => {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (input === PASSWORD) {
+  const tryLogin = async (enteredPassword: string) => {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      body: JSON.stringify({ password: enteredPassword }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    const data = await res.json()
+
+    if (data.auth) {
       localStorage.setItem('access_granted', 'true')
       navigate('/tree')
     } else {
       setError('Mot de passe incorrect.')
     }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    tryLogin(input)
   }
 
   return (
