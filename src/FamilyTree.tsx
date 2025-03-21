@@ -42,7 +42,6 @@ export const FamilyTree = () => {
           throw new Error('Erreur lors du chargement des données')
         }
         const jsonData = await response.json()
-        console.log('looooool', jsonData)
         setFamilyData(jsonData)
       } catch (err) {
         console.error(err.message)
@@ -83,7 +82,6 @@ export const FamilyTree = () => {
     }
 
     const matches = getMatchingIds(familyData, query)
-    console.log('Matches found:', matches)
     setHighlightedNodes(matches)
     // Appliquer immédiatement la surbrillance
     applyHighlights(matches)
@@ -552,7 +550,8 @@ export const FamilyTree = () => {
       width / 2 + 100,
       height / 2 - 250
     )
-    svg.call(zoomBehavior.transform, initialTransform)
+
+    svg.call(zoomBehavior).call(zoomBehavior.transform, initialTransform)
 
     // Réappliquer la surbrillance si nécessaire
     if (highlightedNodes.length > 0) {
