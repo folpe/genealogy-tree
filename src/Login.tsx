@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const PASSWORD = 'Khau2025'
-
 export const Login = () => {
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
