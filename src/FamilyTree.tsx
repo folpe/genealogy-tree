@@ -3,16 +3,16 @@ import { tree, select, hierarchy, zoom, zoomIdentity } from 'd3'
 import { Person } from '../public/data/familyData'
 import {
   TreeNode,
-  centerChildrenUnderParents,
   createHierarchy,
   deepCopy,
-  generateImprovedPath,
   getMatchingIds,
 } from './FamilyTree.helpers'
 import PersonCard from './PersonCard'
 import SynthesisCard from './SynthesisCard'
 import { SearchField } from './SearchField'
 import { ZoomControls } from './ZoomControl'
+
+import { FamilyTree as FamilyTreeNew } from './organisms/FamilyTree'
 
 // Composant principal FamilyTree
 export const FamilyTree = () => {
@@ -21,7 +21,11 @@ export const FamilyTree = () => {
   const [treeRoot, setTreeRoot] = useState<TreeNode | null>(null)
   const [highlightedNodes, setHighlightedNodes] = useState([])
   const [treeData, setTreeData] = useState(null)
-  const [familyData, setFamilyData] = useState([])
+  const [familyData, setFamilyData] = useState({
+    data: [],
+    isLoading: false,
+    isError: '',
+  })
 
   // Constantes pour la taille et l'espacement
   const NODE_RADIUS = 20
@@ -38,20 +42,33 @@ export const FamilyTree = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setFamilyData((prev) => ({ ...prev, isLoading: true }))
       try {
-        const response = await fetch(`/api/getNotionPeople`)
+        const response = await fetch(`/api/getNotionPeople?useCache=false`)
         if (!response.ok) {
+          setFamilyData((prev) => ({
+            ...prev,
+            isLoading: false,
+            isError: 'Erreur lors du chargement des données',
+          }))
           throw new Error('Erreur lors du chargement des données')
         }
         const jsonData = await response.json()
-        setFamilyData(jsonData)
+        setFamilyData((prev) => ({ ...prev, isLoading: false, data: jsonData }))
       } catch (err) {
+        setFamilyData((prev) => ({
+          ...prev,
+          isLoading: false,
+          isError: err.message,
+        }))
         console.error(err.message)
       }
     }
 
     fetchData()
   }, [])
+
+  console.log(familyData.isLoading)
 
   // Fonction pour centrer les enfants sous leurs parents
   const centerChildrenUnderParents = (nodes) => {
@@ -726,7 +743,7 @@ export const FamilyTree = () => {
   // Initialisation de l'arbre
   useEffect(() => {
     const hierarchyData = createHierarchy(
-      familyData,
+      familyData.data,
       'Arbre Généalogique Familial'
     )
     setTreeRoot(hierarchyData)
@@ -740,6 +757,10 @@ export const FamilyTree = () => {
     }
   }, [highlightedNodes])
 
+  if (familyData.isError) {
+    return <div>Error</div>
+  }
+
   return (
     <div className="flex flex-col w-full p-4">
       <div className="w-full p-4">
@@ -747,29 +768,52 @@ export const FamilyTree = () => {
 
         <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
           <SearchField onSearch={handleSearch} />
-          <SynthesisCard people={familyData} />
+          {familyData.isLoading ? (
+            <div>...loading</div>
+          ) : (
+            <SynthesisCard people={familyData.data} />
+          )}
           {/* <ZoomControls svgRef={svgRef} /> */}
         </div>
 
         <div className="relative w-full h-[800px] border border-gray-300 rounded-lg overflow-hidden">
-          <p className="absolute bottom-2 right-2 text-sm text-gray-500">
-            Utilisez la souris pour déplacer et zoomer (molette)
-          </p>
-          {highlightedNodes.length > 0 && (
-            <div className="absolute top-2 left-2 bg-yellow-100 p-2 rounded shadow-sm">
-              <p className="text-sm">
-                {highlightedNodes.length} résultat(s) trouvé(s)
+          {familyData.isLoading ? (
+            <div>...loading</div>
+          ) : (
+            <div>
+              {' '}
+              <p className="absolute bottom-2 right-2 text-sm text-gray-500">
+                Utilisez la souris pour déplacer et zoomer (molette)
               </p>
+              {highlightedNodes.length > 0 && (
+                <div className="absolute top-2 left-2 bg-yellow-100 p-2 rounded shadow-sm">
+                  <p className="text-sm">
+                    {highlightedNodes.length} résultat(s) trouvé(s)
+                  </p>
+                </div>
+              )}
+              <svg ref={svgRef} className="w-full h-full" />
             </div>
           )}
-          <svg ref={svgRef} className="w-full h-full" />
         </div>
+      </div>
+
+      <div>
+        <FamilyTreeNew
+          data={familyData.data}
+          // Vous pouvez spécifier l'ID de la racine si vous le souhaitez
+          // rootId="TREHONG1"
+          nodeWidth={150}
+          nodeHeight={80}
+          horizontalGap={40}
+          verticalGap={100}
+        />
       </div>
 
       <div className="flex align-center justify-center p-4 w-full">
         {selectedPerson && (
           <PersonCard
-            people={familyData}
+            people={familyData.data}
             closeCardFunc={() => setSelectedPerson(null)}
             selectedPerson={selectedPerson}
             selectPersonFunc={setSelectedPerson}
