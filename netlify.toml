@@ -1,5 +1,14 @@
 [build]
+  command = "pnpm run build"
   publish = "dist" # ou le dossier où se trouve votre application frontend compilée
+
+[dev]
+  command = "pnpm run dev"
+  port = 8888
+  targetPort = 9000
+  framework = "#custom"
+  autoLaunch = true
+  npmClient = "pnpm"
 
 [functions]
   directory = "netlify/functions"

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { FamilyTree } from './FamilyTree'
-import { Login } from './Login'
+import { Login } from './components/Login/Login'
 import { ProtectedRoute } from './ProtectedRoute'
 
 export const Main = () => {

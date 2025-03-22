@@ -7,12 +7,10 @@ import {
   deepCopy,
   getMatchingIds,
 } from './FamilyTree.helpers'
-import PersonCard from './PersonCard'
-import SynthesisCard from './SynthesisCard'
-import { SearchField } from './SearchField'
-import { ZoomControls } from './ZoomControl'
-
-import { FamilyTree as FamilyTreeNew } from './organisms/FamilyTree'
+import { PersonCard } from './components/PersonCard'
+import { SynthesisSection } from './components/SynthesisSection'
+import { SearchField } from './components/atomic/SearchField/SearchField'
+import Logo from './assets/logo.svg'
 
 // Composant principal FamilyTree
 export const FamilyTree = () => {
@@ -67,8 +65,6 @@ export const FamilyTree = () => {
 
     fetchData()
   }, [])
-
-  console.log(familyData.isLoading)
 
   // Fonction pour centrer les enfants sous leurs parents
   const centerChildrenUnderParents = (nodes) => {
@@ -268,7 +264,7 @@ export const FamilyTree = () => {
       return
     }
 
-    const matches = getMatchingIds(familyData, query)
+    const matches = getMatchingIds(familyData.data, query)
     setHighlightedNodes(matches)
     // Appliquer immédiatement la surbrillance
     applyHighlights(matches)
@@ -623,7 +619,7 @@ export const FamilyTree = () => {
       .attr('dy', NODE_RADIUS + 15)
       .attr('text-anchor', 'middle')
       .text((d) => (d.data.data ? d.data.data.lastName : ''))
-      .attr('fill', 'black')
+      .attr('fill', 'white')
       .style('font-size', '9px')
       .style('font-weight', 'bold')
       .style('pointer-events', 'none')
@@ -634,7 +630,7 @@ export const FamilyTree = () => {
       .attr('dy', NODE_RADIUS + 25)
       .attr('text-anchor', 'middle')
       .text((d) => (d.data.data ? d.data.data.firstName : ''))
-      .attr('fill', 'black')
+      .attr('fill', 'white')
       .style('font-size', '9px')
       .style('pointer-events', 'none')
 
@@ -712,7 +708,7 @@ export const FamilyTree = () => {
           .attr('dy', NODE_RADIUS + 15)
           .attr('text-anchor', 'middle')
           .text(node.data.partner ? node.data.partner.lastName : '')
-          .attr('fill', 'black')
+          .attr('fill', 'white')
           .style('font-size', '9px')
           .style('font-weight', 'bold')
           .style('pointer-events', 'none')
@@ -723,7 +719,7 @@ export const FamilyTree = () => {
           .attr('dy', NODE_RADIUS + 25)
           .attr('text-anchor', 'middle')
           .text(node.data.partner ? node.data.partner.firstName : '')
-          .attr('fill', 'black')
+          .attr('fill', 'white')
           .style('font-size', '9px')
           .style('pointer-events', 'none')
       })
@@ -762,53 +758,56 @@ export const FamilyTree = () => {
   }
 
   return (
-    <div className="flex flex-col w-full p-4">
-      <div className="w-full p-4">
-        <h1 className="text-2xl font-bold mb-6">Arbre Généalogique Familial</h1>
+    <div className="flex flex-col w-full min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      <header className="w-full px-4 sm:px-8 py-4 bg-white/5 border-b border-white/10 flex flex-wrap items-center justify-between">
+        {/* Logo et titre - centré sur mobile, aligné à gauche sur desktop */}
+        <div className="flex items-center w-full sm:w-1/3 justify-center sm:justify-start mb-3 sm:mb-0 order-1">
+          <img src={Logo} alt="Ances-Tree Logo" className="h-10 w-10 mr-3" />
+          <h1 className="text-2xl font-bold text-white">Ances-Tree</h1>
+        </div>
 
-        <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
+        {/* Barre de recherche - pleine largeur sur mobile, 1/3 sur desktop */}
+        <div className="flex items-center justify-center w-full sm:w-1/3 order-3 sm:order-2">
           <SearchField onSearch={handleSearch} />
-          {familyData.isLoading ? (
-            <div>...loading</div>
-          ) : (
-            <SynthesisCard people={familyData.data} />
-          )}
-          {/* <ZoomControls svgRef={svgRef} /> */}
         </div>
 
-        <div className="relative w-full h-[800px] border border-gray-300 rounded-lg overflow-hidden">
+        {/* Section de synthèse - cachée sur mobile, visible sur desktop */}
+        <div className="hidden sm:flex items-center justify-end w-full sm:w-1/3 order-2 sm:order-3">
           {familyData.isLoading ? (
-            <div>...loading</div>
+            <div className="text-white opacity-80">Chargement...</div>
           ) : (
-            <div>
-              {' '}
-              <p className="absolute bottom-2 right-2 text-sm text-gray-500">
-                Utilisez la souris pour déplacer et zoomer (molette)
-              </p>
-              {highlightedNodes.length > 0 && (
-                <div className="absolute top-2 left-2 bg-yellow-100 p-2 rounded shadow-sm">
-                  <p className="text-sm">
-                    {highlightedNodes.length} résultat(s) trouvé(s)
-                  </p>
+            <SynthesisSection people={familyData.data} />
+          )}
+        </div>
+      </header>
+
+      <main className="flex-1 p-4 w-full">
+        <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl shadow-2xl p-6 w-full h-full">
+          <div className="relative w-full h-[750px] overflow-hidden">
+            {familyData.isLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-white text-lg">
+                  Chargement de l'arbre généalogique...
                 </div>
-              )}
-              <svg ref={svgRef} className="w-full h-full" />
-            </div>
-          )}
+              </div>
+            ) : (
+              <div className="h-full">
+                <p className="absolute bottom-2 right-2 text-sm text-gray-400">
+                  Utilisez la souris pour déplacer et zoomer (molette)
+                </p>
+                {highlightedNodes.length > 0 && (
+                  <div className="absolute top-2 left-2 bg-white/10 border border-white/20 p-2 rounded-lg shadow-sm">
+                    <p className="text-white text-sm">
+                      {highlightedNodes.length} résultat(s) trouvé(s)
+                    </p>
+                  </div>
+                )}
+                <svg ref={svgRef} className="w-full h-full" />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-
-      {/* <div>
-        <FamilyTreeNew
-          data={familyData.data}
-          // Vous pouvez spécifier l'ID de la racine si vous le souhaitez
-          // rootId="TREHONG1"
-          nodeWidth={150}
-          nodeHeight={80}
-          horizontalGap={40}
-          verticalGap={100}
-        />
-      </div> */}
+      </main>
 
       <div className="flex align-center justify-center p-4 w-full">
         {selectedPerson && (
@@ -820,6 +819,12 @@ export const FamilyTree = () => {
           />
         )}
       </div>
+
+      <footer className="w-full p-3 bg-white/5 border-t border-white/10 text-center">
+        <p className="text-gray-400 text-xs">
+          Accès réservé à la famille ✨ © 2025 Ances-Tree
+        </p>
+      </footer>
     </div>
   )
 }
