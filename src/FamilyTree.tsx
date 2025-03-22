@@ -11,6 +11,7 @@ import { PersonCard } from './components/PersonCard'
 import { SynthesisSection } from './components/SynthesisSection'
 import { SearchField } from './components/atomic/SearchField/SearchField'
 import Logo from './assets/logo.svg'
+import { Loader } from './components/atomic/Loader/Loader'
 
 // Composant principal FamilyTree
 export const FamilyTree = () => {
@@ -774,7 +775,7 @@ export const FamilyTree = () => {
         {/* Section de synthèse - cachée sur mobile, visible sur desktop */}
         <div className="hidden sm:flex items-center justify-end w-full sm:w-1/3 order-2 sm:order-3">
           {familyData.isLoading ? (
-            <div className="text-white opacity-80">Chargement...</div>
+            <Loader dots />
           ) : (
             <SynthesisSection people={familyData.data} />
           )}
@@ -786,9 +787,7 @@ export const FamilyTree = () => {
           <div className="relative w-full h-[750px] overflow-hidden">
             {familyData.isLoading ? (
               <div className="flex items-center justify-center h-full">
-                <div className="text-white text-lg">
-                  Chargement de l'arbre généalogique...
-                </div>
+                <Loader />
               </div>
             ) : (
               <div className="h-full">

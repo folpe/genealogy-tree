@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { FamilyTree } from './FamilyTree'
+
 import { Login } from './components/Login/Login'
 import { ProtectedRoute } from './ProtectedRoute'
+// import { Tree } from './pages/Tree'
 
 export const Main = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -24,6 +26,7 @@ export const Main = () => {
           element={
             <ProtectedRoute>
               <FamilyTree />
+              {/* <Tree /> */}
             </ProtectedRoute>
           }
         />

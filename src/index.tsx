@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { Main } from './Main'
-import './index.css'
+import '../styles/tailwind.css'
 
 const container = document.querySelector('#root') as Element
 const root = createRoot(container)

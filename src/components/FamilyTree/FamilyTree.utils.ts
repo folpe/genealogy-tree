@@ -1,4 +1,3 @@
-// utils.ts
 import { Person, FamilyTreeNode } from './FamilyTree.types'
 
 // Construit un dictionnaire pour accéder rapidement aux personnes par ID
@@ -91,7 +90,7 @@ export const layoutTree = (
   }
 
   // Calculer largeur totale nécessaire pour les enfants
-  const totalChildrenWidth = node.children.reduce((width, child) => {
+  const totalChildrenWidth = node.children.reduce((width) => {
     return width + nodeWidth + horizontalGap
   }, -horizontalGap)
 

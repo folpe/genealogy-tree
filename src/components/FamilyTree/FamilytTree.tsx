@@ -6,7 +6,7 @@ import {
   findRoot,
   buildTree,
   layoutTree,
-} from './FamilyTree.helpers'
+} from './FamilyTree.utils'
 import { PersonNode, PartnerLink, ParentChildLink } from './elements'
 
 export const FamilyTree: React.FC<FamilyTreeProps> = ({
