@@ -798,7 +798,7 @@ export const FamilyTree = () => {
         </div>
       </div>
 
-      <div>
+      {/* <div>
         <FamilyTreeNew
           data={familyData.data}
           // Vous pouvez spécifier l'ID de la racine si vous le souhaitez
@@ -808,7 +808,7 @@ export const FamilyTree = () => {
           horizontalGap={40}
           verticalGap={100}
         />
-      </div>
+      </div> */}
 
       <div className="flex align-center justify-center p-4 w-full">
         {selectedPerson && (
