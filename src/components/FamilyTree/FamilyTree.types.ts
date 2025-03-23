@@ -20,6 +20,7 @@ export interface FamilyTreeNode {
   x?: number
   y?: number
   width?: number
+  height?: number
 }
 
 export interface FamilyTreeProps {

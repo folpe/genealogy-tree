@@ -13,4 +13,12 @@ export default {
     },
   },
   plugins: [],
+  safelist: [
+    'bg-blue-400',
+    'bg-blue-600',
+    'bg-pink-400',
+    'bg-pink-600',
+    'bg-gray-600',
+    'bg-gray-800',
+  ],
 }

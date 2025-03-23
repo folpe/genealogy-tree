@@ -11,6 +11,8 @@ import { select } from 'd3'
 import { FamilyTree } from '../components/FamilyTree'
 import { Loader } from '../components/atomic/Loader/Loader'
 
+const USE_CACHE = true
+
 export const Tree: React.FC = () => {
   const svgRef = useRef(null)
 
@@ -26,7 +28,9 @@ export const Tree: React.FC = () => {
     const fetchData = async () => {
       setFamilyData((prev) => ({ ...prev, isLoading: true }))
       try {
-        const response = await fetch(`/api/getNotionPeople?useCache=false`)
+        const response = await fetch(
+          `/api/getNotionPeople${USE_CACHE ? '?useCache=true' : '?useCache=false'}`
+        )
         if (!response.ok) {
           setFamilyData((prev) => ({
             ...prev,
