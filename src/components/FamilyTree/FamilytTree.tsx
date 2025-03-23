@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
-import * as d3 from 'd3'
+import { hierarchy, linkVertical, select, tree, zoom, zoomIdentity } from 'd3'
 import { FamilyTreeProps, FamilyTreeNode, Person } from './FamilyTree.types'
 import { buildPeopleMap, findRoot, buildTree } from './FamilyTree.utils'
 import { PersonNodeD3 } from './elements/PersonNodeD3'
 import { PersonCard } from '../PersonCard'
+import { ZoomControls } from '../ZoomControls'
 
 export const FamilyTree: React.FC<FamilyTreeProps> = ({
   data,
@@ -11,14 +12,15 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
   nodeWidth = 60,
   nodeHeight = 60,
   horizontalGap = 30,
-  verticalGap = 120,
+  // verticalGap = 120,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null)
-  const [dimensions, setDimensions] = useState({ width: 1000, height: 800 })
+  const [dimensions, setDimensions] = useState({ width: 1625, height: 750 })
   const [treeData, setTreeData] =
     useState<d3.HierarchyNode<FamilyTreeNode> | null>(null)
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
   const [showPersonCard, setShowPersonCard] = useState<boolean>(false)
+  const [transform, setTransform] = useState<d3.ZoomTransform>(zoomIdentity)
 
   // Construire l'arbre initial
   useEffect(() => {
@@ -41,13 +43,12 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     const rootNode = buildTree(rootPerson, peopleMap)
 
     // Créer la hiérarchie D3
-    const hierarchy = d3.hierarchy<FamilyTreeNode>(rootNode, (node) =>
+    const d3hierarchy = hierarchy<FamilyTreeNode>(rootNode, (node) =>
       node.isCollapsed ? [] : node.children
     )
 
     // Configurer le layout
-    const treeLayout = d3
-      .tree<FamilyTreeNode>()
+    const treeLayout = tree<FamilyTreeNode>()
       .nodeSize([nodeWidth * 1.5, nodeHeight * 2.5])
       .separation((a, b) => {
         // Ajouter un espace supplémentaire pour les nœuds avec des partenaires
@@ -55,7 +56,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
       })
 
     // Appliquer le layout
-    const layoutedTree = treeLayout(hierarchy)
+    const layoutedTree = treeLayout(d3hierarchy)
 
     setTreeData(layoutedTree)
 
@@ -66,30 +67,35 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     initializeZoom()
   }, [data, rootId])
 
-  // Gestionnaire de mise à jour du zoom
-  const [transform, setTransform] = useState<d3.ZoomTransform>(d3.zoomIdentity)
-
   // Initialisation du zoom
   const initializeZoom = () => {
     if (!svgRef.current) return
 
-    const svg = d3.select(svgRef.current)
+    const svg = select(svgRef.current)
 
-    const zoom = d3
-      .zoom<SVGSVGElement, unknown>()
+    const d3zoom = zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 3])
       .on('zoom', (event) => {
         setTransform(event.transform)
       })
 
-    svg.call(zoom)
+    svg.call(d3zoom)
 
     // Centrer l'arbre initialement
-    const initialTransform = d3.zoomIdentity
-      .translate(dimensions.width / 3, 100)
+    const initialTransform = zoomIdentity
+      .translate(dimensions.width / 2, dimensions.height / 4)
       .scale(0.8)
 
-    svg.call(zoom.transform, initialTransform)
+    try {
+      svg.call(d3zoom.transform, initialTransform)
+    } catch (error) {
+      console.error("Erreur lors de l'application du zoom initial:", error)
+      // Fallback si transform échoue
+      svg.attr(
+        'transform',
+        `translate(${dimensions.width / 2}, ${dimensions.height / 4}) scale(0.8)`
+      )
+    }
   }
 
   // Calcul des dimensions de l'arbre
@@ -142,20 +148,19 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     const updatedRoot = updateNodeCollapse(treeData.data)
 
     // Créer une nouvelle hiérarchie
-    const hierarchy = d3.hierarchy<FamilyTreeNode>(updatedRoot, (node) =>
+    const d3hierarchy = hierarchy<FamilyTreeNode>(updatedRoot, (node) =>
       node.isCollapsed ? [] : node.children
     )
 
     // Configurer le layout
-    const treeLayout = d3
-      .tree<FamilyTreeNode>()
+    const treeLayout = tree<FamilyTreeNode>()
       .nodeSize([nodeWidth * 1.5, nodeHeight * 2.5])
       .separation((a, b) => {
         return (a.data.partner ? 2 : 1) + (b.data.partner ? 2 : 1)
       })
 
     // Appliquer le layout avec une animation
-    const layoutedTree = treeLayout(hierarchy)
+    const layoutedTree = treeLayout(d3hierarchy)
 
     setTreeData(layoutedTree)
     calculateTreeDimensions(layoutedTree)
@@ -166,8 +171,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     if (!treeData) return null
 
     // Générateur de liens
-    const linkGenerator = d3
-      .linkVertical<any, any>()
+    const linkGenerator = linkVertical<any, any>()
       .x((d: any) => d.x)
       .y((d: any) => d.y)
 
@@ -326,110 +330,12 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
       </svg>
 
       {/* Contrôles de zoom */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '20px',
-          right: '20px',
-          display: 'flex',
-          gap: '10px',
-        }}
-      >
-        <button
-          onClick={() => {
-            if (!svgRef.current) return
-            const svg = d3.select(svgRef.current)
-            const zoom = d3
-              .zoom<SVGSVGElement, unknown>()
-              .on('zoom', (event) => {
-                setTransform(event.transform)
-              })
-            svg
-              .transition()
-              .duration(750)
-              .call(
-                zoom.transform,
-                d3.zoomIdentity
-                  .scale(transform.k * 1.2)
-                  .translate(transform.x / 1.2, transform.y / 1.2)
-              )
-          }}
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            border: 'none',
-            backgroundColor: '#333',
-            color: 'white',
-            fontSize: '20px',
-            cursor: 'pointer',
-          }}
-        >
-          +
-        </button>
-        <button
-          onClick={() => {
-            if (!svgRef.current) return
-            const svg = d3.select(svgRef.current)
-            const zoom = d3
-              .zoom<SVGSVGElement, unknown>()
-              .on('zoom', (event) => {
-                setTransform(event.transform)
-              })
-            svg
-              .transition()
-              .duration(750)
-              .call(
-                zoom.transform,
-                d3.zoomIdentity
-                  .scale(transform.k / 1.2)
-                  .translate(transform.x * 1.2, transform.y * 1.2)
-              )
-          }}
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            border: 'none',
-            backgroundColor: '#333',
-            color: 'white',
-            fontSize: '20px',
-            cursor: 'pointer',
-          }}
-        >
-          -
-        </button>
-        <button
-          onClick={() => {
-            if (!svgRef.current) return
-            const svg = d3.select(svgRef.current)
-            const zoom = d3
-              .zoom<SVGSVGElement, unknown>()
-              .on('zoom', (event) => {
-                setTransform(event.transform)
-              })
-            svg
-              .transition()
-              .duration(750)
-              .call(
-                zoom.transform,
-                d3.zoomIdentity.translate(dimensions.width / 3, 100).scale(0.8)
-              )
-          }}
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            border: 'none',
-            backgroundColor: '#333',
-            color: 'white',
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}
-        >
-          R
-        </button>
-      </div>
+      <ZoomControls
+        svgRef={svgRef}
+        transform={transform}
+        setTransform={setTransform}
+        dimensions={dimensions}
+      />
 
       {/* PersonCard */}
       {showPersonCard && selectedPerson && (
