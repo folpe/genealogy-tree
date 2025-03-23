@@ -110,10 +110,12 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
         error
       )
       // Fallback si la méthode transform échoue
-      svg.attr(
-        'transform',
-        `translate(${initialTransform.x}, ${initialTransform.y}) scale(${initialTransform.k})`
-      )
+      svg
+        .select('g')
+        .attr(
+          'transform',
+          `translate(${initialTransform.x}, ${initialTransform.y}) scale(${initialTransform.k})`
+        )
       // Vous pourriez essayer une approche alternative ici si nécessaire
     }
   }
