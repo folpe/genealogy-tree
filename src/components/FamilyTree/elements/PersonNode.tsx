@@ -56,6 +56,7 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
     if (!nodeRef.current) return
 
     const nodeSelection = select(nodeRef.current)
+    nodeSelection.datum(node)
 
     // Ajouter effet de survol
     nodeSelection

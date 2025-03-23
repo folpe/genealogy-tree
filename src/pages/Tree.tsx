@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { SynthesisSection } from '../components/SynthesisSection'
 import { SearchField } from '../components/atomic/SearchField'
 import { Person } from '../components/FamilyTree/FamilyTree.types'
@@ -6,7 +6,6 @@ import { PersonCard } from '../components/PersonCard'
 
 import Logo from '../assets/logo.svg'
 
-import { select } from 'd3'
 import { FamilyTree } from '../components/FamilyTree'
 import { Loader } from '../components/atomic/Loader/Loader'
 import { getMatchingIds } from '../components/FamilyTree/FamilyTree.utils'
@@ -14,10 +13,10 @@ import { getMatchingIds } from '../components/FamilyTree/FamilyTree.utils'
 const USE_CACHE = false
 
 export const Tree: React.FC = () => {
-  const svgRef = useRef(null)
-
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
   const [highlightedNodes, setHighlightedNodes] = useState<string[]>([])
+  const [shouldFocusOnNodes, setShouldFocusOnNodes] = useState(false)
+  const [shouldResetZoom, setShouldResetZoom] = useState(false)
   const [familyData, setFamilyData] = useState({
     data: [],
     isLoading: false,
@@ -40,7 +39,7 @@ export const Tree: React.FC = () => {
           throw new Error('Erreur lors du chargement des données')
         }
         const jsonData = await response.json()
-        console.log('ici', jsonData)
+        console.log('data', jsonData)
         setFamilyData((prev) => ({ ...prev, isLoading: false, data: jsonData }))
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err)
@@ -61,61 +60,27 @@ export const Tree: React.FC = () => {
     if (!query.trim()) {
       setHighlightedNodes([])
 
-      // Réinitialiser tous les nœuds à leur apparence normale
-      if (svgRef.current) {
-        // Réinitialiser les cercles des nœuds principaux
-        select(svgRef.current)
-          .selectAll('.node circle')
-          .attr('stroke-width', 2)
-          .attr('stroke', (d: any) => (d.data.isAlive ? 'green' : 'black'))
-          .attr('opacity', 1)
-
-        // Réinitialiser les cercles des partenaires
-        select(svgRef.current)
-          .selectAll('.partner-group circle')
-          .attr('stroke-width', 2)
-          .attr('stroke', 'black')
-          .attr('opacity', 1)
-      }
+      // Déclencher la réinitialisation du zoom
+      setShouldResetZoom(true)
+      setShouldFocusOnNodes(false)
       return
     }
 
     const matches = getMatchingIds(familyData.data, query)
     setHighlightedNodes(matches)
-    // Appliquer immédiatement la surbrillance
-    applyHighlights(matches)
+
+    // Déclencher la focalisation sur les nœuds correspondants
+    if (matches.length > 0) {
+      setShouldFocusOnNodes(true)
+      setShouldResetZoom(false)
+    }
   }
 
-  const applyHighlights = (matches: string[]) => {
-    if (!svgRef.current || !matches.length) return
-
-    // D'abord, réinitialiser tous les cercles
-    // Cercles des nœuds principaux
-    select(svgRef.current).selectAll('.node circle').attr('opacity', 0.2)
-
-    // Cercles des partenaires
-    select(svgRef.current)
-      .selectAll('.partner-group circle')
-      .attr('opacity', 0.2)
-
-    // Mettre en surbrillance les nœuds principaux
-    select(svgRef.current)
-      .selectAll('.node')
-      .each(function (d: any) {
-        if (matches.includes(d.data.id)) {
-          select(this).select('circle').attr('opacity', 1)
-        }
-      })
-
-    // Mettre en surbrillance les partenaires
-    // Pour chaque nœud principal
-    select(svgRef.current)
-      .selectAll('.partner-group')
-      .each(function (data) {
-        if (matches.includes((data as Person).id)) {
-          select(this).select('circle').attr('opacity', 1)
-        }
-      })
+  // Cette fonction sera appelée par FamilyTree pour indiquer
+  // que l'action a été exécutée
+  const handleZoomActionComplete = () => {
+    setShouldFocusOnNodes(false)
+    setShouldResetZoom(false)
   }
 
   return (
@@ -162,6 +127,10 @@ export const Tree: React.FC = () => {
                 <FamilyTree
                   data={familyData.data}
                   selectPersonFunc={(person) => setSelectedPerson(person)}
+                  highlightedNodes={highlightedNodes}
+                  shouldFocusOnNodes={shouldFocusOnNodes}
+                  shouldResetZoom={shouldResetZoom}
+                  onZoomActionComplete={handleZoomActionComplete}
                 />
               </div>
             )}

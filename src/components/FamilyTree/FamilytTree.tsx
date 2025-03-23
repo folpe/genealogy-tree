@@ -11,14 +11,18 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
   nodeWidth = 60,
   nodeHeight = 60,
   horizontalGap = 30,
-  // verticalGap = 120,
   selectPersonFunc,
+  highlightedNodes = [],
+  shouldFocusOnNodes = false,
+  shouldResetZoom = false,
+  onZoomActionComplete = () => {},
 }) => {
   const svgRef = useRef<SVGSVGElement>(null)
   const [dimensions, setDimensions] = useState({ width: 1625, height: 750 })
   const [treeData, setTreeData] =
     useState<d3.HierarchyNode<FamilyTreeNode> | null>(null)
   const [transform, setTransform] = useState<d3.ZoomTransform>(zoomIdentity)
+  const zoomBehaviorRef = useRef<any>(null)
 
   // Construire l'arbre initial
   useEffect(() => {
@@ -71,13 +75,16 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
 
     const svg = select(svgRef.current)
       .style('user-select', 'none')
-      .attr('preserveAspectRatio', 'XmidYmid meet')
+      .attr('preserveAspectRatio', 'xMidYMid meet')
 
     const d3zoom = zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 3])
       .on('zoom', (event) => {
         setTransform(event.transform)
       })
+
+    // Stocker le comportement de zoom pour y accéder plus tard
+    zoomBehaviorRef.current = d3zoom
 
     svg.call(d3zoom)
 
@@ -95,6 +102,125 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
         'transform',
         `translate(${dimensions.width / 2}, ${dimensions.height / 4}) scale(0.8)`
       )
+    }
+  }
+
+  // Effet pour gérer le zoom sur les nœuds en surbrillance
+  useEffect(() => {
+    if (
+      shouldFocusOnNodes &&
+      treeData &&
+      svgRef.current &&
+      highlightedNodes.length > 0
+    ) {
+      focusOnNodes(highlightedNodes)
+      // Indiquer que l'action a été exécutée
+      onZoomActionComplete()
+    }
+  }, [shouldFocusOnNodes, highlightedNodes, treeData])
+
+  // Effet pour gérer la réinitialisation du zoom
+  useEffect(() => {
+    if (shouldResetZoom && svgRef.current) {
+      resetZoom()
+      // Indiquer que l'action a été exécutée
+      onZoomActionComplete()
+    }
+  }, [shouldResetZoom])
+
+  // Fonction pour centrer et zoomer sur les nœuds spécifiques
+  const focusOnNodes = (nodeIds: string[]) => {
+    if (!treeData || !svgRef.current || nodeIds.length === 0) return
+
+    // Trouver les nœuds correspondants
+    const matchingNodes = treeData
+      .descendants()
+      .filter(
+        (node) =>
+          nodeIds.includes(node.data.person.id) ||
+          (node.data.partner && nodeIds.includes(node.data.partner.id))
+      )
+
+    if (matchingNodes.length === 0) return
+
+    // Calculer les limites des nœuds correspondants
+    const padding = 50 // Espace supplémentaire autour des nœuds
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity
+
+    matchingNodes.forEach((node) => {
+      // Position du nœud principal
+      minX = Math.min(minX, node.x! - nodeWidth / 2)
+      minY = Math.min(minY, node.y! - nodeHeight / 2)
+      maxX = Math.max(maxX, node.x! + nodeWidth / 2)
+      maxY = Math.max(maxY, node.y! + nodeHeight / 2)
+
+      // Si le nœud a un partenaire, inclure sa position aussi
+      if (node.data.partner) {
+        minX = Math.min(minX, node.x! + nodeWidth / 2 + horizontalGap)
+        maxX = Math.max(
+          maxX,
+          node.x! + nodeWidth / 2 + horizontalGap + nodeWidth
+        )
+      }
+    })
+
+    // Ajouter le padding
+    minX -= padding
+    minY -= padding
+    maxX += padding
+    maxY += padding
+
+    // Calculer les dimensions de la boîte englobante
+    const width = maxX - minX
+    const height = maxY - minY
+
+    // Calculer le centre de la boîte
+    const centerX = (minX + maxX) / 2
+    const centerY = (minY + maxY) / 2
+
+    // Calculer le facteur de zoom pour afficher tous les nœuds
+    const svgWidth = dimensions.width
+    const svgHeight = dimensions.height
+    const scaleX = svgWidth / width
+    const scaleY = svgHeight / height
+    const scale = Math.min(Math.min(scaleX, scaleY), 1.5) // Limitation du zoom max
+
+    // Appliquer la transformation
+    const svg = select(svgRef.current)
+    const zoomInstance = zoomBehaviorRef.current
+
+    if (zoomInstance) {
+      // Calculer la transformation pour centrer sur la boîte
+      const newTransform = zoomIdentity
+        .translate(svgWidth / 2, svgHeight / 2)
+        .scale(scale)
+        .translate(-centerX, -centerY)
+
+      // Animation fluide du zoom
+      svg.transition().duration(750).call(zoomInstance.transform, newTransform)
+    }
+  }
+
+  // Fonction pour réinitialiser le zoom
+  const resetZoom = () => {
+    if (!svgRef.current) return
+
+    const svg = select(svgRef.current)
+    const zoomInstance = zoomBehaviorRef.current
+
+    if (zoomInstance) {
+      // Revenir à la transformation initiale
+      const initialTransform = zoomIdentity
+        .translate(dimensions.width / 2, dimensions.height / 4)
+        .scale(0.8)
+
+      svg
+        .transition()
+        .duration(750)
+        .call(zoomInstance.transform, initialTransform)
     }
   }
 
@@ -165,6 +291,79 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     setTreeData(layoutedTree)
     calculateTreeDimensions(layoutedTree)
   }
+
+  // Effet pour appliquer l'opacité aux nœuds en fonction des résultats de recherche
+  useEffect(() => {
+    if (!svgRef.current) return
+
+    // Si aucun nœud n'est mis en évidence, tout réinitialiser
+    if (highlightedNodes.length === 0) {
+      // Réinitialiser les cercles des nœuds principaux
+      select(svgRef.current)
+        .selectAll('.node circle')
+        .attr('stroke-width', 2)
+        .attr('stroke', (d: any) => (d.data.person.isAlive ? 'green' : 'black'))
+        .attr('opacity', 1)
+
+      // Réinitialiser les cercles des partenaires
+      select(svgRef.current)
+        .selectAll('.partner-group circle')
+        .attr('stroke-width', 2)
+        .attr('stroke', 'black')
+        .attr('opacity', 1)
+
+      return
+    }
+
+    // D'abord, réduire l'opacité de tous les cercles
+    select(svgRef.current).selectAll('.node circle').attr('opacity', 0.2)
+    select(svgRef.current)
+      .selectAll('.partner-group circle')
+      .attr('opacity', 0.2)
+
+    // Mettre en surbrillance les nœuds principaux
+    select(svgRef.current)
+      .selectAll('.node')
+      .each(function (d: any) {
+        if (highlightedNodes.includes(d.data.person.id)) {
+          select(this).select('circle').attr('opacity', 1)
+        }
+      })
+
+    // Mettre en surbrillance les partenaires
+    select(svgRef.current)
+      .selectAll('.partner-group')
+      .each(function (data) {
+        if (highlightedNodes.includes((data as any).id)) {
+          select(this).select('circle').attr('opacity', 1)
+        }
+      })
+  }, [highlightedNodes, treeData])
+
+  useEffect(() => {
+    if (!svgRef.current) return
+
+    if (highlightedNodes.length === 0) {
+      // Réinitialiser tous les nœuds à une opacité normale (1)
+      select(svgRef.current).selectAll('.person-node').attr('opacity', 1)
+      return
+    }
+
+    // Réduire l'opacité de tous les nœuds
+    select(svgRef.current).selectAll('.person-node').attr('opacity', 0.2)
+
+    // Rétablir l'opacité normale pour les nœuds correspondants uniquement
+    select(svgRef.current)
+      .selectAll('.person-node')
+      .each(function (d: any) {
+        if (highlightedNodes.includes(d.person.id)) {
+          select(this).attr('opacity', 1)
+        }
+      })
+
+    // Faire de même pour les partenaires
+    // ...
+  }, [highlightedNodes])
 
   // Générer les liens entre parents et enfants
   const generateParentChildLinks = () => {
@@ -330,16 +529,6 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
         setTransform={setTransform}
         dimensions={dimensions}
       />
-
-      {/* PersonCard */}
-      {/* {showPersonCard && selectedPerson && (
-        <PersonCard
-          people={data}
-          selectedPerson={selectedPerson}
-          closeCardFunc={handleClosePersonCard}
-          selectPersonFunc={handlePersonClick}
-        />
-      )} */}
     </div>
   )
 }

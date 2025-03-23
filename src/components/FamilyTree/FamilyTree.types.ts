@@ -35,4 +35,8 @@ export interface FamilyTreeProps {
   horizontalGap?: number
   verticalGap?: number
   selectPersonFunc: (person: Person) => void
+  highlightedNodes?: string[]
+  shouldFocusOnNodes?: boolean
+  shouldResetZoom?: boolean
+  onZoomActionComplete?: () => void
 }
