@@ -1,10 +1,10 @@
 import React from 'react'
-import { select, zoom, zoomIdentity, ZoomTransform } from 'd3'
+import * as d3 from 'd3'
 
 interface ZoomControlsProps {
   svgRef: React.RefObject<SVGSVGElement>
-  transform: ZoomTransform
-  setTransform: (transform: ZoomTransform) => void
+  transform: d3.ZoomTransform
+  setTransform: (transform: d3.ZoomTransform) => void
   dimensions: { width: number; height: number }
 }
 
@@ -17,8 +17,8 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
   // Zoom in handler
   const handleZoomIn = () => {
     if (!svgRef.current) return
-    const svg = select(svgRef.current)
-    const d3zoom = zoom<SVGSVGElement, unknown>().on('zoom', (event) => {
+    const svg = d3.select(svgRef.current)
+    const d3zoom = d3.zoom<SVGSVGElement, unknown>().on('zoom', (event) => {
       setTransform(event.transform)
     })
 
@@ -27,7 +27,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
       .duration(750)
       .call(
         d3zoom.transform,
-        zoomIdentity
+        d3.zoomIdentity
           .scale(transform.k * 1.2)
           .translate(transform.x / 1.2, transform.y / 1.2)
       )
@@ -36,8 +36,8 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
   // Zoom out handler
   const handleZoomOut = () => {
     if (!svgRef.current) return
-    const svg = select(svgRef.current)
-    const d3zoom = zoom<SVGSVGElement, unknown>().on('zoom', (event) => {
+    const svg = d3.select(svgRef.current)
+    const d3zoom = d3.zoom<SVGSVGElement, unknown>().on('zoom', (event) => {
       setTransform(event.transform)
     })
 
@@ -46,7 +46,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
       .duration(750)
       .call(
         d3zoom.transform,
-        zoomIdentity
+        d3.zoomIdentity
           .scale(transform.k / 1.2)
           .translate(transform.x * 1.2, transform.y * 1.2)
       )
@@ -55,14 +55,15 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
   // Reset zoom handler
   const handleResetZoom = () => {
     if (!svgRef.current) return
-    const svg = select(svgRef.current)
-    const d3zoom = zoom<SVGSVGElement, unknown>()
+    const svg = d3.select(svgRef.current)
+    const d3zoom = d3
+      .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 3])
       .on('zoom', (event) => {
         setTransform(event.transform)
       })
 
-    const initialTransform = zoomIdentity
+    const initialTransform = d3.zoomIdentity
       .translate(dimensions.width / 2, dimensions.height / 4)
       .scale(0.8)
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { hierarchy, linkVertical, select, tree, zoom, zoomIdentity } from 'd3'
 import { FamilyTreeProps, FamilyTreeNode, Person } from './FamilyTree.types'
 import { buildPeopleMap, findRoot, buildTree } from './FamilyTree.utils'
 import { PersonNode } from './elements'
 import { ZoomControls } from '../ZoomControls'
+import * as d3 from 'd3'
 
 export const FamilyTree: React.FC<FamilyTreeProps> = ({
   data,
@@ -21,7 +21,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
   const [dimensions, setDimensions] = useState({ width: 1625, height: 750 })
   const [treeData, setTreeData] =
     useState<d3.HierarchyNode<FamilyTreeNode> | null>(null)
-  const [transform, setTransform] = useState<d3.ZoomTransform>(zoomIdentity)
+  const [transform, setTransform] = useState<d3.ZoomTransform>(d3.zoomIdentity)
   const zoomBehaviorRef = useRef<any>(null)
 
   // Construire l'arbre initial
@@ -45,12 +45,13 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     const rootNode = buildTree(rootPerson, peopleMap)
 
     // Créer la hiérarchie D3
-    const d3hierarchy = hierarchy<FamilyTreeNode>(rootNode, (node) =>
+    const d3hierarchy = d3.hierarchy<FamilyTreeNode>(rootNode, (node) =>
       node.isCollapsed ? [] : node.children
     )
 
     // Configurer le layout
-    const treeLayout = tree<FamilyTreeNode>()
+    const treeLayout = d3
+      .tree<FamilyTreeNode>()
       .nodeSize([nodeWidth * 1.5, nodeHeight * 2.5])
       .separation((a, b) => {
         // Ajouter un espace supplémentaire pour les nœuds avec des partenaires
@@ -73,11 +74,13 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
   const initializeZoom = () => {
     if (!svgRef.current) return
 
-    const svg = select(svgRef.current)
+    const svg = d3
+      .select(svgRef.current)
       .style('user-select', 'none')
       .attr('preserveAspectRatio', 'xMidYMid meet')
 
-    const d3zoom = zoom<SVGSVGElement, unknown>()
+    const d3zoom = d3
+      .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 3])
       .on('zoom', (event) => {
         setTransform(event.transform)
@@ -89,20 +92,11 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     svg.call(d3zoom)
 
     // Centrer l'arbre initialement
-    const initialTransform = zoomIdentity
+    const initialTransform = d3.zoomIdentity
       .translate(dimensions.width / 2, dimensions.height / 4)
       .scale(0.8)
 
-    try {
-      svg.call(d3zoom.transform, initialTransform)
-    } catch (error) {
-      console.error("Erreur lors de l'application du zoom initial:", error)
-      // Fallback si transform échoue
-      svg.attr(
-        'transform',
-        `translate(${dimensions.width / 2}, ${dimensions.height / 4}) scale(0.8)`
-      )
-    }
+    svg.call(d3zoom.transform, initialTransform)
   }
 
   // Effet pour gérer le zoom sur les nœuds en surbrillance
@@ -189,12 +183,12 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     const scale = Math.min(Math.min(scaleX, scaleY), 1.5) // Limitation du zoom max
 
     // Appliquer la transformation
-    const svg = select(svgRef.current)
+    const svg = d3.select(svgRef.current)
     const zoomInstance = zoomBehaviorRef.current
 
     if (zoomInstance) {
       // Calculer la transformation pour centrer sur la boîte
-      const newTransform = zoomIdentity
+      const newTransform = d3.zoomIdentity
         .translate(svgWidth / 2, svgHeight / 2)
         .scale(scale)
         .translate(-centerX, -centerY)
@@ -208,12 +202,12 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
   const resetZoom = () => {
     if (!svgRef.current) return
 
-    const svg = select(svgRef.current)
+    const svg = d3.select(svgRef.current)
     const zoomInstance = zoomBehaviorRef.current
 
     if (zoomInstance) {
       // Revenir à la transformation initiale
-      const initialTransform = zoomIdentity
+      const initialTransform = d3.zoomIdentity
         .translate(dimensions.width / 2, dimensions.height / 4)
         .scale(0.8)
 
@@ -274,12 +268,13 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     const updatedRoot = updateNodeCollapse(treeData.data)
 
     // Créer une nouvelle hiérarchie
-    const d3hierarchy = hierarchy<FamilyTreeNode>(updatedRoot, (node) =>
+    const d3hierarchy = d3.hierarchy<FamilyTreeNode>(updatedRoot, (node) =>
       node.isCollapsed ? [] : node.children
     )
 
     // Configurer le layout
-    const treeLayout = tree<FamilyTreeNode>()
+    const treeLayout = d3
+      .tree<FamilyTreeNode>()
       .nodeSize([nodeWidth * 1.5, nodeHeight * 2.5])
       .separation((a, b) => {
         return (a.data.partner ? 2 : 1) + (b.data.partner ? 2 : 1)
@@ -292,87 +287,49 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     calculateTreeDimensions(layoutedTree)
   }
 
-  // Effet pour appliquer l'opacité aux nœuds en fonction des résultats de recherche
-  useEffect(() => {
-    if (!svgRef.current) return
-
-    // Si aucun nœud n'est mis en évidence, tout réinitialiser
-    if (highlightedNodes.length === 0) {
-      // Réinitialiser les cercles des nœuds principaux
-      select(svgRef.current)
-        .selectAll('.node circle')
-        .attr('stroke-width', 2)
-        .attr('stroke', (d: any) => (d.data.person.isAlive ? 'green' : 'black'))
-        .attr('opacity', 1)
-
-      // Réinitialiser les cercles des partenaires
-      select(svgRef.current)
-        .selectAll('.partner-group circle')
-        .attr('stroke-width', 2)
-        .attr('stroke', 'black')
-        .attr('opacity', 1)
-
-      return
-    }
-
-    // D'abord, réduire l'opacité de tous les cercles
-    select(svgRef.current).selectAll('.node circle').attr('opacity', 0.2)
-    select(svgRef.current)
-      .selectAll('.partner-group circle')
-      .attr('opacity', 0.2)
-
-    // Mettre en surbrillance les nœuds principaux
-    select(svgRef.current)
-      .selectAll('.node')
-      .each(function (d: any) {
-        if (highlightedNodes.includes(d.data.person.id)) {
-          select(this).select('circle').attr('opacity', 1)
-        }
-      })
-
-    // Mettre en surbrillance les partenaires
-    select(svgRef.current)
-      .selectAll('.partner-group')
-      .each(function (data) {
-        if (highlightedNodes.includes((data as any).id)) {
-          select(this).select('circle').attr('opacity', 1)
-        }
-      })
-  }, [highlightedNodes, treeData])
-
+  // Highlights avec la recherche
   useEffect(() => {
     if (!svgRef.current) return
 
     if (highlightedNodes.length === 0) {
       // Réinitialiser tous les nœuds à une opacité normale (1)
-      select(svgRef.current).selectAll('.person-node').attr('opacity', 1)
+      d3.select(svgRef.current).selectAll('.person-node').attr('opacity', 1)
       return
     }
 
     // Réduire l'opacité de tous les nœuds
-    select(svgRef.current).selectAll('.person-node').attr('opacity', 0.2)
+    d3.select(svgRef.current).selectAll('.person-node').attr('opacity', 0.2)
 
     // Rétablir l'opacité normale pour les nœuds correspondants uniquement
-    select(svgRef.current)
+    d3.select(svgRef.current)
       .selectAll('.person-node')
       .each(function (d: any) {
         if (highlightedNodes.includes(d.person.id)) {
-          select(this).attr('opacity', 1)
+          d3.select(this).attr('opacity', 1)
         }
       })
-
-    // Faire de même pour les partenaires
-    // ...
   }, [highlightedNodes])
 
   // Générer les liens entre parents et enfants
   const generateParentChildLinks = () => {
     if (!treeData) return null
 
-    // Générateur de liens
-    const linkGenerator = linkVertical<any, any>()
-      .x((d: any) => d.x)
-      .y((d: any) => d.y)
+    const orthogonalLink = (d: any) => {
+      const sourceX = d.source.x
+      const sourceY = d.source.y
+      const targetX = d.target.x
+      const targetY = d.target.y
+
+      // Calculer le point intermédiaire (à mi-chemin entre source et cible sur l'axe Y)
+      const midY = sourceY + (targetY - sourceY) / 2
+
+      return `
+        M${sourceX},${sourceY}
+        V${midY}
+        H${targetX}
+        V${targetY}
+      `
+    }
 
     // Créer les liens
     return treeData.links().map((link) => {
@@ -386,7 +343,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
         y: link.target.y! - nodeHeight / 2,
       }
 
-      const path = linkGenerator({ source, target })
+      const path = orthogonalLink({ source, target })
 
       return (
         <path
@@ -396,7 +353,6 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
           stroke="#666"
           strokeWidth={1.5}
           strokeOpacity={0.7}
-          markerEnd="url(#arrowhead)"
         />
       )
     })
@@ -414,7 +370,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     return nodesWithPartners.map((node) => {
       const startX = node.x! + nodeWidth / 2
       const startY = node.y
-      const endX = node.x! + nodeWidth + horizontalGap + nodeWidth / 2
+      const endX = node.x! + nodeWidth / 2 + horizontalGap
       const endY = node.y
 
       return (
@@ -500,18 +456,6 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
   return (
     <div style={{ position: 'relative', width: '100%', height: '700px' }}>
       <svg ref={svgRef} width="100%" height="100%">
-        <defs>
-          <marker
-            id="arrowhead"
-            markerWidth="10"
-            markerHeight="7"
-            refX="0"
-            refY="3.5"
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
-          </marker>
-        </defs>
         <g transform={transform.toString()}>
           {/* Liens et nœuds */}
           <g className="links">
