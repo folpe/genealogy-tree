@@ -1,6 +1,13 @@
 [build]
   command = "pnpm run build"
-  publish = "dist" # ou le dossier où se trouve votre application frontend compilée
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NPM_FLAGS = "--version"
+
+[[plugins]]
+  package = "@netlify/plugin-pnpm"
 
 [dev]
   command = "pnpm run dev"
