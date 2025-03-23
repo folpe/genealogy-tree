@@ -11,7 +11,7 @@ import { FamilyTree } from '../components/FamilyTree'
 import { Loader } from '../components/atomic/Loader/Loader'
 import { getMatchingIds } from '../components/FamilyTree/FamilyTree.utils'
 
-const USE_CACHE = true
+const USE_CACHE = false
 
 export const Tree: React.FC = () => {
   const svgRef = useRef(null)
@@ -40,6 +40,7 @@ export const Tree: React.FC = () => {
           throw new Error('Erreur lors du chargement des données')
         }
         const jsonData = await response.json()
+        console.log('ici', jsonData)
         setFamilyData((prev) => ({ ...prev, isLoading: false, data: jsonData }))
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err)
@@ -142,7 +143,7 @@ export const Tree: React.FC = () => {
       </header>
 
       <main className="flex-1 p-4 w-full">
-        <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl shadow-2xl p-6 w-full h-full">
+        <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl shadow-2xl w-full h-full">
           <div className="relative w-full h-[750px] overflow-hidden">
             {familyData.isLoading ? (
               <Loader />

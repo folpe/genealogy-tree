@@ -7,9 +7,13 @@ export interface Person {
   birthLocation?: string | null
   deathDate?: string | null
   gender?: string
+  city?: string
+  zipCode?: number
+  country?: string
   photo?: string
   partnerId: string[]
   childrenIds: string[]
+  parentsIds: string[]
 }
 
 export interface FamilyTreeNode {

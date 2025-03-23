@@ -7,14 +7,15 @@ import {
   handleSelectPersonById,
 } from './PersonCard.utils'
 import {
-  UserIcon,
   CakeIcon,
-  HeartIcon,
   VenetianMaskIcon,
   MapPin,
   Users,
   HeartHandshake,
   X,
+  Trees,
+  Cross,
+  House,
 } from 'lucide-react'
 
 type PersonCardProps = {
@@ -78,9 +79,18 @@ export const PersonCard: React.FC<PersonCardProps> = ({
             <X className="w-5 h-5" />
           </button>
 
-          <h2 className="text-2xl font-bold text-center mb-6">
+          <h2 className="text-2xl font-bold text-center ">
             {selectedPerson.firstName} {selectedPerson.lastName}
           </h2>
+
+          <div className="text-xl text-center mb-6">
+            {selectedPerson.birthDate &&
+              calculateAge(
+                selectedPerson.birthDate ?? undefined,
+                selectedPerson.deathDate ?? undefined
+              )}
+            {selectedPerson.deathDate ? ' ans à son décès' : ' ans'}
+          </div>
 
           {/* Photo ou initiales - fixe, ne scroll pas */}
           <div className="flex justify-center mb-6">
@@ -124,12 +134,12 @@ export const PersonCard: React.FC<PersonCardProps> = ({
         {/* Contenu scrollable */}
         <div className="overflow-y-auto px-6 pb-6 flex-1 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
           <div className="space-y-4 text-base mb-6">
-            <div className="flex items-center gap-3 text-lg">
+            {/* <div className="flex items-center gap-3 text-lg">
               <UserIcon className="w-6 h-6 min-w-6 text-blue-400" />
               <span className="font-medium">
                 {selectedPerson.gender === 'male' ? 'Homme' : 'Femme'}
               </span>
-            </div>
+            </div> */}
 
             {selectedPerson.maidenName && (
               <div className="flex items-center gap-3 text-lg">
@@ -138,7 +148,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
               </div>
             )}
 
-            <div className="flex items-center gap-3 text-lg">
+            {/* <div className="flex items-center gap-3 text-lg">
               <HeartIcon
                 className={`w-6 h-6 min-w-6 ${
                   selectedPerson.deathDate ? 'text-gray-400' : 'text-red-400'
@@ -151,35 +161,71 @@ export const PersonCard: React.FC<PersonCardProps> = ({
                     ).toLocaleDateString('fr-FR')}`
                   : 'Vivant(e)'}
               </span>
-            </div>
-
+            </div> */}
             <div className="flex items-center gap-3 text-lg">
-              <CakeIcon className="w-6 h-6 min-w-6 text-orange-400" />
+              <MapPin className="w-6 h-6 min-w-6 text-orange-400" />
               <span className="font-medium">
-                {selectedPerson.birthDate
-                  ? new Date(selectedPerson.birthDate).toLocaleDateString(
-                      'fr-FR'
-                    )
-                  : '-'}{' '}
-                (
-                {selectedPerson.birthDate &&
-                  calculateAge(
-                    selectedPerson.birthDate ?? undefined,
-                    selectedPerson.deathDate ?? undefined
-                  )}
-                {selectedPerson.deathDate ? ' ans à son décès' : ' ans'})
+                Né{selectedPerson.gender === 'female' && 'e'} -{' '}
+                {selectedPerson.birthLocation ?? '-'}
               </span>
             </div>
 
+            <div className="flex items-center  justify-between">
+              <div className="flex items-center gap-3 text-lg w-1/2">
+                <CakeIcon className="w-6 h-6 min-w-6 text-orange-400" />
+                <span className="font-medium">
+                  {selectedPerson.birthDate
+                    ? new Date(selectedPerson.birthDate).toLocaleDateString(
+                        'fr-FR'
+                      )
+                    : '-'}
+                </span>
+              </div>
+              {selectedPerson.deathDate && (
+                <div className="flex items-center gap-3 text-lg  w-1/2">
+                  <Cross className="w-6 h-6 min-w-6 text-gray-600" />
+                  <span className="font-medium">
+                    {new Date(selectedPerson.deathDate).toLocaleDateString(
+                      'fr-FR'
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center gap-3 text-lg">
-              <MapPin className="w-6 h-6 min-w-6 text-green-400" />
+              <House className="w-6 h-6 min-w-6 text-green-400" />
               <span className="font-medium">
-                {selectedPerson.birthLocation ?? '-'}
+                {`${selectedPerson.city ?? '-'} - ${selectedPerson.zipCode ?? ''} ${selectedPerson.country ? '(' + selectedPerson.country + ')' : ''}`}
               </span>
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 mt-8">
+            {selectedPerson.parentsIds.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2 text-gray-300">
+                  <Trees className="w-4 h-4 text-yellow-400" /> Parents
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedPerson.parentsIds.map((parentId) => (
+                    <button
+                      key={parentId}
+                      className="bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-200 px-3 py-1 rounded-full text-sm font-medium transition hover:cursor-pointer"
+                      onClick={() =>
+                        handleSelectPersonById(
+                          people,
+                          parentId,
+                          selectPersonFunc
+                        )
+                      }
+                    >
+                      {getPersonNameById(people, parentId)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {selectedPerson.partnerId.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2 text-gray-300">

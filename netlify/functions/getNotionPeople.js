@@ -102,6 +102,14 @@ export const handler = async (event, context) => {
         })
         .filter(Boolean)
 
+      // Récupérer les IDs des parents via l'index
+      const parentsIds = (props.parentsIds?.relation || [])
+        .map((rel) => {
+          const parentPage = pageIndex[rel.id]
+          return parentPage?.properties.id?.title[0]?.plain_text || null
+        })
+        .filter(Boolean)
+
       return {
         id: props.id?.title[0]?.plain_text || null,
         firstName: props.firstName?.rich_text[0]?.plain_text ?? '',
@@ -111,11 +119,15 @@ export const handler = async (event, context) => {
         birthLocation: props.birthLocation?.rich_text[0]?.plain_text ?? null,
         deathDate: props.deathDate?.date?.start ?? null,
         gender: props.gender?.select?.name ?? '',
+        city: props.city?.rich_text[0]?.plain_text ?? '',
+        country: props.country?.rich_text[0]?.plain_text ?? '',
+        zipCode: props.zipCode?.number,
         photo: props.photo?.files[0]?.external
           ? props.photo?.files[0]?.external?.url
-          : props.photo?.files[0]?.file?.url ?? '',
+          : (props.photo?.files[0]?.file?.url ?? ''),
         partnerId: partnerIds,
         childrenIds: childrenIds,
+        parentsIds: parentsIds,
       }
     })
 
