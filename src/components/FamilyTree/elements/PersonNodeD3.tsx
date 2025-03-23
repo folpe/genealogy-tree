@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react'
-import * as d3 from 'd3'
+import { select } from 'd3'
 import { FamilyTreeNode, Person } from '../FamilyTree.types'
 import { useImagePreloader } from '../../../utils/useImagePreloader'
 
@@ -55,12 +55,12 @@ export const PersonNodeD3: React.FC<PersonNodeD3Props> = ({
   useEffect(() => {
     if (!nodeRef.current) return
 
-    const nodeSelection = d3.select(nodeRef.current)
+    const nodeSelection = select(nodeRef.current)
 
     // Ajouter effet de survol
     nodeSelection
       .on('mouseenter', function () {
-        d3.select(this)
+        select(this)
           .transition()
           .duration(200)
           .attr('filter', 'url(#glow)')
@@ -68,7 +68,7 @@ export const PersonNodeD3: React.FC<PersonNodeD3Props> = ({
           .attr('stroke-width', 3)
       })
       .on('mouseleave', function () {
-        d3.select(this)
+        select(this)
           .transition()
           .duration(200)
           .attr('filter', null)

@@ -9,6 +9,25 @@ export const buildPeopleMap = (people: Person[]): Record<string, Person> => {
   return map
 }
 
+export const getMatchingIds = (people: Person[], query: string): string[] => {
+  if (!people || !query) return []
+
+  const queryLower = query.toLowerCase()
+
+  return people
+    .filter((person) => {
+      const firstName = (person.firstName || '').toLowerCase()
+      const lastName = (person.lastName || '').toLowerCase()
+      const maidenName = (person.maidenName || '').toLowerCase()
+      const fullName = `${firstName} ${lastName}`
+
+      return [firstName, lastName, fullName, maidenName].some((item) =>
+        item.includes(queryLower)
+      )
+    })
+    .map((person) => person.id)
+}
+
 // Trouve la racine de l'arbre si non spécifiée
 export const findRoot = (people: Person[]): Person | undefined => {
   // Personnes qui sont des enfants (ont des parents)

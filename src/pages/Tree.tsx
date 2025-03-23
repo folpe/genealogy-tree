@@ -5,11 +5,11 @@ import { Person } from '../components/FamilyTree/FamilyTree.types'
 import { PersonCard } from '../components/PersonCard'
 
 import Logo from '../assets/logo.svg'
-import { getMatchingIds } from '../FamilyTree.helpers'
 
 import { select } from 'd3'
 import { FamilyTree } from '../components/FamilyTree'
 import { Loader } from '../components/atomic/Loader/Loader'
+import { getMatchingIds } from '../components/FamilyTree/FamilyTree.utils'
 
 const USE_CACHE = true
 

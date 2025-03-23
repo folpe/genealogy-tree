@@ -5,7 +5,7 @@ import {
   getPersonGenderById,
   getPersonNameById,
   handleSelectPersonById,
-} from '../../FamilyTree.helpers'
+} from './PersonCard.utils'
 import {
   UserIcon,
   CakeIcon,
