@@ -102,7 +102,20 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
       .translate(INITIAL_WIDTH / 2, INITIAL_HEIGHT / 4)
       .scale(0.8)
 
-    svg.call(d3zoom.transform, initialTransform)
+    try {
+      svg.call(d3zoom.transform, initialTransform)
+    } catch (error) {
+      console.error(
+        "Erreur lors de l'application de la transformation initiale:",
+        error
+      )
+      // Fallback si la méthode transform échoue
+      svg.attr(
+        'transform',
+        `translate(${initialTransform.x}, ${initialTransform.y}) scale(${initialTransform.k})`
+      )
+      // Vous pourriez essayer une approche alternative ici si nécessaire
+    }
   }
 
   //
