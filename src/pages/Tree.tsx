@@ -159,7 +159,10 @@ export const Tree: React.FC = () => {
                     </p>
                   </div>
                 )}
-                <FamilyTree data={familyData.data} />
+                <FamilyTree
+                  data={familyData.data}
+                  selectPersonFunc={(person) => setSelectedPerson(person)}
+                />
               </div>
             )}
           </div>

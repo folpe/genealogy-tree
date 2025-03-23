@@ -34,4 +34,5 @@ export interface FamilyTreeProps {
   nodeHeight?: number
   horizontalGap?: number
   verticalGap?: number
+  selectPersonFunc: (person: Person) => void
 }

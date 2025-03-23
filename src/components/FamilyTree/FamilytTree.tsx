@@ -3,7 +3,6 @@ import { hierarchy, linkVertical, select, tree, zoom, zoomIdentity } from 'd3'
 import { FamilyTreeProps, FamilyTreeNode, Person } from './FamilyTree.types'
 import { buildPeopleMap, findRoot, buildTree } from './FamilyTree.utils'
 import { PersonNode } from './elements'
-import { PersonCard } from '../PersonCard'
 import { ZoomControls } from '../ZoomControls'
 
 export const FamilyTree: React.FC<FamilyTreeProps> = ({
@@ -13,13 +12,12 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
   nodeHeight = 60,
   horizontalGap = 30,
   // verticalGap = 120,
+  selectPersonFunc,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null)
   const [dimensions, setDimensions] = useState({ width: 1625, height: 750 })
   const [treeData, setTreeData] =
     useState<d3.HierarchyNode<FamilyTreeNode> | null>(null)
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
-  const [showPersonCard, setShowPersonCard] = useState<boolean>(false)
   const [transform, setTransform] = useState<d3.ZoomTransform>(zoomIdentity)
 
   // Construire l'arbre initial
@@ -72,6 +70,8 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     if (!svgRef.current) return
 
     const svg = select(svgRef.current)
+      .style('user-select', 'none')
+      .attr('preserveAspectRatio', 'XmidYmid meet')
 
     const d3zoom = zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 3])
@@ -245,8 +245,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
 
   // Gérer le clic sur une personne
   const handlePersonClick = (person: Person) => {
-    setSelectedPerson(person)
-    setShowPersonCard(true)
+    selectPersonFunc(person)
   }
 
   // Générer les nœuds de personnes
@@ -298,16 +297,11 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     return allNodes
   }
 
-  // Fermer la modal PersonCard
-  const handleClosePersonCard = () => {
-    setShowPersonCard(false)
-  }
-
   // Rendu du composant
   return (
     <div style={{ position: 'relative', width: '100%', height: '700px' }}>
       <svg ref={svgRef} width="100%" height="100%">
-        {/* <defs>
+        <defs>
           <marker
             id="arrowhead"
             markerWidth="10"
@@ -318,7 +312,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
           >
             <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
           </marker>
-        </defs> */}
+        </defs>
         <g transform={transform.toString()}>
           {/* Liens et nœuds */}
           <g className="links">
@@ -338,14 +332,14 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
       />
 
       {/* PersonCard */}
-      {showPersonCard && selectedPerson && (
+      {/* {showPersonCard && selectedPerson && (
         <PersonCard
           people={data}
           selectedPerson={selectedPerson}
           closeCardFunc={handleClosePersonCard}
           selectPersonFunc={handlePersonClick}
         />
-      )}
+      )} */}
     </div>
   )
 }
