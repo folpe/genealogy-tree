@@ -23,8 +23,8 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
     })
 
     svg
-      // .transition()
-      // .duration(750)
+      .transition()
+      .duration(750)
       .call(
         d3zoom.transform,
         d3.zoomIdentity
@@ -42,8 +42,8 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
     })
 
     svg
-      // .transition()
-      // .duration(750)
+      .transition()
+      .duration(750)
       .call(
         d3zoom.transform,
         d3.zoomIdentity

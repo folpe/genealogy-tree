@@ -208,8 +208,8 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
         .scale(scale)
         .translate(-centerX, -centerY)
 
-      // Animation fluide du zoom .transition().duration(750)
-      svg.call(zoomInstance.transform, newTransform)
+      // Animation fluide du zoom
+      svg.transition().duration(750).call(zoomInstance.transform, newTransform)
     }
   }
 
@@ -230,7 +230,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
       // .translate(-centerTreeX, -centerTreeY)
 
       // Application de la transformation
-      svg.call(zoomInstance.transform, newTransform)
+      svg.transition().duration(750).call(zoomInstance.transform, newTransform)
 
       // Mise à jour explicite de l'état React
       setTransform(newTransform)
