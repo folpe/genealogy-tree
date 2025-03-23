@@ -3,14 +3,14 @@ import { select } from 'd3'
 import { FamilyTreeNode, Person } from '../FamilyTree.types'
 import { useImagePreloader } from '../../../utils/useImagePreloader'
 
-interface PersonNodeD3Props {
+interface PersonNodeProps {
   node: FamilyTreeNode
   width: number
   height: number
   onToggleCollapse?: (id: string) => void
 }
 
-export const PersonNodeD3: React.FC<PersonNodeD3Props> = ({
+export const PersonNode: React.FC<PersonNodeProps> = ({
   node,
   width = 70,
   height = 70,

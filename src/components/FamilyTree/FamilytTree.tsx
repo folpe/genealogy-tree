@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { hierarchy, linkVertical, select, tree, zoom, zoomIdentity } from 'd3'
 import { FamilyTreeProps, FamilyTreeNode, Person } from './FamilyTree.types'
 import { buildPeopleMap, findRoot, buildTree } from './FamilyTree.utils'
-import { PersonNodeD3 } from './elements/PersonNodeD3'
+import { PersonNode } from './elements'
 import { PersonCard } from '../PersonCard'
 import { ZoomControls } from '../ZoomControls'
 
@@ -261,7 +261,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
           transform={`translate(${node.x! - nodeWidth / 2}, ${node.y! - nodeHeight / 2})`}
           onClick={() => handlePersonClick(node.data.person)}
         >
-          <PersonNodeD3
+          <PersonNode
             node={node.data}
             width={nodeWidth}
             height={nodeHeight}
@@ -278,7 +278,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
             transform={`translate(${node.x! + nodeWidth / 2 + horizontalGap}, ${node.y! - nodeHeight / 2})`}
             onClick={() => handlePersonClick(node.data.partner!)}
           >
-            <PersonNodeD3
+            <PersonNode
               node={{
                 person: node.data.partner,
                 children: [],
