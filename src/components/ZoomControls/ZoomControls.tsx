@@ -5,14 +5,14 @@ interface ZoomControlsProps {
   svgRef: React.RefObject<SVGSVGElement>
   transform: d3.ZoomTransform
   setTransform: (transform: d3.ZoomTransform) => void
-  dimensions: { width: number; height: number }
+  resetZoomFunc: () => void
 }
 
 export const ZoomControls: React.FC<ZoomControlsProps> = ({
   svgRef,
+  resetZoomFunc,
   transform,
   setTransform,
-  dimensions,
 }) => {
   // Zoom in handler
   const handleZoomIn = () => {
@@ -23,8 +23,8 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
     })
 
     svg
-      .transition()
-      .duration(750)
+      // .transition()
+      // .duration(750)
       .call(
         d3zoom.transform,
         d3.zoomIdentity
@@ -42,8 +42,8 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
     })
 
     svg
-      .transition()
-      .duration(750)
+      // .transition()
+      // .duration(750)
       .call(
         d3zoom.transform,
         d3.zoomIdentity
@@ -54,20 +54,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
 
   // Reset zoom handler
   const handleResetZoom = () => {
-    if (!svgRef.current) return
-    const svg = d3.select(svgRef.current)
-    const d3zoom = d3
-      .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 3])
-      .on('zoom', (event) => {
-        setTransform(event.transform)
-      })
-
-    const initialTransform = d3.zoomIdentity
-      .translate(dimensions.width / 2, dimensions.height / 4)
-      .scale(0.8)
-
-    svg.transition().duration(750).call(d3zoom.transform, initialTransform)
+    resetZoomFunc()
   }
 
   // Button style to avoid duplication

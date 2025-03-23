@@ -62,16 +62,16 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
     nodeSelection
       .on('mouseenter', function () {
         d3.select(this)
-          .transition()
-          .duration(200)
+          // .transition()
+          // .duration(200)
           .attr('filter', 'url(#glow)')
           .select('rect')
           .attr('stroke-width', 3)
       })
       .on('mouseleave', function () {
         d3.select(this)
-          .transition()
-          .duration(200)
+          // .transition()
+          // .duration(200)
           .attr('filter', null)
           .select('rect')
           .attr('stroke-width', nodeStyle.strokeWidth)

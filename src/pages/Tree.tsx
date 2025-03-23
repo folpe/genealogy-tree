@@ -10,7 +10,7 @@ import { FamilyTree } from '../components/FamilyTree'
 import { Loader } from '../components/atomic/Loader/Loader'
 import { getMatchingIds } from '../components/FamilyTree/FamilyTree.utils'
 
-const USE_CACHE = false
+const USE_CACHE = true
 
 export const Tree: React.FC = () => {
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
@@ -39,7 +39,6 @@ export const Tree: React.FC = () => {
           throw new Error('Erreur lors du chargement des données')
         }
         const jsonData = await response.json()
-        console.log('data', jsonData)
         setFamilyData((prev) => ({ ...prev, isLoading: false, data: jsonData }))
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err)

@@ -5,6 +5,9 @@ import { PersonNode } from './elements'
 import { ZoomControls } from '../ZoomControls'
 import * as d3 from 'd3'
 
+const INITIAL_WIDTH = 1625
+const INITIAL_HEIGHT = 750
+
 export const FamilyTree: React.FC<FamilyTreeProps> = ({
   data,
   rootId,
@@ -18,7 +21,10 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
   onZoomActionComplete = () => {},
 }) => {
   const svgRef = useRef<SVGSVGElement>(null)
-  const [dimensions, setDimensions] = useState({ width: 1625, height: 750 })
+  // const [dimensions, setDimensions] = useState({
+  //   width: INITIAL_WIDTH,
+  //   height: INITIAL_HEIGHT,
+  // })
   const [treeData, setTreeData] =
     useState<d3.HierarchyNode<FamilyTreeNode> | null>(null)
   const [transform, setTransform] = useState<d3.ZoomTransform>(d3.zoomIdentity)
@@ -64,7 +70,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     setTreeData(layoutedTree)
 
     // Calculer les dimensions nécessaires pour le SVG
-    calculateTreeDimensions(layoutedTree)
+    // calculateTreeDimensions(layoutedTree)
 
     // Initialiser le zoom
     initializeZoom()
@@ -93,12 +99,15 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
 
     // Centrer l'arbre initialement
     const initialTransform = d3.zoomIdentity
-      .translate(dimensions.width / 2, dimensions.height / 4)
+      .translate(INITIAL_WIDTH / 2, INITIAL_HEIGHT / 4)
       .scale(0.8)
 
     svg.call(d3zoom.transform, initialTransform)
   }
 
+  //
+  //---------------------------------------------------------------------------------
+  //
   // Effet pour gérer le zoom sur les nœuds en surbrillance
   useEffect(() => {
     if (
@@ -113,6 +122,9 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     }
   }, [shouldFocusOnNodes, highlightedNodes, treeData])
 
+  //
+  //---------------------------------------------------------------------------------
+  //
   // Effet pour gérer la réinitialisation du zoom
   useEffect(() => {
     if (shouldResetZoom && svgRef.current) {
@@ -122,6 +134,9 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     }
   }, [shouldResetZoom])
 
+  //
+  //---------------------------------------------------------------------------------
+  //
   // Fonction pour centrer et zoomer sur les nœuds spécifiques
   const focusOnNodes = (nodeIds: string[]) => {
     if (!treeData || !svgRef.current || nodeIds.length === 0) return
@@ -176,8 +191,8 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     const centerY = (minY + maxY) / 2
 
     // Calculer le facteur de zoom pour afficher tous les nœuds
-    const svgWidth = dimensions.width
-    const svgHeight = dimensions.height
+    const svgWidth = INITIAL_WIDTH
+    const svgHeight = INITIAL_HEIGHT
     const scaleX = svgWidth / width
     const scaleY = svgHeight / height
     const scale = Math.min(Math.min(scaleX, scaleY), 1.5) // Limitation du zoom max
@@ -193,60 +208,78 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
         .scale(scale)
         .translate(-centerX, -centerY)
 
-      // Animation fluide du zoom
-      svg.transition().duration(750).call(zoomInstance.transform, newTransform)
+      // Animation fluide du zoom .transition().duration(750)
+      svg.call(zoomInstance.transform, newTransform)
     }
   }
 
-  // Fonction pour réinitialiser le zoom
-  const resetZoom = () => {
+  //
+  //---------------------------------------------------------------------------------
+  //
+  const applyResetTransform = () => {
     if (!svgRef.current) return
 
     const svg = d3.select(svgRef.current)
     const zoomInstance = zoomBehaviorRef.current
 
     if (zoomInstance) {
-      // Revenir à la transformation initiale
-      const initialTransform = d3.zoomIdentity
-        .translate(dimensions.width / 2, dimensions.height / 4)
+      // Création d'une transformation qui centre l'arbre
+      const newTransform = d3.zoomIdentity
+        .translate(INITIAL_WIDTH / 2, INITIAL_HEIGHT / 4)
         .scale(0.8)
+      // .translate(-centerTreeX, -centerTreeY)
 
-      svg
-        .transition()
-        .duration(750)
-        .call(zoomInstance.transform, initialTransform)
+      // Application de la transformation
+      svg.call(zoomInstance.transform, newTransform)
+
+      // Mise à jour explicite de l'état React
+      setTransform(newTransform)
     }
   }
 
-  // Calcul des dimensions de l'arbre
-  const calculateTreeDimensions = (tree: d3.HierarchyNode<FamilyTreeNode>) => {
-    if (!tree) return
-
-    let minX = Infinity,
-      minY = Infinity
-    let maxX = -Infinity,
-      maxY = -Infinity
-
-    tree.each((node) => {
-      // Pour chaque nœud, calculer ses limites
-      minX = Math.min(minX, node.x! - nodeWidth)
-      minY = Math.min(minY, node.y! - nodeHeight)
-      maxX = Math.max(maxX, node.x! + nodeWidth)
-      maxY = Math.max(maxY, node.y! + nodeHeight)
-
-      // Si le nœud a un partenaire, ajouter de l'espace
-      if (node.data.partner) {
-        maxX = Math.max(maxX, node.x! + 2 * nodeWidth + horizontalGap)
-      }
-    })
-
-    // Ajouter une marge
-    const margin = 200
-    setDimensions({
-      width: Math.max(1000, maxX - minX + margin * 2),
-      height: Math.max(800, maxY - minY + margin * 2),
-    })
+  //
+  //---------------------------------------------------------------------------------
+  //
+  //Fonction pour réinitialiser le zoom
+  const resetZoom = () => {
+    applyResetTransform()
   }
+
+  //
+  //---------------------------------------------------------------------------------
+  //
+  // Calcul des dimensions de l'arbre
+  // const calculateTreeDimensions = (tree: d3.HierarchyNode<FamilyTreeNode>) => {
+  //   if (!tree) return
+
+  //   let minX = Infinity,
+  //     minY = Infinity
+  //   let maxX = -Infinity,
+  //     maxY = -Infinity
+
+  //   tree.each((node) => {
+  //     // Pour chaque nœud, calculer ses limites
+  //     minX = Math.min(minX, node.x! - nodeWidth)
+  //     minY = Math.min(minY, node.y! - nodeHeight)
+  //     maxX = Math.max(maxX, node.x! + nodeWidth)
+  //     maxY = Math.max(maxY, node.y! + nodeHeight)
+
+  //     // Si le nœud a un partenaire, ajouter de l'espace
+  //     if (node.data.partner) {
+  //       maxX = Math.max(maxX, node.x! + 2 * nodeWidth + horizontalGap)
+  //     }
+  //   })
+
+  //   const firstGroup = d3.select(svgRef.current).select('g').node()
+  //   if (!firstGroup) return { width: 0, height: 0 }
+  //   const bbox = (firstGroup as SVGGElement).getBBox()
+  //   // Ajouter une marge
+  //   const margin = 200
+  //   setDimensions({
+  //     width: Math.max(INITIAL_WIDTH, bbox.width),
+  //     height: Math.max(INITIAL_HEIGHT, bbox.height),
+  //   })
+  // }
 
   // Gestion du repliage/dépliage d'un nœud
   const handleToggleCollapse = (id: string) => {
@@ -276,15 +309,12 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
     const treeLayout = d3
       .tree<FamilyTreeNode>()
       .nodeSize([nodeWidth * 1.5, nodeHeight * 2.5])
-      .separation((a, b) => {
-        return (a.data.partner ? 2 : 1) + (b.data.partner ? 2 : 1)
-      })
 
     // Appliquer le layout avec une animation
     const layoutedTree = treeLayout(d3hierarchy)
 
     setTreeData(layoutedTree)
-    calculateTreeDimensions(layoutedTree)
+    // calculateTreeDimensions(layoutedTree)
   }
 
   // Highlights avec la recherche
@@ -471,7 +501,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
         svgRef={svgRef}
         transform={transform}
         setTransform={setTransform}
-        dimensions={dimensions}
+        resetZoomFunc={resetZoom}
       />
     </div>
   )
