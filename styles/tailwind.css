@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @config '../tailwind.config.js';
 
@@ -18,4 +18,15 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentColor);
   }
+}
+
+html,
+body {
+  touch-action: manipulation; /* empêche le double-tap zoom sur certains navigateurs */
+}
+
+body {
+  -webkit-user-select: none; /* désactive la sélection (empêche aussi le pinch zoom indirectement) */
+  -webkit-touch-callout: none;
+  -webkit-text-size-adjust: 100%; /* évite l’auto zoom sur textes */
 }

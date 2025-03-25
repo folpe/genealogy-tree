@@ -232,7 +232,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
   //---------------------------------------------------------------------------------
   //
   const applyResetTransform = () => {
-    if (!svgRef.current) return
+    if (!svgRef.current || !zoomBehaviorRef.current) return
 
     const svg = d3.select(svgRef.current)
     const zoomInstance = zoomBehaviorRef.current
@@ -245,10 +245,16 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
       // .translate(-centerTreeX, -centerTreeY)
 
       // Application de la transformation
-      svg.transition().duration(750).call(zoomInstance.transform, newTransform)
+      svg
+        .transition()
+        .duration(750)
+        .call(zoomInstance.transform, newTransform)
+        .on('end', () => {
+          setTransform(newTransform)
+        })
 
       // Mise à jour explicite de l'état React
-      setTransform(newTransform)
+      // setTransform(newTransform)
     }
   }
 
