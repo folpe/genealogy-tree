@@ -95,7 +95,7 @@ importers:
         version: 10.4.22(postcss@8.5.6)
       core-js:
         specifier: ^3.36.1
-        version: 3.41.0
+        version: 3.46.0
       netlify-cli:
         specifier: ^19.0.3
         version: 19.0.3(@types/node@24.10.1)(picomatch@4.0.2)
@@ -2065,8 +2065,8 @@ packages:
     resolution: {integrity: sha512-TG2hpqe4ELx54QER/S3HQ9SRVnQnGBtKUz5bLQWtYAQ+o6GpgMs6sYUvaiJjVxb+UXwhRhAEP3m7LbsIZ77Hmw==}
     engines: {node: '>= 0.8'}
 
-  core-js@3.41.0:
-    resolution: {integrity: sha512-SJ4/EHwS36QMJd6h/Rg+GyR4A5xE0FSI3eZ+iBVpfqf1x0eTSg1smWLHrA+2jQThZSh97fmSgFSU8B61nxosxA==}
+  core-js@3.46.0:
+    resolution: {integrity: sha512-vDMm9B0xnqqZ8uSBpZ8sNtRtOdmfShrvT6h2TuQGLs0Is+cR0DYbj/KWP6ALVNbWPpqA/qPLoOuppJN07humpA==}
 
   core-util-is@1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
@@ -6021,15 +6021,15 @@ snapshots:
 
   '@farmfe/runtime-plugin-hmr@3.5.10':
     dependencies:
-      core-js: 3.41.0
+      core-js: 3.46.0
 
   '@farmfe/runtime-plugin-import-meta@0.2.3':
     dependencies:
-      core-js: 3.41.0
+      core-js: 3.46.0
 
   '@farmfe/runtime@0.12.10':
     dependencies:
-      core-js: 3.41.0
+      core-js: 3.46.0
 
   '@farmfe/utils@0.0.1': {}
 
@@ -7709,7 +7709,7 @@ snapshots:
       depd: 2.0.0
       keygrip: 1.1.0
 
-  core-js@3.41.0: {}
+  core-js@3.46.0: {}
 
   core-util-is@1.0.3: {}
 
