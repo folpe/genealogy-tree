@@ -49,7 +49,7 @@ importers:
         version: 5.1.2
       node-domexception:
         specifier: ^2.0.1
-        version: 2.0.1
+        version: 2.0.2
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -3980,8 +3980,8 @@ packages:
     engines: {node: '>=10.5.0'}
     deprecated: Use your platform's native DOMException instead
 
-  node-domexception@2.0.1:
-    resolution: {integrity: sha512-M85rnSC7WQ7wnfQTARPT4LrK7nwCHLdDFOCcItZMhTQjyCebJH8GciKqYJNgaOFZs9nFmTmd/VMyi3OW5jA47w==}
+  node-domexception@2.0.2:
+    resolution: {integrity: sha512-Qf9vHK9c5MGgUXj8SnucCIS4oEPuUstjRaMplLGeZpbWMfNV1rvEcXuwoXfN51dUfD1b4muPHPQtCx/5Dj/QAA==}
     engines: {node: '>=16'}
     deprecated: Use your platform's native DOMException instead
 
@@ -9878,7 +9878,7 @@ snapshots:
 
   node-domexception@1.0.0: {}
 
-  node-domexception@2.0.1: {}
+  node-domexception@2.0.2: {}
 
   node-fetch-native@1.6.6: {}
 
