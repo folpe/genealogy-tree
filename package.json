@@ -43,7 +43,7 @@
     "@types/react-dom": "18",
     "autoprefixer": "^10.4.21",
     "core-js": "^3.36.1",
-    "netlify-cli": "^19.0.3",
+    "netlify-cli": "^23.0.0",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.7.0",
