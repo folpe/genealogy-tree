@@ -31,7 +31,7 @@ importers:
         version: 16.6.1
       express:
         specifier: ^4.21.2
-        version: 4.21.2
+        version: 4.21.2(supports-color@9.4.0)
       fetch-blob:
         specifier: ^4.0.0
         version: 4.0.0
@@ -71,10 +71,10 @@ importers:
         version: 1.0.5
       '@farmfe/core':
         specifier: ^1.6.7
-        version: 1.7.11(@types/node@24.10.1)
+        version: 1.7.11(@types/node@24.10.1)(supports-color@9.4.0)
       '@farmfe/js-plugin-postcss':
         specifier: ^1.12.0
-        version: 1.12.0(@farmfe/core@1.7.11(@types/node@24.10.1))(postcss@8.5.6)
+        version: 1.12.0(@farmfe/core@1.7.11(@types/node@24.10.1)(supports-color@9.4.0))(postcss@8.5.6)
       '@farmfe/plugin-react':
         specifier: ^1.2.0
         version: 1.2.6
@@ -86,10 +86,10 @@ importers:
         version: 7.4.3
       '@types/react':
         specifier: '18'
-        version: 18.3.26
+        version: 18.3.31
       '@types/react-dom':
         specifier: '18'
-        version: 18.3.7(@types/react@18.3.26)
+        version: 18.3.7(@types/react@18.3.31)
       autoprefixer:
         specifier: ^10.4.21
         version: 10.4.22(postcss@8.5.6)
@@ -98,7 +98,7 @@ importers:
         version: 3.46.0
       netlify-cli:
         specifier: ^19.0.3
-        version: 19.1.7(@types/node@24.10.1)(picomatch@4.0.3)
+        version: 19.1.7(@types/node@24.10.1)(picomatch@4.0.3)(supports-color@9.4.0)
       postcss:
         specifier: ^8.5.3
         version: 8.5.6
@@ -1536,8 +1536,8 @@ packages:
     peerDependencies:
       '@types/react': ^18.0.0
 
-  '@types/react@18.3.26':
-    resolution: {integrity: sha512-RFA/bURkcKzx/X9oumPG9Vp3D3JUgus/d0b67KB0t5S/raciymilkOa66olh78MUI92QLbEJevO7rvqU/kjwKA==}
+  '@types/react@18.3.31':
+    resolution: {integrity: sha512-vfEqpXTvwT91yhmwdfouStN2hSKwTvyRs8qpLfADyrq/kxDw0hZM7Wk9Ug1FELj8hIby+S/+kQCSRFF32nv2Qw==}
 
   '@types/retry@0.12.1':
     resolution: {integrity: sha512-xoDlM2S4ortawSWORYqsdU+2rxdh4LRW9ytc3zmT37RIKQh6IHyKwwtKhKis9ah8ol07DCkZxPt8BBvPjC6v4g==}
@@ -2327,8 +2327,8 @@ packages:
     resolution: {integrity: sha512-0LrrStPOdJj+SPCCrGhzryycLjwcgUSHBtxNA8aIDxf0GLsRh1cKYhB00Gd1lDOS4yGH69+SNn13+TWbVHETFQ==}
     engines: {node: ^10 || ^12.20.0 || ^14.13.0 || >=15.0.0, npm: '>=7.0.0'}
 
-  csstype@3.2.1:
-    resolution: {integrity: sha512-98XGutrXoh75MlgLihlNxAGbUuFQc7l1cqcnEZlLNKc0UrVdPndgmaDmYTDDh929VS/eqTZV0rozmhu2qqT1/g==}
+  csstype@3.2.3:
+    resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
 
   cyclist@1.0.2:
     resolution: {integrity: sha512-0sVXIohTfLqVIW3kb/0n6IiWF3Ifj5nm2XaSrLq2DI6fKIGa2fYAZdk917rUneaeLVpYfFcyXE2ft0fe3remsA==}
@@ -6228,7 +6228,7 @@ snapshots:
   '@farmfe/core-win32-x64-msvc@1.7.11':
     optional: true
 
-  '@farmfe/core@1.7.11(@types/node@24.10.1)':
+  '@farmfe/core@1.7.11(@types/node@24.10.1)(supports-color@9.4.0)':
     dependencies:
       '@farmfe/runtime': 0.12.10
       '@farmfe/runtime-plugin-hmr': 3.5.10
@@ -6245,12 +6245,12 @@ snapshots:
       farm-plugin-replace-dirname: 0.2.1(@types/node@24.10.1)
       fast-glob: 3.3.3
       fs-extra: 11.3.2
-      http-proxy-middleware: 3.0.5
+      http-proxy-middleware: 3.0.5(supports-color@9.4.0)
       is-plain-object: 5.0.0
-      koa: 2.16.3
+      koa: 2.16.3(supports-color@9.4.0)
       koa-compress: 5.1.1
       koa-connect: 2.1.0
-      koa-static: 5.0.0
+      koa-static: 5.0.0(supports-color@9.4.0)
       lodash.debounce: 4.0.8
       loglevel: 1.9.2
       open: 9.1.0
@@ -6273,9 +6273,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@farmfe/js-plugin-postcss@1.12.0(@farmfe/core@1.7.11(@types/node@24.10.1))(postcss@8.5.6)':
+  '@farmfe/js-plugin-postcss@1.12.0(@farmfe/core@1.7.11(@types/node@24.10.1)(supports-color@9.4.0))(postcss@8.5.6)':
     dependencies:
-      '@farmfe/core': 1.7.11(@types/node@24.10.1)
+      '@farmfe/core': 1.7.11(@types/node@24.10.1)(supports-color@9.4.0)
       postcss: 8.5.6
 
   '@farmfe/plugin-react-darwin-arm64@1.2.6':
@@ -6988,7 +6988,7 @@ snapshots:
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
 
-  '@pnpm/tabtab@0.5.4':
+  '@pnpm/tabtab@0.5.4(supports-color@9.4.0)':
     dependencies:
       debug: 4.4.0(supports-color@9.4.0)
       enquirer: 2.4.1
@@ -7266,14 +7266,14 @@ snapshots:
 
   '@types/prop-types@15.7.15': {}
 
-  '@types/react-dom@18.3.7(@types/react@18.3.26)':
+  '@types/react-dom@18.3.7(@types/react@18.3.31)':
     dependencies:
-      '@types/react': 18.3.26
+      '@types/react': 18.3.31
 
-  '@types/react@18.3.26':
+  '@types/react@18.3.31':
     dependencies:
       '@types/prop-types': 15.7.15
-      csstype: 3.2.1
+      csstype: 3.2.3
 
   '@types/retry@0.12.1': {}
 
@@ -7690,11 +7690,11 @@ snapshots:
       inherits: 2.0.4
       readable-stream: 3.6.2
 
-  body-parser@1.20.3:
+  body-parser@1.20.3(supports-color@9.4.0):
     dependencies:
       bytes: 3.1.2
       content-type: 1.0.5
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@9.4.0)
       depd: 2.0.0
       destroy: 1.2.0
       http-errors: 2.0.0
@@ -8137,7 +8137,7 @@ snapshots:
     dependencies:
       css-tree: 2.2.1
 
-  csstype@3.2.1: {}
+  csstype@3.2.3: {}
 
   cyclist@1.0.2: {}
 
@@ -8297,13 +8297,17 @@ snapshots:
 
   data-uri-to-buffer@6.0.2: {}
 
-  debug@2.6.9:
+  debug@2.6.9(supports-color@9.4.0):
     dependencies:
       ms: 2.0.0
+    optionalDependencies:
+      supports-color: 9.4.0
 
-  debug@3.2.7:
+  debug@3.2.7(supports-color@9.4.0):
     dependencies:
       ms: 2.1.3
+    optionalDependencies:
+      supports-color: 9.4.0
 
   debug@4.4.0(supports-color@9.4.0):
     dependencies:
@@ -8311,9 +8315,11 @@ snapshots:
     optionalDependencies:
       supports-color: 9.4.0
 
-  debug@4.4.3:
+  debug@4.4.3(supports-color@9.4.0):
     dependencies:
       ms: 2.1.3
+    optionalDependencies:
+      supports-color: 9.4.0
 
   decache@4.6.2:
     dependencies:
@@ -8722,21 +8728,21 @@ snapshots:
     dependencies:
       on-headers: 1.1.0
 
-  express@4.21.2:
+  express@4.21.2(supports-color@9.4.0):
     dependencies:
       accepts: 1.3.8
       array-flatten: 1.1.1
-      body-parser: 1.20.3
+      body-parser: 1.20.3(supports-color@9.4.0)
       content-disposition: 0.5.4
       content-type: 1.0.5
       cookie: 0.7.1
       cookie-signature: 1.0.6
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@9.4.0)
       depd: 2.0.0
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
-      finalhandler: 1.3.1
+      finalhandler: 1.3.1(supports-color@9.4.0)
       fresh: 0.5.2
       http-errors: 2.0.0
       merge-descriptors: 1.0.3
@@ -8748,8 +8754,8 @@ snapshots:
       qs: 6.13.0
       range-parser: 1.2.1
       safe-buffer: 5.2.1
-      send: 0.19.0
-      serve-static: 1.16.2
+      send: 0.19.0(supports-color@9.4.0)
+      serve-static: 1.16.2(supports-color@9.4.0)
       setprototypeof: 1.2.0
       statuses: 2.0.1
       type-is: 1.6.18
@@ -8775,7 +8781,7 @@ snapshots:
       iconv-lite: 0.4.24
       tmp: 0.0.33
 
-  extract-zip@2.0.1:
+  extract-zip@2.0.1(supports-color@9.4.0):
     dependencies:
       debug: 4.4.0(supports-color@9.4.0)
       get-stream: 5.2.0
@@ -8967,9 +8973,9 @@ snapshots:
 
   filter-obj@5.1.0: {}
 
-  finalhandler@1.3.1:
+  finalhandler@1.3.1(supports-color@9.4.0):
     dependencies:
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@9.4.0)
       encodeurl: 2.0.0
       escape-html: 1.0.3
       on-finished: 2.4.1
@@ -9014,13 +9020,13 @@ snapshots:
     dependencies:
       from2: 2.3.0
 
-  follow-redirects@1.15.11(debug@4.4.0):
+  follow-redirects@1.15.11(debug@4.4.0(supports-color@9.4.0)):
     optionalDependencies:
       debug: 4.4.0(supports-color@9.4.0)
 
-  follow-redirects@1.15.11(debug@4.4.3):
+  follow-redirects@1.15.11(debug@4.4.3(supports-color@9.4.0)):
     optionalDependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@9.4.0)
 
   foreground-child@3.3.1:
     dependencies:
@@ -9313,39 +9319,39 @@ snapshots:
       statuses: 2.0.1
       toidentifier: 1.0.1
 
-  http-proxy-middleware@2.0.7(debug@4.4.0):
+  http-proxy-middleware@2.0.7(debug@4.4.0(supports-color@9.4.0)):
     dependencies:
       '@types/http-proxy': 1.17.17
-      http-proxy: 1.18.1(debug@4.4.0)
+      http-proxy: 1.18.1(debug@4.4.0(supports-color@9.4.0))
       is-glob: 4.0.3
       is-plain-obj: 3.0.0
       micromatch: 4.0.8
     transitivePeerDependencies:
       - debug
 
-  http-proxy-middleware@3.0.5:
+  http-proxy-middleware@3.0.5(supports-color@9.4.0):
     dependencies:
       '@types/http-proxy': 1.17.17
-      debug: 4.4.3
-      http-proxy: 1.18.1(debug@4.4.3)
+      debug: 4.4.3(supports-color@9.4.0)
+      http-proxy: 1.18.1(debug@4.4.3(supports-color@9.4.0))
       is-glob: 4.0.3
       is-plain-object: 5.0.0
       micromatch: 4.0.8
     transitivePeerDependencies:
       - supports-color
 
-  http-proxy@1.18.1(debug@4.4.0):
+  http-proxy@1.18.1(debug@4.4.0(supports-color@9.4.0)):
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.11(debug@4.4.0)
+      follow-redirects: 1.15.11(debug@4.4.0(supports-color@9.4.0))
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
 
-  http-proxy@1.18.1(debug@4.4.3):
+  http-proxy@1.18.1(debug@4.4.3(supports-color@9.4.0)):
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.11(debug@4.4.3)
+      follow-redirects: 1.15.11(debug@4.4.3(supports-color@9.4.0))
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -9364,7 +9370,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@7.0.6:
+  https-proxy-agent@7.0.6(supports-color@9.4.0):
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.0(supports-color@9.4.0)
@@ -9745,29 +9751,29 @@ snapshots:
 
   koa-is-json@1.0.0: {}
 
-  koa-send@5.0.1:
+  koa-send@5.0.1(supports-color@9.4.0):
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@9.4.0)
       http-errors: 1.8.1
       resolve-path: 1.4.0
     transitivePeerDependencies:
       - supports-color
 
-  koa-static@5.0.0:
+  koa-static@5.0.0(supports-color@9.4.0):
     dependencies:
-      debug: 3.2.7
-      koa-send: 5.0.1
+      debug: 3.2.7(supports-color@9.4.0)
+      koa-send: 5.0.1(supports-color@9.4.0)
     transitivePeerDependencies:
       - supports-color
 
-  koa@2.16.3:
+  koa@2.16.3(supports-color@9.4.0):
     dependencies:
       accepts: 1.3.8
       cache-content-type: 1.0.1
       content-disposition: 0.5.4
       content-type: 1.0.5
       cookies: 0.9.1
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@9.4.0)
       delegates: 1.0.0
       depd: 2.0.0
       destroy: 1.2.0
@@ -10143,7 +10149,7 @@ snapshots:
 
   nested-error-stacks@2.1.1: {}
 
-  netlify-cli@19.1.7(@types/node@24.10.1)(picomatch@4.0.3):
+  netlify-cli@19.1.7(@types/node@24.10.1)(picomatch@4.0.3)(supports-color@9.4.0):
     dependencies:
       '@fastify/static': 7.0.4
       '@netlify/blobs': 8.1.2
@@ -10158,7 +10164,7 @@ snapshots:
       '@netlify/zip-it-and-ship-it': 10.0.4(supports-color@9.4.0)
       '@octokit/rest': 21.1.1
       '@opentelemetry/api': 1.8.0
-      '@pnpm/tabtab': 0.5.4
+      '@pnpm/tabtab': 0.5.4(supports-color@9.4.0)
       ansi-escapes: 7.0.0
       ansi-to-html: 0.7.2
       ascii-table: 0.0.9
@@ -10181,9 +10187,9 @@ snapshots:
       envinfo: 7.14.0
       etag: 1.8.1
       execa: 5.1.1
-      express: 4.21.2
+      express: 4.21.2(supports-color@9.4.0)
       express-logging: 1.1.1
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(supports-color@9.4.0)
       fastest-levenshtein: 1.0.16
       fastify: 4.29.0
       find-up: 7.0.0
@@ -10195,9 +10201,9 @@ snapshots:
       gh-release-fetch: 4.0.3
       git-repo-info: 2.1.1
       gitconfiglocal: 2.1.0
-      http-proxy: 1.18.1(debug@4.4.0)
-      http-proxy-middleware: 2.0.7(debug@4.4.0)
-      https-proxy-agent: 7.0.6
+      http-proxy: 1.18.1(debug@4.4.0(supports-color@9.4.0))
+      http-proxy-middleware: 2.0.7(debug@4.4.0(supports-color@9.4.0))
+      https-proxy-agent: 7.0.6(supports-color@9.4.0)
       inquirer: 8.2.6
       inquirer-autocomplete-prompt: 1.4.0(inquirer@8.2.6)
       ipx: 2.1.0(@netlify/blobs@8.1.2)
@@ -10242,7 +10248,7 @@ snapshots:
       ulid: 2.3.0
       update-notifier: 7.3.1
       uuid: 11.0.5
-      wait-port: 1.1.0
+      wait-port: 1.1.0(supports-color@9.4.0)
       write-file-atomic: 5.0.1
       ws: 8.18.1
     transitivePeerDependencies:
@@ -11016,9 +11022,9 @@ snapshots:
 
   semver@7.7.3: {}
 
-  send@0.19.0:
+  send@0.19.0(supports-color@9.4.0):
     dependencies:
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@9.4.0)
       depd: 2.0.0
       destroy: 1.2.0
       encodeurl: 1.0.2
@@ -11034,12 +11040,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  serve-static@1.16.2:
+  serve-static@1.16.2(supports-color@9.4.0):
     dependencies:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       parseurl: 1.3.3
-      send: 0.19.0
+      send: 0.19.0(supports-color@9.4.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -11587,7 +11593,7 @@ snapshots:
 
   vary@1.1.2: {}
 
-  wait-port@1.1.0:
+  wait-port@1.1.0(supports-color@9.4.0):
     dependencies:
       chalk: 4.1.2
       commander: 9.5.0
