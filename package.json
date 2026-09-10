@@ -12,7 +12,7 @@
     "netlify:dev": "netlify dev"
   },
   "dependencies": {
-    "@notionhq/client": "^2.3.0",
+    "@notionhq/client": "^5.0.0",
     "class-variance-authority": "^0.7.1",
     "clone": "^2.1.2",
     "cors": "^2.8.5",
