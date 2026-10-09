@@ -3,7 +3,7 @@
 - **Date :** 2026-10-09
 - **Spec :** [docs/specs/2026-10-09-refonte-ances-tree.md](../specs/2026-10-09-refonte-ances-tree.md), sections 5, 6, 8 et 16
 - **Décisions :** [docs/DECISIONS.md](../DECISIONS.md), ADR 06 (graphe avec nœuds d'union), 08 (droits par proximité), 11 (direction visuelle, pour le vocabulaire affiché)
-- **Statut :** à faire, après le merge de la phase 1
+- **Statut :** en cours (lots 1 et 2 faits)
 
 ## 1. Objectif et sortie attendue
 
@@ -82,21 +82,21 @@ Chaque lot suit le cycle : tests rouges d'abord, implémentation minimale, refac
 
 ### Lot 1 : types et fixture
 
-- [ ] `src/server/_shared/errors.ts` : `AppError` (message, `code`, `status`) et helpers de garde de type.
-- [ ] `family.types.ts` : schémas Zod `personSchema`, `unionSchema` (type `mariage | pacs | union_libre | inconnu`, début, fin, motif `deces | divorce | separation`), `parentChildSchema` (type `biologique | adoptive | a_eleve | inconnue`, `unionId` optionnel), `fuzzyDateSchema`, `familyGraphSchema`.
-- [ ] `tests/fixtures/marchand-family.ts` + builders.
-- [ ] Tests : la fixture passe `familyGraphSchema.parse` ; un payload invalide (type de filiation inconnu, union sans partenaire) est rejeté avec un message exploitable.
+- [x] `src/server/_shared/errors.ts` : `AppError` (message, `code`, `status`) et helpers de garde de type.
+- [x] `family.types.ts` : schémas Zod `personSchema`, `unionSchema` (type `mariage | pacs | union_libre | inconnu`, début, fin, motif `deces | divorce | separation`), `parentChildSchema` (type `biologique | adoptive | a_eleve | inconnue`, `unionId` optionnel), `fuzzyDateSchema`, `familyGraphSchema`.
+- [x] `tests/fixtures/marchand-family.ts` + builders.
+- [x] Tests : la fixture passe `familyGraphSchema.parse` ; un payload invalide (type de filiation inconnu, union sans partenaire) est rejeté avec un message exploitable.
 - **Acceptation :** `bun run test` vert, `bun run type-check` vert, la fixture est la seule source de la famille dans les tests.
 
 ### Lot 2 : dates à précision variable
 
-- [ ] Tests d'abord (`fuzzy-date.helper.test.ts`) :
+- [x] Tests d'abord (`fuzzy-date.helper.test.ts`) :
   - parse depuis la saisie libre française : `12/03/1987`, `mars 1987`, `1987`, `vers 1850`, `avant 1900`, `après 1900`, `entre 1880 et 1885`, avec et sans accents ni majuscules ;
   - format français : « 12 mars 1987 », « mars 1987 », « 1987 », « vers 1850 », « avant 1900 », « après 1900 », « entre 1880 et 1885 » ;
   - comparaison et tri stables entre précisions différentes (une date `annee` 1987 et une date `exacte` 1987-03-12 : ordre défini et documenté) ;
   - âge à une date donnée et âge au décès, avec résultat exact ou approché (`{ value, approx: boolean }`) ;
   - bornes : `vers` = plus ou moins 5 ans par défaut (constante nommée), `entre` avec début postérieur à la fin rejeté.
-- [ ] `fuzzy-date.helper.ts` : `parseFuzzyDate`, `formatFuzzyDate`, `compareFuzzyDates`, `fuzzyDateRange` (intervalle min/max), `ageAt`.
+- [x] `fuzzy-date.helper.ts` : `parseFuzzyDate`, `formatFuzzyDate`, `compareFuzzyDates`, `fuzzyDateRange` (intervalle min/max), `ageAt`.
 - **Acceptation :** tous les formats de la spec section 5 sont couverts ; aucune utilisation de `Date.now()` dans le module.
 
 ### Lot 3 : graphe et invariants
