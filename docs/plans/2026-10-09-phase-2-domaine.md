@@ -3,7 +3,7 @@
 - **Date :** 2026-10-09
 - **Spec :** [docs/specs/2026-10-09-refonte-ances-tree.md](../specs/2026-10-09-refonte-ances-tree.md), sections 5, 6, 8 et 16
 - **Décisions :** [docs/DECISIONS.md](../DECISIONS.md), ADR 06 (graphe avec nœuds d'union), 08 (droits par proximité), 11 (direction visuelle, pour le vocabulaire affiché)
-- **Statut :** en cours (lots 1 et 2 faits)
+- **Statut :** en cours (lots 1 à 4 faits)
 
 ## 1. Objectif et sortie attendue
 
@@ -101,24 +101,24 @@ Chaque lot suit le cycle : tests rouges d'abord, implémentation minimale, refac
 
 ### Lot 3 : graphe et invariants
 
-- [ ] Tests d'abord (`family.helper.test.ts`, `family.invariants.test.ts`) :
+- [x] Tests d'abord (`family.helper.test.ts`, `family.invariants.test.ts`) :
   - requêtes : parents (par type de filiation), enfants, conjoints en cours et passés, frères et sœurs avec distinction plein / demi, ancêtres (sans limite, avec génération), descendants ;
   - invariants d'écriture : ajout d'une filiation qui crée un cycle -> `CycleError` ; troisième parent biologique -> `TooManyBiologicalParentsError` ; enfant né avant un parent, décès avant naissance, union avant la naissance d'un partenaire -> `InconsistentDatesError` (en tenant compte des précisions : un conflit seulement si les intervalles ne se recouvrent pas) ; union avec soi-même -> `SelfUnionError` ;
   - les filiations `a_eleve` n'entrent jamais dans l'ascendance biologique ni dans la limite de deux parents ; les filiations `adoptive` comptent comme filiations à part entière.
-- [ ] `family.helper.ts` : index d'adjacence construit une fois (`buildFamilyIndex(graph)`), requêtes en O(degré).
-- [ ] `family.invariants.ts` : `assertCanAddParentChild`, `assertCanAddUnion`, `assertCanUpdateDates`, qui retournent les erreurs typées.
+- [x] `family.helper.ts` : index d'adjacence construit une fois (`buildFamilyIndex(graph)`), requêtes en O(degré).
+- [x] `family.invariants.ts` : `assertCanAddParentChild`, `assertCanAddUnion`, `assertCanUpdateDates`, qui retournent les erreurs typées.
 - **Acceptation :** un ajout invalide est refusé avec une erreur typée à code stable ; les requêtes passent sur la fixture et sur un graphe généré de 2 000 personnes en moins de 50 ms (test de performance léger, marqué et non bloquant en CI si instable).
 
 ### Lot 4 : ce qui est dessiné (familles recomposées)
 
-- [ ] Tests d'abord (`family.display.test.ts`), à partir de la section 8.1 :
+- [x] Tests d'abord (`family.display.test.ts`), à partir de la section 8.1 :
   - par défaut, seule l'union en cours d'une personne est dessinée ; l'ancien conjoint de Luc n'apparaît pas dans la lignée de Luc ;
   - Maxime est rattaché à Luc seul (branche qui part du parent), au même niveau que Léa et Hugo ;
   - sur une vue centrée sur Maxime (ascendance), l'union passée et l'autre parent apparaissent ;
   - option « Montrer les unions passées » : les unions terminées réapparaissent, veuvage compris ;
   - parent inconnu : nœud d'union avec un emplacement « parent à découvrir » ;
   - `a_eleve` exposé comme lien secondaire (pointillé) sans compter dans l'ascendance.
-- [ ] `family.display.ts` : `selectDisplayedGraph(graph, { focusId, showPastUnions })` qui produit les nœuds (personnes, unions) et arêtes typées que le moteur de rendu (phase 4) consommera tel quel.
+- [x] `family.display.ts` : `selectDisplayedGraph(graph, { focusId, showPastUnions })` qui produit les nœuds (personnes, unions) et arêtes typées que le moteur de rendu (phase 4) consommera tel quel.
 - **Acceptation :** la sortie sur la fixture correspond à la géométrie logique des maquettes (mêmes nœuds visibles, mêmes rattachements).
 
 ### Lot 5 : parenté et nommage en français

@@ -212,3 +212,10 @@ export function ageAt(birth: FuzzyDate, at: FuzzyDate): Age | null {
   if (value === null) return null;
   return { value, min, max, approx: min !== max };
 }
+
+/** Vrai seulement si `a` précède `b` quelle que soit l'interprétation des deux dates. */
+export function isCertainlyBefore(a: FuzzyDate, b: FuzzyDate): boolean {
+  const endOfA = fuzzyDateRange(a).max;
+  const startOfB = fuzzyDateRange(b).min;
+  return endOfA !== null && startOfB !== null && compareYmd(endOfA, startOfB) < 0;
+}
