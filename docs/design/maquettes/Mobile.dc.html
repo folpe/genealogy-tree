@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Arbre sur mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&amp;family=Figtree:wght@400..700&amp;display=swap">
+<style>
+*{font-variation-settings:"SOFT" 100,"WONK" 0}
+body{margin:0;background:#F6F2EA}
+a{color:#A4532F}a:hover{color:#7C3D21}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; height: 100vh; min-height: 640px; overflow: hidden; background-color: #F1EBE0; background-image: radial-gradient(rgba(31, 28, 25, 0.24) 1px, transparent 1.5px); background-size: 46px 46px; color: #1F1C19; font-family: 'Figtree', system-ui, sans-serif">
+
+  <header style="position: absolute; left: 0; right: 0; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px; padding: 54px 16px 12px">
+    <span style="width: 40px; height: 40px; flex: none; border-radius: 50%; background: #1F1C19; display: inline-flex; align-items: center; justify-content: center">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#F6F2EA" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M16 28V16"></path><path d="M16 20C16 16 11 15 9 12"></path><path d="M16 18C16 14 21 13 23 10"></path><circle cx="9" cy="9" r="3"></circle><circle cx="23" cy="7.5" r="3"></circle><circle cx="16" cy="12" r="3"></circle></svg>
+    </span>
+    <button type="button" style="flex: 1; display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 16px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FBF9F5; color: #6F675D; font-size: 15px; box-shadow: 0 6px 16px rgba(31, 28, 25, 0.06); cursor: pointer">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      Trouver quelqu'un
+    </button>
+    <a href="Activite.dc.html" aria-label="Activité, 2 nouveautés" style="position: relative; width: 46px; height: 46px; flex: none; box-sizing: border-box; border: 1px solid #E4DCCF; border-radius: 50%; background: #FBF9F5; color: #1F1C19; display: inline-flex; align-items: center; justify-content: center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+      <span style="position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; border: 2px solid #F1EBE0; background: #A4532F; color: #FFFFFF; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">2</span>
+    </a>
+  </header>
+
+  <div style="position: absolute; left: 50%; top: 112px; width: 390px; height: 420px; transform: translateX(-50%)">
+    <sc-for list="{{ edges }}" as="e" hint-placeholder-count="8">
+      <svg width="390" height="420" viewBox="0 0 390 420" fill="none" stroke-linecap="round" style="position: absolute; left: 0; top: 0; pointer-events: none" aria-hidden="true">
+        <path d="{{ e.d }}" style="{{ e.style }}"></path>
+      </svg>
+    </sc-for>
+    <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="8">
+      <button type="button" onClick="{{ n.pick }}" aria-label="{{ n.label }}" style="{{ n.wrap }}">
+        <span style="{{ n.bubble }}">{{ n.initials }}</span>
+        <span style="{{ n.name }}">{{ n.first }}</span>
+        <span style="font-size: 11px; color: #8A8278; font-variant-numeric: tabular-nums">{{ n.years }}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <nav aria-label="Vues" style="position: absolute; left: 12px; right: 12px; bottom: 22px; z-index: 3; display: flex; justify-content: space-between; padding: 6px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 0 0 1px #E4DCCF, 0 14px 34px rgba(31, 28, 25, 0.12)">
+    <span aria-current="page" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; height: 46px; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 13px; font-weight: 600">Arbre</span>
+    <a href="Eventail.dc.html" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; height: 46px; border-radius: 999px; color: #6F675D; font-size: 13px; font-weight: 500; text-decoration: none">Ancêtres</a>
+    <a href="Frise.dc.html" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; height: 46px; border-radius: 999px; color: #6F675D; font-size: 13px; font-weight: 500; text-decoration: none">Frise</a>
+    <a href="Carte.dc.html" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; height: 46px; border-radius: 999px; color: #6F675D; font-size: 13px; font-weight: 500; text-decoration: none">Carte</a>
+    <a href="Recits.dc.html" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; height: 46px; border-radius: 999px; color: #6F675D; font-size: 13px; font-weight: 500; text-decoration: none">Récits</a>
+  </nav>
+
+  <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ true }}">
+    <section aria-label="Fiche" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; box-sizing: border-box; padding: 10px 20px 30px; border-radius: 28px 28px 0 0; background: #FFFFFF; box-shadow: 0 -1px 0 #E4DCCF, 0 -20px 50px rgba(31, 28, 25, 0.14)">
+      <button type="button" onClick="{{ close }}" aria-label="Fermer la fiche" style="display: block; width: 100%; height: 24px; padding: 0; border: 0; background: transparent; cursor: pointer">
+        <span style="display: block; width: 40px; height: 5px; margin: 0 auto; border-radius: 999px; background: #E4DCCF"></span>
+      </button>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 8px 0 16px">
+        <span style="{{ sel.avatar }}">{{ sel.initials }}</span>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">{{ sel.rel }}</span>
+          <h2 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 26px; line-height: 1.1">{{ sel.name }}</h2>
+          <span style="font-size: 13px; color: #6F675D">{{ sel.lifeLine }}</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 14px">
+        <sc-for list="{{ sel.chips }}" as="c" hint-placeholder-count="4">
+          <button type="button" onClick="{{ c.pick }}" style="flex: none; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px 0 5px; border: 0; border-radius: 999px; background: #F6F2EA; color: #1F1C19; font-size: 14px; cursor: pointer">
+            <span style="width: 34px; height: 34px; border-radius: 50%; background: #EAE3D7; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 12px">{{ c.initials }}</span>
+            <span style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15">
+              <span>{{ c.name }}</span>
+              <span style="font-size: 11px; color: #8A8278">{{ c.role }}</span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 16px; background: #F6F2EA; font-size: 13px; line-height: 1.45; color: #6F675D">
+        <span style="{{ sel.dot }}"></span>
+        <span>{{ sel.rightsLine }}</span>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 14px">
+        <sc-if value="{{ sel.notMe }}" hint-placeholder-val="{{ true }}">
+          <button type="button" style="flex: 1; height: 52px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 15px; font-weight: 600; cursor: pointer">Notre lien</button>
+        </sc-if>
+        <sc-if value="{{ sel.canEdit }}" hint-placeholder-val="{{ true }}">
+          <button type="button" style="flex: 1; height: 52px; border: 0; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 15px; font-weight: 600; cursor: pointer">Modifier</button>
+        </sc-if>
+        <sc-if value="{{ sel.canSuggest }}" hint-placeholder-val="{{ false }}">
+          <a href="Suggestion.dc.html" style="flex: 1; height: 52px; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 15px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center">Suggérer</a>
+        </sc-if>
+      </div>
+    </section>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const PEOPLE = [
+  { id: 'paul', first: 'Paul', last: 'Marchand', g: 'm', b: 1931, d: 2008, place: 'Rodez', x: 130, y: 40 },
+  { id: 'jeanne', first: 'Jeanne', last: 'Marchand', g: 'f', b: 1934, d: 2019, place: 'Albi', x: 260, y: 40 },
+  { id: 'anne', first: 'Anne', last: 'Marchand', g: 'f', b: 1960, place: 'Toulouse', x: 50, y: 185 },
+  { id: 'luc', first: 'Luc', last: 'Marchand', g: 'm', b: 1963, place: 'Toulouse', city: 'Toulouse', x: 180, y: 185 },
+  { id: 'sophie', first: 'Sophie', last: 'Marchand', g: 'f', b: 1965, place: 'Nantes', city: 'Toulouse', x: 310, y: 185 },
+  { id: 'maxime', first: 'Maxime', last: 'Marchand', g: 'm', b: 1987, place: 'Nantes', city: 'Lille', x: 70, y: 330 },
+  { id: 'lea', first: 'Léa', last: 'Marchand', g: 'f', b: 1992, place: 'Toulouse', city: 'Paris', x: 210, y: 330 },
+  { id: 'hugo', first: 'Hugo', last: 'Marchand', g: 'm', b: 1995, place: 'Toulouse', city: 'Toulouse', x: 330, y: 330 }
+];
+const UNIONS = [
+  { a: 'paul', b: 'jeanne', kids: ['anne', 'luc'] },
+  { a: 'luc', b: 'sophie', kids: ['lea', 'hugo'] },
+  { a: 'luc', b: null, kids: ['maxime'] }
+];
+const ME = 'hugo';
+const EDIT = ['hugo', 'luc', 'sophie', 'lea', 'maxime', 'paul', 'jeanne'];
+const GUARDS = { anne: 'Anne' };
+const REL = { paul: 'Ton grand-père', jeanne: 'Ta grand-mère', anne: 'Ta tante', luc: 'Ton père', sophie: 'Ta mère', maxime: 'Ton demi-frère', lea: 'Ta sœur', hugo: 'C’est toi' };
+const CHIPS = {
+  paul: [['jeanne', 'Épouse'], ['anne', 'Fille'], ['luc', 'Fils']],
+  jeanne: [['paul', 'Époux'], ['anne', 'Fille'], ['luc', 'Fils']],
+  anne: [['paul', 'Père'], ['jeanne', 'Mère'], ['luc', 'Frère']],
+  luc: [['sophie', 'Épouse'], ['maxime', 'Fils'], ['lea', 'Fille'], ['hugo', 'Fils']],
+  sophie: [['luc', 'Époux'], ['lea', 'Fille'], ['hugo', 'Fils']],
+  maxime: [['luc', 'Père'], ['lea', 'Demi-sœur'], ['hugo', 'Demi-frère']],
+  lea: [['luc', 'Père'], ['sophie', 'Mère'], ['hugo', 'Frère'], ['maxime', 'Demi-frère']],
+  hugo: [['luc', 'Père'], ['sophie', 'Mère'], ['lea', 'Sœur'], ['maxime', 'Demi-frère']]
+};
+const byId = {};
+PEOPLE.forEach((p) => { byId[p.id] = p; });
+function initials(p) { return p.first.charAt(0) + p.last.charAt(0); }
+
+class Component extends DCLogic {
+  state = { sel: 'luc' };
+
+  renderVals() {
+    const s = this.state;
+    const pick = (id) => () => this.setState({ sel: id });
+    const edges = [];
+    UNIONS.forEach((u) => {
+      const A = byId[u.a];
+      const m = u.b ? { x: (A.x + byId[u.b].x) / 2, y: A.y } : { x: A.x, y: A.y + 34 };
+      if (u.b) edges.push('M' + A.x + ' ' + A.y + ' L' + byId[u.b].x + ' ' + A.y);
+      u.kids.forEach((k) => {
+        const K = byId[k];
+        edges.push('M' + m.x + ' ' + m.y + ' C' + m.x + ' ' + (m.y + 70) + ' ' + K.x + ' ' + (K.y - 70) + ' ' + K.x + ' ' + K.y);
+      });
+    });
+
+    const nodes = PEOPLE.map((p) => {
+      const isSel = s.sel === p.id;
+      const isMe = p.id === ME;
+      return {
+        pick: pick(p.id),
+        label: p.first + ' ' + p.last,
+        initials: initials(p),
+        first: isMe ? 'Toi' : p.first,
+        years: p.d ? p.b + '-' + p.d : String(p.b),
+        wrap: 'position: absolute; left: ' + (p.x - 50) + 'px; top: ' + (p.y - 28) + 'px; width: 100px; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px',
+        bubble: 'width: 56px; height: 56px; box-sizing: border-box; border-radius: 50%; border: 3px solid #FFFFFF; margin-bottom: 4px; background: ' + (p.d ? '#E3DED6' : '#EAE3D7') + '; display: inline-flex; align-items: center; justify-content: center; font-family: Fraunces, serif; font-size: 18px; color: ' + (p.d ? '#8A8278' : '#1F1C19') + '; box-shadow: ' + (isSel ? '0 0 0 2px #A4532F, 0 10px 22px rgba(164, 83, 47, 0.22)' : '0 0 0 1px #E4DCCF, 0 6px 14px rgba(31, 28, 25, 0.1)'),
+        name: 'font-family: Fraunces, serif; font-size: 15px; white-space: nowrap; color: ' + (isMe ? '#A4532F' : p.d ? '#6F675D' : '#1F1C19')
+      };
+    });
+
+    const P = s.sel ? byId[s.sel] : null;
+    let sel = { chips: [] };
+    if (P) {
+      const fem = P.g === 'f';
+      const canEdit = EDIT.includes(P.id);
+      let rightsLine = 'Dans ta lignée : tu modifies directement.';
+      if (P.id === ME) rightsLine = 'C’est ta fiche : toi seul décides de ce que la famille voit.';
+      else if (!canEdit) rightsLine = 'Hors de ta lignée : ta suggestion ira à ' + GUARDS[P.id] + '.';
+      sel = {
+        name: P.first + ' ' + P.last,
+        initials: initials(P),
+        rel: REL[P.id],
+        lifeLine: P.d ? P.b + ' - ' + P.d + ', ' + P.place : (fem ? 'Née en ' : 'Né en ') + P.b + ' à ' + P.place + (canEdit && P.city ? ', vit à ' + P.city : ''),
+        avatar: 'width: 72px; height: 72px; flex: none; box-sizing: border-box; border-radius: 50%; border: 4px solid #FFFFFF; background: ' + (P.d ? '#E3DED6' : '#EAE3D7') + '; display: inline-flex; align-items: center; justify-content: center; font-family: Fraunces, serif; font-size: 24px; color: ' + (P.d ? '#6F675D' : '#1F1C19') + '; box-shadow: 0 0 0 1px #E4DCCF, 0 10px 24px rgba(31, 28, 25, 0.12)',
+        chips: (CHIPS[P.id] || []).map((c) => ({ pick: pick(c[0]), initials: initials(byId[c[0]]), name: c[0] === ME ? 'Toi' : byId[c[0]].first, role: c[1] })),
+        dot: 'flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: ' + (canEdit ? '#1F1C19' : '#A4532F'),
+        rightsLine: rightsLine,
+        canEdit: canEdit,
+        canSuggest: !canEdit,
+        notMe: P.id !== ME
+      };
+    }
+
+    return {
+      edges: edges.map((d) => ({ d: d, style: 'stroke: #C9BCA9; stroke-width: 2; opacity: ' + (P ? 0.9 : 1) })),
+      nodes: nodes,
+      hasSel: !!P,
+      sel: sel,
+      close: () => this.setState({ sel: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Frise familiale, thème sombre</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&amp;family=Figtree:wght@400..700&amp;display=swap">
+<style>
+*{font-variation-settings:"SOFT" 100,"WONK" 0}
+body{margin:0;background:#1D1A2B}
+a{color:#FFB86B}a:hover{color:#FFC98C}
+button{font-family:inherit}
+input::placeholder{color:#7C7398}
+</style>
+</helmet>
+<div style="min-height: 100vh; height: 100vh; display: flex; flex-direction: column; background: #1D1A2B; color: #F5EFE6; font-family: 'Figtree', system-ui, sans-serif; overflow: hidden">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px 32px">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1 1 200px">
+      <span style="width: 40px; height: 40px; border-radius: 50%; background: #F5EFE6; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#1D1A2B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M16 28V16"></path><path d="M16 20C16 16 11 15 9 12"></path><path d="M16 18C16 14 21 13 23 10"></path><circle cx="9" cy="9" r="3"></circle><circle cx="23" cy="7.5" r="3"></circle><circle cx="16" cy="12" r="3"></circle></svg>
+      </span>
+      <span style="font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500; letter-spacing: -0.01em">Ances-Tree</span>
+    </div>
+    <nav aria-label="Vues" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid #3A3456; background: #262238">
+      <a href="Arbre.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Arbre</a>
+      <a href="Eventail.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Ancêtres</a>
+      <span aria-current="page" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; background: #F5EFE6; color: #1D1A2B; font-size: 14px; font-weight: 600">Frise</span>
+      <a href="Carte.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Carte</a>
+      <a href="Recits.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Récits</a>
+    </nav>
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 1 1 300px">
+      <button type="button" onClick="{{ openSearch }}" style="display: flex; align-items: center; gap: 10px; height: 46px; min-width: 220px; padding: 0 16px; border: 1px solid #3A3456; border-radius: 999px; background: #262238; color: #B7AFC9; font-size: 15px; cursor: pointer">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <span style="flex: 1; text-align: left">Trouver quelqu'un</span>
+        <span style="font-size: 12px; color: #7C7398">⌘K</span>
+      </button>
+      <a href="Activite.dc.html" aria-label="Activité, 2 nouveautés" style="position: relative; width: 46px; height: 46px; box-sizing: border-box; border: 1px solid #3A3456; border-radius: 50%; background: #262238; color: #F5EFE6; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+        <span style="position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; border: 2px solid #1D1A2B; background: #FFB86B; color: #2A2640; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">2</span>
+      </a>
+      <span style="width: 46px; height: 46px; box-sizing: border-box; border-radius: 50%; border: 2px solid #2A2640; background: #3D3758; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-weight: 500; font-size: 17px; box-shadow: 0 0 0 1px #3A3456">{{ meInitial }}</span>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 0 32px 32px; min-height: 0">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #FFB86B">Frise</span>
+        <h1 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 30px; letter-spacing: -0.01em">La famille dans le temps</h1>
+      </div>
+      <div role="group" aria-label="Filtrer" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid #3A3456; background: #262238">
+        <button type="button" aria-pressed="{{ allPressed }}" onClick="{{ showAll }}" style="{{ allStyle }}">Toute la famille</button>
+        <button type="button" aria-pressed="{{ directPressed }}" onClick="{{ showDirect }}" style="{{ directStyle }}">Ma lignée directe</button>
+      </div>
+    </div>
+
+    <main style="position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; border-radius: 28px; border: 1px solid #3A3456; background-color: #221E33; background-image: radial-gradient(rgba(245, 239, 230, 0.16) 1px, transparent 1.5px); background-size: 46px 46px; overflow: hidden">
+      <div onMouseDown="{{ down }}" onMouseMove="{{ move }}" onMouseUp="{{ up }}" onMouseLeave="{{ up }}" style="position: relative; flex: 1; min-height: 0; overflow-y: auto; padding: 0 28px 12px 0; user-select: none">
+        <div style="position: absolute; left: 170px; right: 28px; top: 0; bottom: 0; pointer-events: none">
+          <sc-for list="{{ eras }}" as="er" hint-placeholder-count="4">
+            <span style="{{ er.band }}"></span>
+            <span style="{{ er.label }}">{{ er.name }}</span>
+          </sc-for>
+          <sc-for list="{{ ticks }}" as="t" hint-placeholder-count="13">
+            <span style="{{ t.style }}">{{ t.label }}</span>
+            <span style="{{ t.line }}"></span>
+          </sc-for>
+          <span style="{{ cursorLine }}"></span>
+          <span style="{{ cursorPill }}">{{ year }}</span>
+        </div>
+
+        <div style="position: relative; padding-top: 70px; display: flex; flex-direction: column">
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+            <div style="display: flex; flex-direction: column">
+              <span style="padding: 10px 0 4px 28px; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #7C7398">{{ g.title }}</span>
+              <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="4">
+                <div style="display: flex; align-items: center; height: 32px">
+                  <button type="button" onClick="{{ r.pick }}" style="{{ r.nameBtn }}">
+                    <span style="{{ r.nameStyle }}">{{ r.first }}</span>
+                    <span style="font-size: 12px; color: #8E86A8; font-variant-numeric: tabular-nums">{{ r.years }}</span>
+                  </button>
+                  <div style="position: relative; flex: 1; height: 32px">
+                    <span onClick="{{ r.pick }}" style="{{ r.bar }}"></span>
+                    <sc-for list="{{ r.events }}" as="ev" hint-placeholder-count="2">
+                      <span title="{{ ev.title }}" style="{{ ev.dot }}"></span>
+                      <span style="{{ ev.label }}">{{ ev.text }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <section aria-live="polite" style="flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 24px; margin: 0 16px 16px; padding: 18px 22px; border-radius: 24px; background: #2A2640; box-shadow: 0 0 0 1px #3A3456, 0 16px 40px rgba(8, 6, 18, 0.2)">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <button type="button" onClick="{{ prev }}" aria-label="Année précédente" style="width: 44px; height: 44px; border: 1px solid #3A3456; border-radius: 50%; background: #2A2640; color: #F5EFE6; cursor: pointer; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
+          <span style="min-width: 118px; text-align: center; font-family: 'Fraunces', serif; font-size: 34px; font-variant-numeric: tabular-nums">En {{ year }}</span>
+          <button type="button" onClick="{{ next }}" aria-label="Année suivante" style="width: 44px; height: 44px; border: 1px solid #3A3456; border-radius: 50%; background: #2A2640; color: #F5EFE6; cursor: pointer; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+        </div>
+        <div style="flex: 1 1 400px; display: flex; flex-direction: column; gap: 4px">
+          <p style="margin: 0; font-family: 'Fraunces', serif; font-size: 21px; line-height: 1.3">{{ headline }}</p>
+          <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #B7AFC9">{{ ages }}</p>
+        </div>
+        <span style="font-size: 13px; color: #8E86A8">{{ alive }}</span>
+      </section>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const Y0 = 1900;
+const Y1 = 2026;
+const PEOPLE = [
+  { id: 'henri', gen: 0, first: 'Henri', g: 'm', b: 1902, d: 1979, place: 'Rodez', ev: [{ y: 1928, k: 'mariage', t: 'Mariage avec Louise' }] },
+  { id: 'louise', gen: 0, first: 'Louise', g: 'f', b: 1905, d: 1991, place: 'Millau', ev: [{ y: 1928, k: 'mariage', t: 'Mariage avec Henri' }] },
+  { id: 'paul', gen: 1, first: 'Paul', g: 'm', b: 1931, d: 2008, place: 'Rodez', ev: [{ y: 1957, k: 'mariage', t: 'Mariage avec Jeanne' }, { y: 1962, k: 'demenagement', t: 'S’installe à Toulouse', city: 'Toulouse' }] },
+  { id: 'jeanne', gen: 1, first: 'Jeanne', g: 'f', b: 1934, d: 2019, place: 'Albi', ev: [{ y: 1957, k: 'mariage', t: 'Mariage avec Paul' }, { y: 1962, k: 'demenagement', t: 'S’installe à Toulouse', city: 'Toulouse' }] },
+  { id: 'marie', gen: 1, first: 'Marie', g: 'f', b: 1936, place: 'Rodez', ev: [{ y: 1959, k: 'mariage', t: 'Mariage avec Jacques' }] },
+  { id: 'jacques', gen: 1, first: 'Jacques', g: 'm', b: 1933, d: 2015, place: 'Lyon', ev: [{ y: 1959, k: 'mariage', t: 'Mariage avec Marie' }] },
+  { id: 'claude', gen: 1, first: 'Claude', g: 'm', b: 1940, place: 'Rodez', ev: [{ y: 1968, k: 'demenagement', t: 'Part pour Montpellier', city: 'Montpellier' }] },
+  { id: 'anne', gen: 2, first: 'Anne', g: 'f', b: 1960, place: 'Toulouse', ev: [{ y: 1985, k: 'demenagement', t: 'Part pour Bordeaux', city: 'Bordeaux' }] },
+  { id: 'luc', gen: 2, first: 'Luc', g: 'm', b: 1963, place: 'Toulouse', ev: [{ y: 1990, k: 'mariage', t: 'Mariage avec Sophie' }] },
+  { id: 'sophie', gen: 2, first: 'Sophie', g: 'f', b: 1965, place: 'Nantes', ev: [{ y: 1988, k: 'demenagement', t: 'Arrive à Toulouse', city: 'Toulouse' }, { y: 1990, k: 'mariage', t: 'Mariage avec Luc' }] },
+  { id: 'isabelle', gen: 2, first: 'Isabelle', g: 'f', b: 1962, place: 'Lyon', ev: [] },
+  { id: 'maxime', gen: 3, first: 'Maxime', g: 'm', b: 1987, place: 'Nantes', ev: [{ y: 2010, k: 'demenagement', t: 'Part pour Lille', city: 'Lille' }] },
+  { id: 'lea', gen: 3, first: 'Léa', g: 'f', b: 1992, place: 'Toulouse', ev: [{ y: 2014, k: 'demenagement', t: 'Part pour Paris', city: 'Paris' }] },
+  { id: 'hugo', gen: 3, first: 'Toi', g: 'm', b: 1995, place: 'Toulouse', me: true, ev: [] }
+];
+const GEN_TITLES = ['Arrière-grands-parents', 'Grands-parents, grands-oncles et grandes-tantes', 'Parents, oncle, tante et cousins', 'Ta génération'];
+const DIRECT = ['henri', 'louise', 'paul', 'jeanne', 'luc', 'sophie', 'hugo'];
+const MARRIAGES = [
+  { y: 1928, ids: ['henri', 'louise'], t: 'Henri et Louise se marient' },
+  { y: 1957, ids: ['paul', 'jeanne'], t: 'Paul et Jeanne se marient' },
+  { y: 1959, ids: ['marie', 'jacques'], t: 'Marie et Jacques se marient' },
+  { y: 1990, ids: ['luc', 'sophie'], t: 'Luc et Sophie se marient' }
+];
+const ERAS = [
+  { a: 1914, b: 1918, name: 'Grande Guerre' },
+  { a: 1939, b: 1945, name: 'Seconde Guerre mondiale' },
+  { a: 1968, b: 1968, name: 'Mai 68' },
+  { a: 2000, b: 2000, name: 'An 2000' }
+];
+
+function pct(y) { return ((y - Y0) / (Y1 - Y0)) * 100; }
+function clamp(y) { return Math.max(Y0, Math.min(Y1, y)); }
+function capFirst(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function joinFr(list) { return list.length < 2 ? list.join('') : list.slice(0, -1).join(', ') + ' et ' + list[list.length - 1]; }
+
+class Component extends DCLogic {
+  state = { year: 1963, sel: 'luc', direct: false, drag: false };
+
+  yearAt(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left - 170;
+    const w = rect.width - 170 - 28;
+    if (x < 0 || w <= 0) return null;
+    return clamp(Math.round(Y0 + (x / w) * (Y1 - Y0)));
+  }
+
+  renderVals() {
+    const s = this.state;
+    const Y = s.year;
+    const visible = PEOPLE.filter((p) => !s.direct || DIRECT.includes(p.id));
+    const pick = (id) => () => this.setState({ sel: id });
+
+    const groups = GEN_TITLES.map((title, gi) => ({
+      title: title,
+      rows: visible.filter((p) => p.gen === gi).map((p) => {
+        const isSel = s.sel === p.id;
+        const end = p.d || Y1;
+        const bg = isSel ? '#3F3343' : p.d ? '#2F2A45' : '#3D3758';
+        const fill = p.d ? bg : 'linear-gradient(90deg, ' + bg + ' 82%, transparent)';
+        const events = [{ y: p.b, k: 'naissance', t: 'Naissance à ' + p.place }].concat(p.ev);
+        if (p.d) events.push({ y: p.d, k: 'deces', t: 'Décès' });
+        return {
+          pick: pick(p.id),
+          first: p.first,
+          years: p.d ? p.b + '-' + p.d : String(p.b),
+          nameBtn: 'flex: none; width: 170px; height: 32px; box-sizing: border-box; padding: 0 14px 0 28px; border: 0; background: transparent; cursor: pointer; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; color: inherit',
+          nameStyle: 'font-family: Fraunces, serif; font-size: 16px; white-space: nowrap; color: ' + (isSel || p.me ? '#FFB86B' : p.d ? '#B7AFC9' : '#F5EFE6'),
+          bar: 'position: absolute; top: 10px; height: 12px; left: ' + pct(p.b).toFixed(2) + '%; width: ' + (pct(end) - pct(p.b)).toFixed(2) + '%; border-radius: 999px; cursor: pointer; background: ' + fill + (isSel ? '; box-shadow: 0 0 0 1.5px #FFB86B' : ''),
+          events: events.map((ev) => {
+            const filled = ev.k === 'mariage';
+            const hollow = ev.k === 'demenagement';
+            const size = filled || hollow ? 10 : 6;
+            const color = isSel ? '#FFB86B' : ev.k === 'mariage' ? '#F5EFE6' : '#B7AFC9';
+            return {
+              title: ev.y + ' : ' + ev.t,
+              dot: 'position: absolute; top: ' + (16 - size / 2) + 'px; left: calc(' + pct(ev.y).toFixed(2) + '% - ' + size / 2 + 'px); width: ' + size + 'px; height: ' + size + 'px; box-sizing: border-box; border-radius: 50%; pointer-events: none; ' + (hollow ? 'background: #2A2640; border: 2px solid ' + color : 'background: ' + color + '; border: 0'),
+              text: isSel && ev.k !== 'naissance' && ev.k !== 'deces' ? ev.y + ' ' + ev.t.toLowerCase() : '',
+              label: 'position: absolute; top: 24px; left: ' + pct(ev.y).toFixed(2) + '%; transform: translateX(-50%); font-size: 11px; white-space: nowrap; color: #FFB86B; pointer-events: none'
+            };
+          })
+        };
+      })
+    })).filter((g) => g.rows.length);
+
+    const eras = ERAS.map((er) => {
+      const point = er.a === er.b;
+      return {
+        name: er.name,
+        band: 'position: absolute; top: 28px; bottom: 0; left: ' + (point ? 'calc(' + pct(er.a).toFixed(2) + '% - 0.5px)' : pct(er.a).toFixed(2) + '%') + '; width: ' + (point ? '1px' : (pct(er.b) - pct(er.a)).toFixed(2) + '%') + '; background: ' + (point ? '#3A3456' : '#322D4A') + '; opacity: 0.7',
+        label: 'position: absolute; top: 10px; left: ' + pct((er.a + er.b) / 2).toFixed(2) + '%; transform: translateX(-50%); font-size: 11px; white-space: nowrap; color: #7C7398'
+      };
+    });
+
+    const ticks = [];
+    for (let y = 1900; y <= 2020; y += 10) {
+      ticks.push({
+        label: String(y),
+        style: 'position: absolute; top: 40px; left: ' + pct(y).toFixed(2) + '%; transform: translateX(-50%); font-size: 12px; color: #8E86A8; font-variant-numeric: tabular-nums',
+        line: 'position: absolute; top: 60px; bottom: 0; left: ' + pct(y).toFixed(2) + '%; width: 1px; background: #3A3456; opacity: 0.45'
+      });
+    }
+
+    const born = visible.filter((p) => p.b === Y).map((p) => (p.me ? 'Tu nais' : p.first + ' naît') + ' à ' + p.place);
+    const died = visible.filter((p) => p.d === Y).map((p) => p.first + ' s’éteint à ' + (p.d - p.b) + ' ans');
+    const married = MARRIAGES.filter((m) => m.y === Y && m.ids.every((id) => visible.some((p) => p.id === id))).map((m) => m.t);
+    const byCity = {};
+    visible.forEach((p) => p.ev.forEach((ev) => {
+      if (ev.y === Y && ev.k === 'demenagement') (byCity[ev.city] = byCity[ev.city] || []).push(p);
+    }));
+    const moved = Object.keys(byCity).map((city) => {
+      const who = byCity[city];
+      return who.length > 1 ? joinFr(who.map((p) => p.first)) + ' s\u2019installent à ' + city : who[0].first + ' ' + who[0].ev.find((ev) => ev.y === Y && ev.k === 'demenagement').t.toLowerCase();
+    });
+    const facts = born.concat(married, moved, died);
+    const headline = facts.length ? facts.map(capFirst).join('. ') + '.' : 'Pas d’événement noté cette année-là.';
+
+    const living = visible.filter((p) => p.b < Y && (!p.d || p.d > Y));
+    const order = living.slice().sort((a, b) => (DIRECT.includes(b.id) - DIRECT.includes(a.id)) || a.b - b.b);
+    const ages = order.slice(0, 4).map((p, i) => {
+      const age = Y - p.b;
+      if (p.me) return i === 0 ? 'Tu as ' + age + ' ans' : 'toi ' + age;
+      return i === 0 ? p.first + ' a ' + age + ' ans' : p.first + ' ' + age;
+    });
+    const agesLine = ages.length ? joinFr(ages) + '.' : '';
+
+    const segBtn = (on) => 'height: 38px; padding: 0 18px; border: 0; border-radius: 999px; cursor: pointer; font-size: 14px; font-weight: ' + (on ? 600 : 500) + '; background: ' + (on ? '#F5EFE6' : 'transparent') + '; color: ' + (on ? '#1D1A2B' : '#B7AFC9');
+
+    return {
+      meInitial: 'H',
+      openSearch: () => {},
+      groups: groups,
+      eras: eras,
+      ticks: ticks,
+      year: Y,
+      cursorLine: 'position: absolute; top: 64px; bottom: 0; left: calc(' + pct(Y).toFixed(2) + '% - 1px); width: 2px; background: #FFB86B; opacity: 0.85',
+      cursorPill: 'position: absolute; top: 36px; left: ' + pct(Y).toFixed(2) + '%; transform: translateX(-50%); height: 26px; padding: 0 10px; border-radius: 999px; background: #FFB86B; color: #2A2640; font-size: 13px; font-weight: 600; line-height: 26px; font-variant-numeric: tabular-nums; box-shadow: 0 6px 16px rgba(255, 184, 107, 0.3)',
+      headline: headline,
+      ages: agesLine,
+      alive: living.length + (living.length > 1 ? ' personnes en vie' : ' personne en vie'),
+      down: (e) => { const y = this.yearAt(e); if (y !== null) this.setState({ year: y, drag: true }); },
+      move: (e) => { if (!s.drag) return; const y = this.yearAt(e); if (y !== null && y !== s.year) this.setState({ year: y }); },
+      up: () => { if (s.drag) this.setState({ drag: false }); },
+      prev: () => this.setState({ year: clamp(Y - 1) }),
+      next: () => this.setState({ year: clamp(Y + 1) }),
+      allPressed: s.direct ? 'false' : 'true',
+      directPressed: s.direct ? 'true' : 'false',
+      allStyle: segBtn(!s.direct),
+      directStyle: segBtn(s.direct),
+      showAll: () => this.setState({ direct: false }),
+      showDirect: () => this.setState({ direct: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

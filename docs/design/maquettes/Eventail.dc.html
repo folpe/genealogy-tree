@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Ancêtres en éventail</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&amp;family=Figtree:wght@400..700&amp;display=swap">
+<style>
+*{font-variation-settings:"SOFT" 100,"WONK" 0}
+body{margin:0;background:#F6F2EA}
+a{color:#A4532F}a:hover{color:#7C3D21}
+button{font-family:inherit}
+input::placeholder{color:#9A9186}
+</style>
+</helmet>
+<div style="min-height: 100vh; height: 100vh; display: flex; flex-direction: column; background: #F6F2EA; color: #1F1C19; font-family: 'Figtree', system-ui, sans-serif; overflow: hidden">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px 32px">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1 1 200px">
+      <span style="width: 40px; height: 40px; border-radius: 50%; background: #1F1C19; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#F6F2EA" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M16 28V16"></path><path d="M16 20C16 16 11 15 9 12"></path><path d="M16 18C16 14 21 13 23 10"></path><circle cx="9" cy="9" r="3"></circle><circle cx="23" cy="7.5" r="3"></circle><circle cx="16" cy="12" r="3"></circle></svg>
+      </span>
+      <span style="font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500; letter-spacing: -0.01em">Ances-Tree</span>
+    </div>
+    <nav aria-label="Vues" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid #E4DCCF; background: #FBF9F5">
+      <a href="Arbre.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Arbre</a>
+      <span aria-current="page" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 14px; font-weight: 600">Ancêtres</span>
+      <a href="Frise.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Frise</a>
+      <a href="Carte.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Carte</a>
+      <a href="Recits.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Récits</a>
+    </nav>
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 1 1 300px">
+      <button type="button" onClick="{{ openSearch }}" style="display: flex; align-items: center; gap: 10px; height: 46px; min-width: 220px; padding: 0 16px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FBF9F5; color: #6F675D; font-size: 15px; cursor: pointer">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <span style="flex: 1; text-align: left">Trouver quelqu'un</span>
+        <span style="font-size: 12px; color: #9A9186">⌘K</span>
+      </button>
+      <a href="Activite.dc.html" aria-label="Activité, 2 nouveautés" style="position: relative; width: 46px; height: 46px; box-sizing: border-box; border: 1px solid #E4DCCF; border-radius: 50%; background: #FBF9F5; color: #1F1C19; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+        <span style="position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; border: 2px solid #F6F2EA; background: #A4532F; color: #FFFFFF; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">2</span>
+      </a>
+      <span style="width: 46px; height: 46px; box-sizing: border-box; border-radius: 50%; border: 2px solid #FFFFFF; background: #EAE3D7; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-weight: 500; font-size: 17px; box-shadow: 0 0 0 1px #E4DCCF">{{ meInitial }}</span>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 20px; padding: 0 32px 32px; min-height: 0">
+    <main style="position: relative; flex: 999 1 560px; min-width: 0; min-height: 620px; border-radius: 28px; border: 1px solid #E4DCCF; background-color: #F1EBE0; background-image: radial-gradient(rgba(31, 28, 25, 0.24) 1px, transparent 1.5px); background-size: 46px 46px; overflow: hidden">
+      <div style="position: absolute; left: 32px; top: 28px; display: flex; flex-direction: column; gap: 6px; max-width: 360px">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">Tes ancêtres</span>
+        <h1 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 30px; letter-spacing: -0.01em; line-height: 1.1">Quatre générations derrière toi</h1>
+        <p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #6F675D">Les cases en pointillés attendent quelqu'un. Touche-les pour compléter.</p>
+      </div>
+
+      <div style="position: absolute; left: 50%; top: 54%; width: 960px; height: 600px; transform: translate(-50%, -50%) scale(0.9)">
+        <sc-for list="{{ cells }}" as="c" hint-placeholder-count="30">
+          <svg width="960" height="600" viewBox="0 0 960 600" fill="none" style="position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none" aria-hidden="true">
+            <path d="{{ c.d }}" onClick="{{ c.pick }}" onMouseEnter="{{ c.enter }}" onMouseLeave="{{ leave }}" style="{{ c.style }}"></path>
+          </svg>
+        </sc-for>
+        <svg width="960" height="600" viewBox="0 0 960 600" fill="none" style="position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none" aria-hidden="true">
+          <path d="{{ selD }}" style="fill: #F3E4DA; stroke: #A4532F; stroke-width: 2.5; pointer-events: none"></path>
+        </svg>
+        <sc-for list="{{ labels }}" as="l" hint-placeholder-count="30">
+          <svg width="960" height="600" viewBox="0 0 960 600" fill="none" style="position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none" aria-hidden="true">
+            <g transform="{{ l.transform }}">
+              <text x="{{ l.x }}" y="{{ l.y1 }}" text-anchor="middle" style="{{ l.nameStyle }}">{{ l.name }}</text>
+              <text x="{{ l.x }}" y="{{ l.y2 }}" text-anchor="middle" style="{{ l.subStyle }}">{{ l.sub }}</text>
+            </g>
+          </svg>
+        </sc-for>
+        <svg width="960" height="600" viewBox="0 0 960 600" fill="none" style="position: absolute; left: 0; top: 0; pointer-events: none" role="img" aria-label="Éventail des ancêtres de Hugo">
+          <circle cx="480" cy="500" r="62" style="fill: #EAE3D7; stroke: #FFFFFF; stroke-width: 5"></circle>
+          <circle cx="480" cy="500" r="65" style="fill: none; stroke: #E4DCCF; stroke-width: 1"></circle>
+          <text x="480" y="508" text-anchor="middle" style="font-family: Fraunces, serif; font-size: 24px; fill: #1F1C19">HM</text>
+          <text x="480" y="588" text-anchor="middle" style="font-family: Fraunces, serif; font-size: 18px; fill: #A4532F">Toi</text>
+        </svg>
+      </div>
+
+      <div style="position: absolute; right: 20px; bottom: 20px; display: flex; gap: 8px">
+        <button type="button" aria-label="Zoomer" style="width: 46px; height: 46px; border: 1px solid #E4DCCF; border-radius: 50%; background: #FBF9F5; color: #1F1C19; display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+        <button type="button" aria-label="Dézoomer" style="width: 46px; height: 46px; border: 1px solid #E4DCCF; border-radius: 50%; background: #FBF9F5; color: #1F1C19; display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+      </div>
+    </main>
+
+    <aside aria-label="Ancêtre sélectionné" style="flex: 1 1 360px; max-width: 420px; box-sizing: border-box; border-radius: 28px; border: 1px solid #E4DCCF; background: #FFFFFF; box-shadow: 0 20px 50px rgba(31, 28, 25, 0.07); overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 30px 28px 22px">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">{{ sel.kicker }}</span>
+        <h2 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 32px; letter-spacing: -0.01em; line-height: 1.1">{{ sel.title }}</h2>
+        <sc-if value="{{ sel.hasBirthName }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size: 14px; color: #6F675D">{{ sel.birthName }}</span>
+        </sc-if>
+        <span style="font-size: 15px; line-height: 1.5; color: #6F675D">{{ sel.line }}</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px">
+          <span style="display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 999px; background: #F6F2EA; font-size: 13px; color: #1F1C19">{{ sel.branch }}</span>
+          <span style="display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 999px; background: #F6F2EA; font-size: 13px; color: #1F1C19">{{ sel.gen }}</span>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: #F6F2EA; font-size: 13px; line-height: 1.45; color: #6F675D">
+          <span style="{{ sel.dot }}"></span>
+          <span>{{ sel.rights }}</span>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 8px">
+          <sc-if value="{{ sel.known }}" hint-placeholder-val="{{ true }}">
+            <a href="Arbre.dc.html" style="flex: 1; height: 50px; box-sizing: border-box; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 15px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center">Voir dans l'arbre</a>
+            <button type="button" style="flex: 1; height: 50px; border: 0; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 15px; font-weight: 600; cursor: pointer">Modifier</button>
+          </sc-if>
+          <sc-if value="{{ sel.unknown }}" hint-placeholder-val="{{ false }}">
+            <button type="button" style="flex: 1; height: 50px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 15px; font-weight: 600; cursor: pointer">Demander à la famille</button>
+            <button type="button" style="flex: 1; height: 50px; border: 0; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 15px; font-weight: 600; cursor: pointer">Ajouter</button>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 0 28px 28px">
+        <span style="padding: 18px 0 4px; border-top: 1px solid #EFE9DF; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #9A9186">Tes racines</span>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding: 12px 0 16px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline">
+            <span style="font-family: 'Fraunces', serif; font-size: 26px">{{ known }} <span style="font-family: 'Figtree', sans-serif; font-size: 14px; color: #6F675D">ancêtres connus sur {{ total }}</span></span>
+            <span style="font-size: 13px; color: #8A8278; font-variant-numeric: tabular-nums">{{ pct }}</span>
+          </div>
+          <span style="position: relative; display: block; height: 6px; border-radius: 999px; background: #EFE9DF; overflow: hidden">
+            <span style="{{ barStyle }}"></span>
+          </span>
+        </div>
+        <div style="display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-top: 1px solid #EFE9DF">
+          <span style="font-size: 14px; color: #6F675D">Le plus ancien</span>
+          <span style="font-size: 15px; text-align: right">{{ oldest }}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 0 0; border-top: 1px solid #EFE9DF">
+          <span style="font-size: 14px; color: #6F675D">Terres d'origine</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{ origins }}" as="o" hint-placeholder-count="5">
+              <span style="display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 6px 0 14px; border-radius: 999px; border: 1px solid #E4DCCF; font-size: 14px">{{ o.name }}<span style="min-width: 22px; height: 22px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: #F6F2EA; font-size: 12px; color: #6F675D; display: inline-flex; align-items: center; justify-content: center">{{ o.count }}</span></span>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const P = {
+  luc: { first: 'Luc', last: 'Marchand', g: 'm', b: 1963, place: 'Toulouse' },
+  sophie: { first: 'Sophie', last: 'Marchand', birthLast: 'Blanc', g: 'f', b: 1965, place: 'Nantes' },
+  paul: { first: 'Paul', last: 'Marchand', g: 'm', b: 1931, d: 2008, place: 'Rodez' },
+  jeanne: { first: 'Jeanne', last: 'Marchand', birthLast: 'Roux', g: 'f', b: 1934, d: 2019, place: 'Albi' },
+  bernard: { first: 'Bernard', last: 'Blanc', g: 'm', b: 1938, d: 2012, place: 'Nantes' },
+  odette: { first: 'Odette', last: 'Blanc', birthLast: 'Pichon', g: 'f', b: 1941, place: 'Nantes' },
+  henri: { first: 'Henri', last: 'Marchand', g: 'm', b: 1902, d: 1979, place: 'Rodez' },
+  louise: { first: 'Louise', last: 'Marchand', birthLast: 'Garnier', g: 'f', b: 1905, d: 1991, place: 'Millau' },
+  emile: { first: 'Émile', last: 'Roux', g: 'm', b: 1905, d: 1980, place: 'Albi' },
+  marthe: { first: 'Marthe', last: 'Roux', birthLast: 'Vidal', g: 'f', b: 1908, d: 1996, place: 'Albi' },
+  marcel: { first: 'Marcel', last: 'Blanc', g: 'm', b: 1910, d: 1975, place: 'Nantes' },
+  yvonne: { first: 'Yvonne', last: 'Blanc', birthLast: 'Guérin', g: 'f', b: 1913, d: 2001, place: 'Nantes' },
+  rene: { first: 'René', last: 'Pichon', g: 'm', b: 1912, d: 1990, place: 'Vannes' },
+  joseph: { first: 'Joseph', last: 'Marchand', g: 'm', b: 1871, d: 1940, place: 'Rodez' },
+  victorine: { first: 'Victorine', last: 'Marchand', birthLast: 'Bru', g: 'f', b: 1875, d: 1950, place: 'Espalion' }
+};
+// Ahnentafel par génération : le père d'abord, null = à découvrir.
+const GENS = [
+  ['luc', 'sophie'],
+  ['paul', 'jeanne', 'bernard', 'odette'],
+  ['henri', 'louise', 'emile', 'marthe', 'marcel', 'yvonne', 'rene', null],
+  ['joseph', 'victorine', null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+];
+const RINGS = [[72, 168], [168, 262], [262, 352], [352, 438]];
+const DEPT = { Rodez: 'Aveyron', Millau: 'Aveyron', Espalion: 'Aveyron', Albi: 'Tarn', Nantes: 'Loire-Atlantique', Vannes: 'Morbihan', Toulouse: 'Haute-Garonne' };
+const REL = [['Ton père', 'Ta mère'], ['Ton grand-père', 'Ta grand-mère'], ['Ton arrière-grand-père', 'Ton arrière-grand-mère'], ['Ton arrière-arrière-grand-père', 'Ton arrière-arrière-grand-mère']];
+const GEN_LABEL = ['1re génération', '2e génération', '3e génération', '4e génération'];
+const CX = 480;
+const CY = 500;
+
+function pt(r, a) { return (CX + r * Math.cos(a)).toFixed(1) + ' ' + (CY + r * Math.sin(a)).toFixed(1); }
+function arc(r0, r1, a0, a1) {
+  return 'M' + pt(r1, a0) + ' A' + r1 + ' ' + r1 + ' 0 0 1 ' + pt(r1, a1) + ' L' + pt(r0, a1) + ' A' + r0 + ' ' + r0 + ' 0 0 0 ' + pt(r0, a0) + ' Z';
+}
+function de(name) { return /^[AEIOUYÉÈ]/i.test(name) ? 'd’' + name : 'de ' + name; }
+function slotId(gi, i) { return gi + ':' + i; }
+
+class Component extends DCLogic {
+  state = { sel: '2:0', hover: null };
+
+  renderVals() {
+    const s = this.state;
+    const cells = [];
+    const labels = [];
+    let selD = '';
+    GENS.forEach((gen, gi) => {
+      const n = gen.length;
+      const [r0, r1] = RINGS[gi];
+      gen.forEach((id, i) => {
+        const a0 = Math.PI + (Math.PI * i) / n;
+        const a1 = Math.PI + (Math.PI * (i + 1)) / n;
+        const key = slotId(gi, i);
+        const p = id ? P[id] : null;
+        const d = arc(r0, r1, a0, a1);
+        const hov = s.hover === key;
+        if (s.sel === key) selD = d;
+        cells.push({
+          d: d,
+          pick: () => this.setState({ sel: key }),
+          enter: () => this.setState({ hover: key }),
+          style: p
+            ? 'fill: ' + (p.d ? '#E3DED6' : '#EAE3D7') + '; stroke: ' + (hov ? '#A4532F' : '#F1EBE0') + '; stroke-width: ' + (hov ? 2 : 4) + '; cursor: pointer; pointer-events: auto'
+            : 'fill: #FBF9F5; stroke: ' + (hov ? '#A4532F' : '#C9BCA9') + '; stroke-width: 1.5; stroke-dasharray: 4 5; cursor: pointer; pointer-events: auto'
+        });
+        const am = (a0 + a1) / 2;
+        const rm = (r0 + r1) / 2;
+        const tx = CX + rm * Math.cos(am);
+        const ty = CY + rm * Math.sin(am);
+        const deg = (am * 180) / Math.PI;
+        const radial = gi >= 2;
+        const rot = radial ? (deg < 270 ? deg + 180 : deg) : 0;
+        const big = gi < 2;
+        labels.push({
+          transform: 'rotate(' + rot.toFixed(1) + ' ' + tx.toFixed(1) + ' ' + ty.toFixed(1) + ')',
+          x: tx.toFixed(1),
+          y1: (ty + (p ? (big ? -2 : -1) : 4)).toFixed(1),
+          y2: (ty + (big ? 18 : 13)).toFixed(1),
+          name: p ? p.first : (gi === 3 ? '+' : 'À découvrir'),
+          sub: p ? (p.d ? p.b + '-' + p.d : String(p.b)) : '',
+          nameStyle: p
+            ? 'font-family: Fraunces, serif; font-size: ' + (big ? 19 : gi === 2 ? 15 : 13) + 'px; fill: ' + (s.sel === key ? '#A4532F' : p.d ? '#6F675D' : '#1F1C19')
+            : 'font-family: Figtree, sans-serif; font-size: ' + (gi === 3 ? 18 : 12) + 'px; fill: ' + (s.sel === key ? '#A4532F' : '#9A9186'),
+          subStyle: 'font-family: Figtree, sans-serif; font-size: ' + (big ? 12 : 11) + 'px; fill: #8A8278'
+        });
+      });
+    });
+
+    const [gs, is] = s.sel.split(':').map(Number);
+    const id = GENS[gs][is];
+    const p = id ? P[id] : null;
+    const fem = is % 2 === 1;
+    const paternal = is < GENS[gs].length / 2;
+    let sel;
+    if (p) {
+      sel = {
+        kicker: REL[gs][fem ? 1 : 0],
+        title: p.first + ' ' + p.last,
+        hasBirthName: !!p.birthLast,
+        birthName: (fem ? 'née ' : 'né ') + p.birthLast,
+        line: (p.d ? p.b + ' - ' + p.d + ', ' : (fem ? 'Née en ' : 'Né en ') + p.b + ', ') + (p.d ? (fem ? 'née à ' : 'né à ') : '') + p.place + ' (' + DEPT[p.place] + ')',
+        rights: 'Dans ta lignée : tu modifies directement. Ses autres descendants sont prévenus et peuvent annuler.',
+        known: true,
+        unknown: false
+      };
+    } else {
+      const childId = gs === 0 ? null : GENS[gs - 1][Math.floor(is / 2)];
+      const child = childId ? P[childId] : null;
+      const who = child ? child.first + ' ' + (child.birthLast || child.last) : 'toi';
+      sel = {
+        kicker: 'À découvrir',
+        title: (fem ? 'La mère ' : 'Le père ') + de(who),
+        hasBirthName: false,
+        birthName: '',
+        line: 'Personne ne l’a encore renseigné' + (fem ? 'e' : '') + '. Un nom, une date ou une photo du livret de famille suffisent pour commencer.',
+        rights: 'Dans ta lignée : tu peux l’ajouter directement, ou demander à la famille si quelqu’un sait.',
+        known: false,
+        unknown: true
+      };
+    }
+    sel.branch = paternal ? 'Branche paternelle' : 'Branche maternelle';
+    sel.gen = GEN_LABEL[gs];
+    sel.dot = 'flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: #1F1C19';
+
+    const all = GENS.flat();
+    const knownIds = all.filter(Boolean);
+    const oldest = knownIds.map((k) => P[k]).sort((a, b) => a.b - b.b)[0];
+    const counts = {};
+    knownIds.forEach((k) => { const dpt = DEPT[P[k].place]; counts[dpt] = (counts[dpt] || 0) + 1; });
+    const origins = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).map((k) => ({ name: k, count: counts[k] }));
+    const ratio = knownIds.length / all.length;
+
+    return {
+      meInitial: 'H',
+      openSearch: () => {},
+      cells: cells,
+      labels: labels,
+      selD: selD,
+      leave: () => this.setState({ hover: null }),
+      sel: sel,
+      known: knownIds.length,
+      total: all.length,
+      pct: Math.round(ratio * 100) + ' %',
+      barStyle: 'position: absolute; left: 0; top: 0; bottom: 0; width: ' + Math.round(ratio * 100) + '%; border-radius: 999px; background: #1F1C19',
+      oldest: oldest.first + ', ' + (oldest.g === 'f' ? 'née' : 'né') + ' en ' + oldest.b,
+      origins: origins
+    };
+  }
+}
+</script>
+</body>
+</html>

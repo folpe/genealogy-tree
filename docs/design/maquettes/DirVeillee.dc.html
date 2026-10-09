@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Direction Veillée</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&amp;family=Figtree:wght@400..700&amp;display=swap">
+<style>
+*{font-variation-settings:"SOFT" 100,"WONK" 1}
+body{margin:0;background:#1D1A2B}
+a{color:#FFB86B}a:hover{color:#FFD19E}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height: 100vh; height: 100vh; display: flex; flex-direction: column; background: #1D1A2B; color: #F5EFE6; font-family: 'Figtree', system-ui, sans-serif; overflow: hidden">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px 28px">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1 1 200px">
+      <span style="width: 44px; height: 44px; border-radius: 50%; background: #FFB86B; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 24px rgba(255, 184, 107, 0.45)">
+        <svg width="24" height="24" viewBox="0 0 32 32" fill="none" stroke="#2A2238" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M16 28V16"></path><path d="M16 20C16 16 11 15 9 12"></path><path d="M16 18C16 14 21 13 23 10"></path><circle cx="9" cy="9" r="3"></circle><circle cx="23" cy="7.5" r="3"></circle><circle cx="16" cy="12" r="3"></circle></svg>
+      </span>
+      <span style="font-family: 'Fraunces', serif; font-size: 26px; font-weight: 500">Ances-Tree</span>
+    </div>
+    <nav aria-label="Vues" style="display: flex; gap: 4px; padding: 5px; border-radius: 999px; background: #2A2640">
+      <button type="button" aria-pressed="true" style="height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: #FFB86B; color: #2A2238; font-size: 14px; font-weight: 700">Arbre</button>
+      <button type="button" style="height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: transparent; color: #B7AFC9; font-size: 14px; font-weight: 500">Ancêtres</button>
+      <button type="button" style="height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: transparent; color: #B7AFC9; font-size: 14px; font-weight: 500">Frise</button>
+      <button type="button" style="height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: transparent; color: #B7AFC9; font-size: 14px; font-weight: 500">Carte</button>
+      <button type="button" style="height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: transparent; color: #B7AFC9; font-size: 14px; font-weight: 500">Récits</button>
+    </nav>
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex: 1 1 300px">
+      <button type="button" style="display: flex; align-items: center; gap: 10px; height: 48px; min-width: 240px; padding: 0 18px; border: 0; border-radius: 999px; background: #2A2640; color: #B7AFC9; font-size: 15px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        Trouver quelqu'un
+      </button>
+      <span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 50%; border: 3px solid #8ED8C0; background: #3A3456; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 18px">H</span>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 20px; padding: 0 28px 28px; min-height: 0">
+    <main style="position: relative; flex: 999 1 560px; min-width: 0; min-height: 600px; border-radius: 32px; background-color: #221E33; background-image: radial-gradient(rgba(245, 239, 230, 0.16) 1px, transparent 1.5px); background-size: 46px 46px; overflow: hidden">
+      <div style="position: absolute; left: 50%; top: 50%; width: 720px; height: 580px; transform: translate(-50%, -50%)">
+        <svg width="720" height="580" viewBox="0 0 720 580" fill="none" stroke-linecap="round" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+          <path d="M330 90 L470 90" stroke="#6E6590" stroke-width="2.5"></path>
+          <path d="M400 90 C400 200 120 170 120 280 M400 90 C400 200 360 170 360 280" stroke="#6E6590" stroke-width="2.5"></path>
+          <path d="M360 280 L520 280" stroke="#6E6590" stroke-width="2.5"></path>
+          <path d="M360 320 C360 400 240 380 240 470" stroke="#FFB86B" stroke-width="3" style="filter: drop-shadow(0 0 6px rgba(255, 184, 107, 0.7))"></path>
+          <path d="M440 280 C440 390 420 360 420 470 M440 280 C440 390 560 360 560 470" stroke="#6E6590" stroke-width="2.5"></path>
+        </svg>
+        <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="9">
+          <div style="{{ n.wrap }}">
+            <span style="{{ n.bubble }}">{{ n.initials }}</span>
+            <span style="font-family: 'Fraunces', serif; font-size: 17px; white-space: nowrap">{{ n.first }}</span>
+            <span style="font-size: 12px; color: #B7AFC9">{{ n.years }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="position: absolute; right: 20px; bottom: 20px; display: flex; gap: 8px">
+        <button type="button" aria-label="Zoomer" style="width: 48px; height: 48px; border: 0; border-radius: 50%; background: #2A2640; color: #F5EFE6; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+        <button type="button" aria-label="Dézoomer" style="width: 48px; height: 48px; border: 0; border-radius: 50%; background: #2A2640; color: #F5EFE6; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+        <button type="button" style="height: 48px; padding: 0 18px; border: 0; border-radius: 999px; background: #8ED8C0; color: #1D1A2B; font-size: 14px; font-weight: 700">Me retrouver</button>
+      </div>
+    </main>
+
+    <aside aria-label="Fiche" style="flex: 1 1 360px; max-width: 420px; box-sizing: border-box; border-radius: 32px; background: #2A2640; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 28px 18px; text-align: center">
+        <span style="width: 124px; height: 124px; box-sizing: border-box; border-radius: 50%; border: 4px solid #8EB8F0; background: #3A3456; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 44px; box-shadow: 0 0 0 10px rgba(255, 184, 107, 0.1), 0 0 50px rgba(255, 184, 107, 0.3)">MM</span>
+        <h2 style="margin: 10px 0 0; font-family: 'Fraunces', serif; font-weight: 500; font-size: 32px">Maxime Marchand</h2>
+        <span style="padding: 6px 14px; border-radius: 999px; background: rgba(255, 184, 107, 0.16); color: #FFC98C; font-size: 14px; font-weight: 600">Ton demi-frère</span>
+        <span style="font-size: 14px; color: #B7AFC9">Né en 1987 à Nantes, vit à Lille</span>
+      </div>
+      <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 4px 22px 18px">
+        <div style="padding: 14px 16px; border-radius: 20px; background: #332E4C; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 13px; font-weight: 600; color: #B7AFC9">Son père</span>
+          <span style="font-size: 15px">Luc Marchand</span>
+          <span style="font-size: 13px; color: #B7AFC9">Né d'une précédente union de Luc</span>
+        </div>
+        <div style="padding: 14px 16px; border-radius: 20px; background: #332E4C; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 13px; font-weight: 600; color: #B7AFC9">Frères et sœurs</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <span style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 4px; border-radius: 999px; background: #3D3758; font-size: 14px"><span style="width: 32px; height: 32px; box-sizing: border-box; border-radius: 50%; border: 2px solid #F4A3B4; display: inline-flex; align-items: center; justify-content: center; font-size: 12px">L</span>Léa <span style="color: #B7AFC9; font-size: 12px">demi-sœur</span></span>
+            <span style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 4px; border-radius: 999px; background: #3D3758; font-size: 14px"><span style="width: 32px; height: 32px; box-sizing: border-box; border-radius: 50%; border: 2px solid #8EB8F0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px">H</span>Toi</span>
+          </div>
+        </div>
+        <div style="padding: 14px 16px; border-radius: 20px; background: #332E4C; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 13px; font-weight: 600; color: #B7AFC9">A aussi été élevé par</span>
+          <span style="font-size: 15px">Sophie Marchand, sa belle-mère</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 22px 22px">
+        <span style="font-size: 13px; color: #8ED8C0; text-align: center">Ton cercle proche : tu peux modifier sa fiche</span>
+        <div style="display: flex; gap: 10px">
+          <button type="button" style="flex: 1; height: 52px; border: 0; border-radius: 999px; background: #3D3758; color: #F5EFE6; font-size: 15px; font-weight: 600">Notre lien</button>
+          <button type="button" style="flex: 1; height: 52px; border: 0; border-radius: 999px; background: #FFB86B; color: #2A2238; font-size: 15px; font-weight: 700; box-shadow: 0 0 24px rgba(255, 184, 107, 0.35)">Modifier</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const PEOPLE = [
+  { first: 'Paul', ini: 'PM', x: 330, y: 90, years: '1931-2008', ring: '#8EB8F0', dead: true },
+  { first: 'Jeanne', ini: 'JM', x: 470, y: 90, years: '1934-2019', ring: '#F4A3B4', dead: true },
+  { first: 'Anne', ini: 'AM', x: 120, y: 280, years: '1960', ring: '#F4A3B4' },
+  { first: 'Luc', ini: 'LM', x: 360, y: 280, years: '1963', ring: '#8EB8F0' },
+  { first: 'Sophie', ini: 'SM', x: 520, y: 280, years: '1965', ring: '#F4A3B4' },
+  { first: 'Maxime', ini: 'MM', x: 240, y: 470, years: '1987', ring: '#8EB8F0', sel: true },
+  { first: 'Léa', ini: 'LM', x: 420, y: 470, years: '1992', ring: '#F4A3B4' },
+  { first: 'Toi', ini: 'HM', x: 560, y: 470, years: '1995', ring: '#8ED8C0', me: true }
+];
+
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      nodes: PEOPLE.map((p) => ({
+        first: p.me ? 'Toi' : p.first,
+        initials: p.ini,
+        years: p.years,
+        wrap: 'position: absolute; left: ' + (p.x - 70) + 'px; top: ' + (p.y - 38) + 'px; width: 140px; display: flex; flex-direction: column; align-items: center; gap: 6px',
+        bubble: 'width: 76px; height: 76px; box-sizing: border-box; border-radius: 50%; border: 3px solid ' + (p.dead ? '#7C7398' : p.ring) + '; background: ' + (p.dead ? '#2C2840' : '#3A3456') + '; display: inline-flex; align-items: center; justify-content: center; font-family: Fraunces, serif; font-size: 24px; color: ' + (p.dead ? '#B7AFC9' : '#F5EFE6') + '; box-shadow: ' + (p.sel ? '0 0 0 8px rgba(255, 184, 107, 0.25), 0 0 40px rgba(255, 184, 107, 0.55)' : (p.dead ? 'none' : '0 0 24px rgba(142, 184, 240, 0.18)'))
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

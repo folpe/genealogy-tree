@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Connexion</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&amp;family=Figtree:wght@400..700&amp;display=swap">
+<style>
+*{font-variation-settings:"SOFT" 100,"WONK" 0}
+body{margin:0;background:#F6F2EA}
+a{color:#A4532F}a:hover{color:#7C3D21}
+button{font-family:inherit}
+input::placeholder{color:#9A9186}
+</style>
+</helmet>
+<div style="min-height: 100vh; height: 100vh; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 20px; padding: 32px; background: #F6F2EA; color: #1F1C19; font-family: 'Figtree', system-ui, sans-serif; overflow: hidden">
+
+  <section aria-hidden="true" style="position: relative; flex: 1 1 560px; min-width: 0; border-radius: 28px; border: 1px solid #E4DCCF; background-color: #F1EBE0; background-image: radial-gradient(rgba(31, 28, 25, 0.24) 1px, transparent 1.5px); background-size: 46px 46px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 40px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span style="width: 40px; height: 40px; border-radius: 50%; background: #1F1C19; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#F6F2EA" stroke-width="2" stroke-linecap="round"><path d="M16 28V16"></path><path d="M16 20C16 16 11 15 9 12"></path><path d="M16 18C16 14 21 13 23 10"></path><circle cx="9" cy="9" r="3"></circle><circle cx="23" cy="7.5" r="3"></circle><circle cx="16" cy="12" r="3"></circle></svg>
+      </span>
+      <span style="font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500; letter-spacing: -0.01em">Ances-Tree</span>
+    </div>
+
+    <div style="position: relative; align-self: center; width: 520px; height: 380px">
+      <svg width="520" height="380" viewBox="0 0 520 380" fill="none" stroke-linecap="round" style="position: absolute; left: 0; top: 0">
+        <path d="M200 60 L320 60" stroke="#C9BCA9" stroke-width="2"></path>
+        <path d="M260 60 C260 150 120 130 120 200 M260 60 C260 150 300 130 300 200" stroke="#C9BCA9" stroke-width="2"></path>
+        <path d="M300 200 L420 200" stroke="#C9BCA9" stroke-width="2"></path>
+        <path d="M360 200 C360 290 300 270 300 330 M360 200 C360 290 420 270 420 330" stroke="#C9BCA9" stroke-width="2"></path>
+        <path d="M120 200 C120 290 160 270 160 330" stroke="#C9BCA9" stroke-width="2" stroke-dasharray="2 7"></path>
+      </svg>
+      <sc-for list="{{ deco }}" as="d" hint-placeholder-count="8">
+        <span style="{{ d.style }}">{{ d.ini }}</span>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; max-width: 460px">
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">Famille Marchand</span>
+      <p style="margin: 0; font-family: 'Fraunces', serif; font-size: 34px; line-height: 1.15; letter-spacing: -0.01em">Quatre générations, 14 personnes, une seule histoire.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #6F675D">Un espace privé : seuls les membres invités voient l'arbre.</p>
+    </div>
+  </section>
+
+  <main style="flex: 1 1 420px; max-width: 520px; box-sizing: border-box; border-radius: 28px; border: 1px solid #E4DCCF; background: #FFFFFF; box-shadow: 0 20px 50px rgba(31, 28, 25, 0.07); display: flex; flex-direction: column; justify-content: center; padding: 48px 52px">
+
+    <sc-if value="{{ isEmail }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 22px">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">Bon retour</span>
+          <h1 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 40px; line-height: 1.1; letter-spacing: -0.01em">Entre dans l'arbre</h1>
+          <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #6F675D">Pas de mot de passe. On t'envoie un lien de connexion par email.</p>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 14px; font-weight: 600">Ton email</span>
+          <input value="{{ email }}" onChange="{{ onEmail }}" type="email" placeholder="prenom@exemple.fr" style="height: 54px; box-sizing: border-box; padding: 0 22px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FBF9F5; color: #1F1C19; font-size: 16px; font-family: inherit; outline: none">
+        </label>
+        <button type="button" onClick="{{ sendLink }}" style="height: 54px; border: 0; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 16px; font-weight: 600; cursor: pointer">Recevoir mon lien</button>
+        <button type="button" style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 54px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 16px; font-weight: 600; cursor: pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2"></path></svg>
+          Me connecter avec une passkey
+        </button>
+        <p style="margin: 6px 0 0; font-size: 14px; color: #6F675D; text-align: center">Pas encore invité ? <button type="button" onClick="{{ goDemande }}" style="padding: 0; border: 0; background: transparent; color: #A4532F; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px">Demander l'accès</button></p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isEnvoye }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center">
+        <span style="width: 96px; height: 96px; box-sizing: border-box; border-radius: 50%; border: 5px solid #FFFFFF; background: #F3E4DA; display: inline-flex; align-items: center; justify-content: center; color: #A4532F; box-shadow: 0 0 0 1px #E4DCCF, 0 14px 30px rgba(164, 83, 47, 0.16)">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"></rect><path d="M4 7l8 6 8-6"></path></svg>
+        </span>
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">Lien envoyé</span>
+        <h1 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 38px; line-height: 1.1">Regarde tes emails</h1>
+        <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #6F675D">On vient d'envoyer un lien à <span style="color: #1F1C19; font-weight: 600">{{ emailShown }}</span>. Il est valable 15 minutes et ne sert qu'une fois.</p>
+        <button type="button" onClick="{{ openLink }}" style="width: 100%; height: 54px; margin-top: 8px; border: 0; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 16px; font-weight: 600; cursor: pointer">J'ai cliqué sur le lien</button>
+        <div style="display: flex; gap: 10px; width: 100%">
+          <button type="button" onClick="{{ resend }}" style="flex: 1; height: 50px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 15px; font-weight: 600; cursor: pointer">{{ resendLabel }}</button>
+          <button type="button" onClick="{{ goEmail }}" style="flex: 1; height: 50px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 15px; font-weight: 600; cursor: pointer">Changer d'email</button>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: #8A8278">Rien reçu ? Pense à regarder dans les indésirables.</p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isPasskey }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center">
+        <span style="width: 96px; height: 96px; box-sizing: border-box; border-radius: 50%; border: 5px solid #FFFFFF; background: #EAE3D7; display: inline-flex; align-items: center; justify-content: center; color: #1F1C19; box-shadow: 0 0 0 1px #E4DCCF, 0 14px 30px rgba(31, 28, 25, 0.12)">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"></path><path d="M9 9v1M15 9v1M12 9v4h-1M9.5 16c1.5 1 3.5 1 5 0"></path></svg>
+        </span>
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">Bienvenue Hugo</span>
+        <h1 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 36px; line-height: 1.12">La prochaine fois, un simple regard suffit</h1>
+        <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #6F675D">Active Face ID ou Touch ID sur cet appareil : tu reviendras dans l'arbre sans attendre d'email.</p>
+        <button type="button" onClick="{{ done }}" style="width: 100%; height: 54px; margin-top: 8px; border: 0; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 16px; font-weight: 600; cursor: pointer">Activer Face ID / Touch ID</button>
+        <button type="button" onClick="{{ done }}" style="width: 100%; height: 50px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 15px; font-weight: 600; cursor: pointer">Plus tard</button>
+        <p style="margin: 0; font-size: 13px; color: #8A8278">Tu pourras l'activer à tout moment depuis ton profil.</p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">Connecté</span>
+        <h1 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 38px; line-height: 1.1">L'arbre s'ouvre sur toi</h1>
+        <a href="Arbre.dc.html" style="width: 100%; height: 54px; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 16px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center">Voir l'arbre</a>
+        <button type="button" onClick="{{ goEmail }}" style="padding: 0; border: 0; background: transparent; color: #6F675D; font-size: 14px; cursor: pointer">Recommencer la démo</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isDemande }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 18px">
+        <button type="button" onClick="{{ goEmail }}" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px 0 10px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 14px; cursor: pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+          Retour
+        </button>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">Demande d'accès</span>
+          <h1 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 36px; line-height: 1.1">Rejoins la famille</h1>
+          <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #6F675D">Un administrateur vérifie ta demande et te relie à ta fiche. Le plus simple reste de demander à un proche déjà inscrit de t'inviter.</p>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 14px; font-weight: 600">Prénom et nom</span>
+          <input placeholder="Camille Marchand" style="height: 50px; box-sizing: border-box; padding: 0 20px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FBF9F5; color: #1F1C19; font-size: 16px; font-family: inherit; outline: none">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 14px; font-weight: 600">Email</span>
+          <input type="email" placeholder="prenom@exemple.fr" style="height: 50px; box-sizing: border-box; padding: 0 20px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FBF9F5; color: #1F1C19; font-size: 16px; font-family: inherit; outline: none">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 14px; font-weight: 600">Qui es-tu dans la famille ?</span>
+          <textarea rows="3" placeholder="Fille de Claude Marchand, petite-fille d'Henri et Louise" style="box-sizing: border-box; padding: 14px 20px; border: 1px solid #E4DCCF; border-radius: 24px; background: #FBF9F5; color: #1F1C19; font-size: 16px; line-height: 1.45; font-family: inherit; outline: none; resize: none"></textarea>
+        </label>
+        <button type="button" onClick="{{ sendDemande }}" style="height: 54px; border: 0; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 16px; font-weight: 600; cursor: pointer">Envoyer ma demande</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isDemandeOk }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center">
+        <span style="width: 96px; height: 96px; box-sizing: border-box; border-radius: 50%; border: 5px solid #FFFFFF; background: #F3E4DA; display: inline-flex; align-items: center; justify-content: center; color: #A4532F; box-shadow: 0 0 0 1px #E4DCCF, 0 14px 30px rgba(164, 83, 47, 0.16)">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+        </span>
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">Demande envoyée</span>
+        <h1 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 36px; line-height: 1.12">Merci, on te répond vite</h1>
+        <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #6F675D">Dès qu'un administrateur valide ta demande, tu reçois un lien de connexion par email. En général, sous 48 heures.</p>
+        <button type="button" onClick="{{ goEmail }}" style="width: 100%; height: 50px; margin-top: 8px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 15px; font-weight: 600; cursor: pointer">Revenir à la connexion</button>
+      </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"etape":{"editor":"enum","options":["email","envoye","passkey","demande","demandeOk"],"default":"email"},"$preview":{"width":1440,"height":900}}'>
+const DECO = [
+  { ini: 'HM', x: 200, y: 60, dead: true },
+  { ini: 'LG', x: 320, y: 60, dead: true },
+  { ini: 'AM', x: 120, y: 200 },
+  { ini: 'LM', x: 300, y: 200 },
+  { ini: 'SB', x: 420, y: 200 },
+  { ini: '?', x: 160, y: 330, ghost: true },
+  { ini: 'LM', x: 300, y: 330 },
+  { ini: 'HM', x: 420, y: 330, me: true }
+];
+
+class Component extends DCLogic {
+  state = { step: null, email: 'hugo.marchand@exemple.fr', resent: false };
+
+  renderVals() {
+    const s = this.state;
+    const step = s.step || this.props.etape || 'email';
+    const go = (to) => () => this.setState({ step: to, resent: false });
+    return {
+      deco: DECO.map((d) => ({
+        ini: d.ini,
+        style: 'position: absolute; left: ' + (d.x - 32) + 'px; top: ' + (d.y - 32) + 'px; width: 64px; height: 64px; box-sizing: border-box; border-radius: 50%; border: ' + (d.ghost ? '2px dashed #C9BCA9' : '4px solid #FFFFFF') + '; background: ' + (d.ghost ? '#FBF9F5' : d.dead ? '#E3DED6' : '#EAE3D7') + '; display: inline-flex; align-items: center; justify-content: center; font-family: Fraunces, serif; font-size: 20px; color: ' + (d.ghost ? '#9A9186' : d.dead ? '#8A8278' : '#1F1C19') + '; box-shadow: ' + (d.me ? '0 0 0 2px #A4532F, 0 12px 28px rgba(164, 83, 47, 0.22)' : d.ghost ? 'none' : '0 0 0 1px #E4DCCF, 0 8px 20px rgba(31, 28, 25, 0.1)')
+      })),
+      isEmail: step === 'email',
+      isEnvoye: step === 'envoye',
+      isPasskey: step === 'passkey',
+      isDone: step === 'done',
+      isDemande: step === 'demande',
+      isDemandeOk: step === 'demandeOk',
+      email: s.email,
+      emailShown: s.email || 'ton adresse',
+      onEmail: (e) => this.setState({ email: e.target.value }),
+      sendLink: go('envoye'),
+      openLink: go('passkey'),
+      resend: () => this.setState({ resent: true }),
+      resendLabel: s.resent ? 'Lien renvoyé' : 'Renvoyer le lien',
+      done: go('done'),
+      goEmail: go('email'),
+      goDemande: go('demande'),
+      sendDemande: go('demandeOk')
+    };
+  }
+}
+</script>
+</body>
+</html>
