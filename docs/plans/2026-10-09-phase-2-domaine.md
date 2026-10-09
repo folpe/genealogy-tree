@@ -3,7 +3,7 @@
 - **Date :** 2026-10-09
 - **Spec :** [docs/specs/2026-10-09-refonte-ances-tree.md](../specs/2026-10-09-refonte-ances-tree.md), sections 5, 6, 8 et 16
 - **Décisions :** [docs/DECISIONS.md](../DECISIONS.md), ADR 06 (graphe avec nœuds d'union), 08 (droits par proximité), 11 (direction visuelle, pour le vocabulaire affiché)
-- **Statut :** en cours (lots 1 à 4 faits)
+- **Statut :** en cours (lots 1 à 5 faits)
 
 ## 1. Objectif et sortie attendue
 
@@ -123,15 +123,15 @@ Chaque lot suit le cycle : tests rouges d'abord, implémentation minimale, refac
 
 ### Lot 5 : parenté et nommage en français
 
-- [ ] Tests d'abord (`kinship.helper.test.ts`, `kinship.labels.test.ts`), tables de cas depuis Hugo et depuis Isabelle, reprises des maquettes :
+- [x] Tests d'abord (`kinship.helper.test.ts`, `kinship.labels.test.ts`), tables de cas depuis Hugo et depuis Isabelle, reprises des maquettes :
   - Hugo -> Luc « ton père », Sophie « ta mère », Léa « ta sœur », Maxime « ton demi-frère », Paul « ton grand-père », Henri « ton arrière-grand-père », Anne « ta tante », Claude « ton grand-oncle », Marie « ta grand-tante », Jacques « ton grand-oncle par alliance », Isabelle « la cousine germaine de ton père » ;
   - Isabelle -> Anne et Luc « cousine / cousin germain », Hugo, Léa et Maxime « petit-cousin / petite-cousine », Paul « ton oncle », Jeanne « ta tante par alliance », Sophie « l'épouse de ton cousin Luc » ;
   - genre grammatical : accords « ton / ta », « né / née », « demi-frère / demi-sœur », valeur par défaut neutre si le genre est inconnu (« ton parent », « ton enfant ») ;
   - liens par alliance, par adoption (même libellé que biologique, mention seulement sur la fiche), `a_eleve` (« beau-père », « belle-mère ») ;
   - cas lointains : au-delà d'une profondeur donnée, formule générique « parent au 6e degré, par Henri et Louise » plutôt qu'un libellé faux ;
   - ancêtres communs : pour Hugo et Isabelle, Henri et Louise ; pour Hugo et Maxime, Luc seul.
-- [ ] `kinship.helper.ts` : `findRelationshipPath(index, fromId, toId)` (BFS sur personnes + unions), `commonAncestors`, `relationship(fromId, toId)` qui retourne une structure (`{ kind, generationsUp, generationsDown, half, byAlliance, via }`), indépendante du texte.
-- [ ] `kinship.labels.ts` : `describeRelationship(relationship, { targetGender, perspective: 'tu' })` qui produit la phrase française, et `describeDegree`.
+- [x] `kinship.helper.ts` : `findRelationshipPath(index, fromId, toId)` (BFS sur personnes + unions), `commonAncestors`, `relationship(fromId, toId)` qui retourne une structure (`{ kind, generationsUp, generationsDown, half, byAlliance, via }`), indépendante du texte.
+- [x] `kinship.labels.ts` : `describeRelationship(relationship, { targetGender, perspective: 'tu' })` qui produit la phrase française, et `describeDegree`.
 - **Acceptation :** chaque libellé affiché dans les maquettes sort de `describeRelationship` ; les libellés sont relus par Folpe dans la PR (liste exportée en tableau dans la description).
 
 ### Lot 6 : policy d'accès
