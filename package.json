@@ -20,7 +20,9 @@
     "test": "vitest run",
     "knip": "knip --no-progress",
     "audit": "bun audit --ignore GHSA-vfj7-8cjw-p6xm",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "test:coverage": "vitest run --coverage",
+    "test:mutation": "stryker run --coverageAnalysis off"
   },
   "dependencies": {
     "@notionhq/client": "^2.3.0",
@@ -40,6 +42,8 @@
     "@farmfe/core": "^1.6.7",
     "@farmfe/js-plugin-postcss": "^1.12.0",
     "@farmfe/plugin-react": "^1.2.0",
+    "@stryker-mutator/core": "^9",
+    "@stryker-mutator/vitest-runner": "^9",
     "@tailwindcss/postcss": "^4.0.14",
     "@types/d3": "^7.4.3",
     "@types/node": "^24",

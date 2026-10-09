@@ -65,3 +65,5 @@ export {
 export type { BloodRelationship, Relationship } from './kinship.helper';
 export { commonAncestors, findRelationshipPath, relationship } from './kinship.helper';
 export { describeDegree, describeRelationship } from './kinship.labels';
+export type { SearchIndex, SearchResult } from './search.helper';
+export { buildSearchIndex, normalizeForSearch, search } from './search.helper';

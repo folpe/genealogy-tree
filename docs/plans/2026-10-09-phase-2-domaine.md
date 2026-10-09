@@ -3,7 +3,7 @@
 - **Date :** 2026-10-09
 - **Spec :** [docs/specs/2026-10-09-refonte-ances-tree.md](../specs/2026-10-09-refonte-ances-tree.md), sections 5, 6, 8 et 16
 - **Décisions :** [docs/DECISIONS.md](../DECISIONS.md), ADR 06 (graphe avec nœuds d'union), 08 (droits par proximité), 11 (direction visuelle, pour le vocabulaire affiché)
-- **Statut :** en cours (lots 1 à 6 faits)
+- **Statut :** lots 1 à 8 faits, PR #64 à #68 à merger
 
 ## 1. Objectif et sortie attendue
 
@@ -160,15 +160,15 @@ Chaque lot suit le cycle : tests rouges d'abord, implémentation minimale, refac
 
 ### Lot 7 : recherche
 
-- [ ] Tests d'abord (`search.helper.test.ts`) : insensible à la casse et aux accents (« lea » trouve « Léa »), trouve le nom de naissance (« Garnier » trouve Louise, « née Roux »), prénoms composés et tirets, classement (correspondance exacte, puis début de mot, puis proximité dans l'arbre par rapport au membre courant), aucun champ masqué par la visibilité n'est indexé pour un viewer qui ne doit pas le voir.
-- [ ] `search.helper.ts` : `normalizeForSearch`, `buildSearchIndex(graph, viewer)`, `search(index, query, { limit })`.
+- [x] Tests d'abord (`search.helper.test.ts`) : insensible à la casse et aux accents (« lea » trouve « Léa »), trouve le nom de naissance (« Garnier » trouve Louise, « née Roux »), prénoms composés et tirets, classement (correspondance exacte, puis début de mot, puis proximité dans l'arbre par rapport au membre courant), aucun champ masqué par la visibilité n'est indexé pour un viewer qui ne doit pas le voir.
+- [x] `search.helper.ts` : `normalizeForSearch`, `buildSearchIndex(graph, viewer)`, `search(index, query, { limit })`.
 - **Acceptation :** les exemples du ⌘K des maquettes donnent les mêmes résultats, dans le même ordre.
 
 ### Lot 8 : durcissement
 
-- [ ] Stryker (`bunx stryker run` en local, configuration `stryker.config.json` limitée à `src/server/**`) sur `access.policy.ts`, `kinship.helper.ts`, `fuzzy-date.helper.ts` ; renforcer les tests sur les mutants survivants.
-- [ ] Couverture : seuils `coverage.thresholds` dans `vitest.config.ts` pour `src/server/**` (95 % lignes, 90 % branches).
-- [ ] `knip` propre : tout export non utilisé hors tests est soit consommé, soit retiré.
+- [x] Stryker (`bunx stryker run` en local, configuration `stryker.config.json` limitée à `src/server/**`) sur `access.policy.ts`, `kinship.helper.ts`, `fuzzy-date.helper.ts` ; renforcer les tests sur les mutants survivants.
+- [x] Couverture : seuils `coverage.thresholds` dans `vitest.config.ts` pour `src/server/**` (95 % lignes, 90 % branches).
+- [x] `knip` propre : tout export non utilisé hors tests est soit consommé, soit retiré.
 
 ## 7. Commandes de vérification
 
@@ -208,3 +208,10 @@ bun run type-check && bun run lint && bun run knip
 3. `feat(domain): calcul et nommage des liens de parenté` (lot 5), avec le tableau des libellés à relire.
 4. `feat(access): policy de périmètre, gardiens et visibilité` (lot 6).
 5. `feat(domain): recherche et durcissement` (lots 7 et 8).
+
+## Bilan (2026-10-09)
+
+- 305 tests, couverture de `src/server` : 99 % des lignes, 92 % des branches (seuils 95 / 90 dans `vitest.config.ts`, contrôlés en CI par `bun run test:coverage`).
+- Mutation testing (`bun run test:mutation`, local) : 92 % au global, 94 % sur `access.policy.ts`, 96 % sur `fuzzy-date.helper.ts`, 86 % sur `kinship.helper.ts`. Les survivants restants sont des gardes défensives sans effet observable (identifiant `null`, valeurs par défaut jamais atteintes, ordre de parcours sans conséquence).
+- Stryker et TypeScript 7 : `tsconfigFile` pointe vers un fichier absent (l'API JS de TS 7 n'existe plus) et `coverageAnalysis` est à `off` (le runner Vitest attribue mal la couverture des contextes construits hors des tests).
+- Règles précisées en route : veuvage sans remariage gardé dans l'arbre (spec 8.1), fiches ouvertes définies par le périmètre (ADR 14), gardiens à la plus petite distance (spec 6.2), recherche « née X » sur le nom de naissance.

@@ -74,8 +74,9 @@ function possessiveFor(forms: Forms, gender: Gender): string {
 
 function definiteFor(forms: Forms, gender: Gender): string {
   if (gender === 'femme') return definite(forms.f, true);
-  if (gender === 'homme' || !forms.n) return definite(forms.m, false);
-  return definite(forms.n, false);
+  if (gender === 'homme') return definite(forms.m, false);
+  if (forms.n) return definite(forms.n, false);
+  return `${definite(forms.m, false)} ou ${definite(forms.f, true)}`;
 }
 
 /** Forme courte d'un lien pour les descriptions (« ton cousin Luc »). */

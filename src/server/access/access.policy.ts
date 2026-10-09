@@ -101,12 +101,14 @@ export function perimeter(ctx: AccessContext, personId: string): Set<string> {
   return new Set([...base, ...ctx.openRecords]);
 }
 
-/** Rang du lien direct pour départager des gardiens à même distance. */
+/**
+ * Rang du lien direct pour départager des gardiens à même distance. À distance 1
+ * il n'y a que conjoint, enfant ou parent ; au-delà, tous ont le même rang.
+ */
 function linkRank(index: FamilyIndex, from: string, to: string): number {
   if (unbrokenPartners(index, from).includes(to)) return 0;
   if (childrenOf(index, from).some((c) => c.id === to)) return 1;
-  if (parentsOf(index, from).some((p) => p.id === to)) return 2;
-  return 3;
+  return 2;
 }
 
 /**
