@@ -1,23 +1,24 @@
-import React, { useState } from 'react'
+import type React from 'react';
+import { useState } from 'react';
 
 interface ISearchField {
-  onSearch: (query: string) => void
+  onSearch: (query: string) => void;
 }
 
 export const SearchField: React.FC<ISearchField> = ({ onSearch }) => {
-  const [query, setQuery] = useState('')
-  const [isFocused, setIsFocused] = useState(false)
+  const [query, setQuery] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuery = e.target.value
-    setQuery(newQuery)
-    onSearch(newQuery)
-  }
+    const newQuery = e.target.value;
+    setQuery(newQuery);
+    onSearch(newQuery);
+  };
 
   const handleClear = () => {
-    setQuery('')
-    onSearch('')
-  }
+    setQuery('');
+    onSearch('');
+  };
 
   return (
     <div
@@ -27,14 +28,13 @@ export const SearchField: React.FC<ISearchField> = ({ onSearch }) => {
     >
       <div
         className={`flex items-center w-full bg-gray-800/20 backdrop-blur-sm border ${
-          isFocused
-            ? 'border-blue-400 shadow-md shadow-blue-500/20'
-            : 'border-gray-600/30'
+          isFocused ? 'border-blue-400 shadow-md shadow-blue-500/20' : 'border-gray-600/30'
         } rounded-lg overflow-hidden transition-all duration-200`}
       >
         {/* Icône de recherche */}
         <div className="flex items-center justify-center pl-3">
           <svg
+            aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             className="h-4 w-4 text-gray-300"
             fill="none"
@@ -64,11 +64,13 @@ export const SearchField: React.FC<ISearchField> = ({ onSearch }) => {
         {/* Bouton d'effacement */}
         {query && (
           <button
+            type="button"
             className="flex items-center justify-center w-8 h-8 mr-1 text-gray-400 hover:text-gray-200 transition-colors"
             onClick={handleClear}
             aria-label="Effacer la recherche"
           >
             <svg
+              aria-hidden="true"
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4"
               fill="none"
@@ -86,5 +88,5 @@ export const SearchField: React.FC<ISearchField> = ({ onSearch }) => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};

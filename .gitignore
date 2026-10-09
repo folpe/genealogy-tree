@@ -1,31 +1,43 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Dépendances
+node_modules/
 
+# Build
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+
+# Env
 .env
-
-node_modules
-dist
-dist-ssr
+.env.local
+.env.*.local
+!.env.example
 *.local
 
-# Editor directories and files
+# Logs
+*.log
+
+# Éditeur
 .vscode/*
 !.vscode/extensions.json
-.idea
+!.vscode/settings.json
+.idea/
 .DS_Store
-*.suo
-*.sln
 *.sw?
 
+# Lefthook
+.lefthook-local.yml
 
+# Claude Code, état local
+.claude/settings.local.json
+
+# Données locales
 public/data
 mocks/*
 
-# Local Netlify folder
+# Netlify local
 .netlify

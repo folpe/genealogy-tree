@@ -1,48 +1,42 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import Logo from '../../assets/logo.svg'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Logo from '../../assets/logo.svg';
 
 export const Login = () => {
-  const [input, setInput] = useState('')
-  const [error, setError] = useState('')
-  const navigate = useNavigate()
+  const [input, setInput] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const tryLogin = async (enteredPassword: string) => {
     const res = await fetch('/api/auth', {
       method: 'POST',
       body: JSON.stringify({ password: enteredPassword }),
       headers: { 'Content-Type': 'application/json' },
-    })
+    });
 
-    const data = await res.json()
+    const data = await res.json();
 
     if (data.auth) {
-      localStorage.setItem('access_granted', 'true')
-      navigate('/tree')
+      localStorage.setItem('access_granted', 'true');
+      navigate('/tree');
     } else {
-      setError('Mot de passe incorrect.')
+      setError('Mot de passe incorrect.');
     }
-  }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    tryLogin(input)
-  }
+    e.preventDefault();
+    tryLogin(input);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center px-4">
       <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl shadow-2xl p-8 w-full max-w-sm">
         <div className="mb-6">
           <div>
-            <img
-              src={Logo}
-              alt="Ances-Tree Logo"
-              className="w-20 h-20 mx-auto mb-2"
-            />
+            <img src={Logo} alt="Ances-Tree Logo" className="w-20 h-20 mx-auto mb-2" />
           </div>
-          <h1 className="text-white text-3xl font-bold text-center">
-            Ances-Tree
-          </h1>
+          <h1 className="text-white text-3xl font-bold text-center">Ances-Tree</h1>
           <p className="text-gray-400 text-sm text-center mt-1">
             Explorez votre histoire familiale
           </p>
@@ -81,5 +75,5 @@ export const Login = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

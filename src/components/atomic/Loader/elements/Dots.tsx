@@ -1,12 +1,12 @@
-import React from 'react'
-import { cva } from 'class-variance-authority'
+import { cva } from 'class-variance-authority';
+import type React from 'react';
 
 interface IDots {
-  numDots?: number
-  size?: 'small' | 'medium' | 'large'
+  numDots?: number;
+  size?: 'small' | 'medium' | 'large';
 }
 
-export const Dots: React.FC<IDots> = ({numDots = 5, size = 'medium' }) => {
+export const Dots: React.FC<IDots> = ({ numDots = 5, size = 'medium' }) => {
   const wrapper = cva('flex', {
     variants: {
       size: {
@@ -18,7 +18,7 @@ export const Dots: React.FC<IDots> = ({numDots = 5, size = 'medium' }) => {
     defaultVariants: {
       size: 'medium',
     },
-  })
+  });
   const dotSize = cva('rounded-full animate-bounce bg-primary', {
     variants: {
       size: {
@@ -30,21 +30,17 @@ export const Dots: React.FC<IDots> = ({numDots = 5, size = 'medium' }) => {
     defaultVariants: {
       size: 'medium',
     },
-  })
+  });
   return (
     <div className={wrapper({ size })}>
       {[...Array(numDots).keys()]
         .map((i) => i + 1)
         .map((i) => {
-          const delay = `${i * 100}ms`
+          const delay = `${i * 100}ms`;
           return (
-            <div
-              key={i}
-              className={dotSize({ size })}
-              style={{ animationDelay: delay }}
-            ></div>
-          )
+            <div key={i} className={dotSize({ size })} style={{ animationDelay: delay }}></div>
+          );
         })}
     </div>
-  )
-}
+  );
+};

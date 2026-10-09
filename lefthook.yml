@@ -1,0 +1,21 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: biome
+      glob: "*.{js,ts,jsx,tsx,json,jsonc,css}"
+      run: bunx biome check --staged --no-errors-on-unmatched {staged_files}
+    - name: type-check
+      glob: "*.{ts,tsx}"
+      run: bun run type-check
+    - name: gitleaks
+      run: gitleaks protect --staged --redact --no-banner
+
+pre-push:
+  jobs:
+    - name: knip
+      run: bun run knip
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: bunx commitlint --edit {1}

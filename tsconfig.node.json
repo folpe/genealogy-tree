@@ -1,11 +1,9 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "composite": true,
-    "skipLibCheck": true,
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true,
-    "strict": true
+    "lib": ["ES2023"],
+    "types": ["node"]
   },
-  "include": ["farm.config.ts"]
+  "include": ["farm.config.ts", "vitest.config.ts"]
 }

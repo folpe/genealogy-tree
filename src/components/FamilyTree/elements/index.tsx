@@ -1,1 +1,1 @@
-export { PersonNode } from './PersonNode'
+export { PersonNode } from './PersonNode';

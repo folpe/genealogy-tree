@@ -1,1 +1,1 @@
-export { SynthesisSection } from './SynthesisSection'
+export { SynthesisSection } from './SynthesisSection';

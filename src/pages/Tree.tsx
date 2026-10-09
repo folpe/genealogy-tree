@@ -1,86 +1,84 @@
-import React, { useEffect, useState } from 'react'
-import { SynthesisSection } from '../components/SynthesisSection'
-import { SearchField } from '../components/atomic/SearchField'
-import { Person } from '../components/FamilyTree/FamilyTree.types'
-import { PersonCard } from '../components/PersonCard'
+import type React from 'react';
+import { useEffect, useState } from 'react';
+import Logo from '../assets/logo.svg';
+import { Loader } from '../components/atomic/Loader/Loader';
+import { SearchField } from '../components/atomic/SearchField';
+import { FamilyTree } from '../components/FamilyTree';
+import type { Person } from '../components/FamilyTree/FamilyTree.types';
+import { getMatchingIds } from '../components/FamilyTree/FamilyTree.utils';
+import { PersonCard } from '../components/PersonCard';
+import { SynthesisSection } from '../components/SynthesisSection';
 
-import Logo from '../assets/logo.svg'
-
-import { FamilyTree } from '../components/FamilyTree'
-import { Loader } from '../components/atomic/Loader/Loader'
-import { getMatchingIds } from '../components/FamilyTree/FamilyTree.utils'
-
-const USE_CACHE = true
+const USE_CACHE = true;
 
 export const Tree: React.FC = () => {
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
-  const [highlightedNodes, setHighlightedNodes] = useState<string[]>([])
-  const [shouldFocusOnNodes, setShouldFocusOnNodes] = useState(false)
-  const [shouldResetZoom, setShouldResetZoom] = useState(false)
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [highlightedNodes, setHighlightedNodes] = useState<string[]>([]);
+  const [shouldFocusOnNodes, setShouldFocusOnNodes] = useState(false);
+  const [shouldResetZoom, setShouldResetZoom] = useState(false);
   const [familyData, setFamilyData] = useState({
     data: [],
     isLoading: false,
     isError: '',
-  })
+  });
 
   useEffect(() => {
     const fetchData = async () => {
-      setFamilyData((prev) => ({ ...prev, isLoading: true }))
+      setFamilyData((prev) => ({ ...prev, isLoading: true }));
       try {
         const response = await fetch(
-          `/api/getNotionPeople${USE_CACHE ? '?useCache=true' : '?useCache=false'}`
-        )
+          `/api/getNotionPeople${USE_CACHE ? '?useCache=true' : '?useCache=false'}`,
+        );
         if (!response.ok) {
           setFamilyData((prev) => ({
             ...prev,
             isLoading: false,
             isError: 'Erreur lors du chargement des données',
-          }))
-          throw new Error('Erreur lors du chargement des données')
+          }));
+          throw new Error('Erreur lors du chargement des données');
         }
-        const jsonData = await response.json()
-        setFamilyData((prev) => ({ ...prev, isLoading: false, data: jsonData }))
+        const jsonData = await response.json();
+        setFamilyData((prev) => ({ ...prev, isLoading: false, data: jsonData }));
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err)
+        const errorMessage = err instanceof Error ? err.message : String(err);
         setFamilyData((prev) => ({
           ...prev,
           isLoading: false,
           isError: errorMessage,
-        }))
-        console.error(errorMessage)
+        }));
       }
-    }
+    };
 
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   const handleSearch = (query: string) => {
     // Si la requête est vide, réinitialiser tout
     if (!query.trim()) {
-      setHighlightedNodes([])
+      setHighlightedNodes([]);
 
       // Déclencher la réinitialisation du zoom
-      setShouldResetZoom(true)
-      setShouldFocusOnNodes(false)
-      return
+      setShouldResetZoom(true);
+      setShouldFocusOnNodes(false);
+      return;
     }
 
-    const matches = getMatchingIds(familyData.data, query)
-    setHighlightedNodes(matches)
+    const matches = getMatchingIds(familyData.data, query);
+    setHighlightedNodes(matches);
 
     // Déclencher la focalisation sur les nœuds correspondants
     if (matches.length > 0) {
-      setShouldFocusOnNodes(true)
-      setShouldResetZoom(false)
+      setShouldFocusOnNodes(true);
+      setShouldResetZoom(false);
     }
-  }
+  };
 
   // Cette fonction sera appelée par FamilyTree pour indiquer
   // que l'action a été exécutée
   const handleZoomActionComplete = () => {
-    setShouldFocusOnNodes(false)
-    setShouldResetZoom(false)
-  }
+    setShouldFocusOnNodes(false);
+    setShouldResetZoom(false);
+  };
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
@@ -98,11 +96,7 @@ export const Tree: React.FC = () => {
 
         {/* Section de synthèse - cachée sur mobile, visible sur desktop */}
         <div className="hidden sm:flex items-center justify-end w-full sm:w-1/3 order-2 sm:order-3">
-          {familyData.isLoading ? (
-            <Loader dots />
-          ) : (
-            <SynthesisSection people={familyData.data} />
-          )}
+          {familyData.isLoading ? <Loader dots /> : <SynthesisSection people={familyData.data} />}
         </div>
       </header>
 
@@ -149,10 +143,8 @@ export const Tree: React.FC = () => {
       </div>
 
       <footer className="w-full p-3 bg-white/5 border-t border-white/10 text-center">
-        <p className="text-gray-400 text-xs">
-          Accès réservé à la famille ✨ © 2025 Ances-Tree
-        </p>
+        <p className="text-gray-400 text-xs">Accès réservé à la famille ✨ © 2025 Ances-Tree</p>
       </footer>
     </div>
-  )
-}
+  );
+};

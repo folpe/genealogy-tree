@@ -1,13 +1,14 @@
-import React, { useRef, useEffect } from 'react'
-import * as d3 from 'd3'
-import { FamilyTreeNode, Person } from '../FamilyTree.types'
-import { useImagePreloader } from '../../../utils/useImagePreloader'
+import * as d3 from 'd3';
+import type React from 'react';
+import { useEffect, useRef } from 'react';
+import { useImagePreloader } from '../../../utils/useImagePreloader';
+import type { FamilyTreeNode, Person } from '../FamilyTree.types';
 
 interface PersonNodeProps {
-  node: FamilyTreeNode
-  width: number
-  height: number
-  onToggleCollapse?: (id: string) => void
+  node: FamilyTreeNode;
+  width: number;
+  height: number;
+  onToggleCollapse?: (id: string) => void;
 }
 
 export const PersonNode: React.FC<PersonNodeProps> = ({
@@ -16,9 +17,9 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
   height = 70,
   onToggleCollapse,
 }) => {
-  const { person, isCollapsed } = node
-  const nodeRef = useRef<SVGGElement>(null)
-  const { isLoaded } = useImagePreloader(person.photo)
+  const { person, isCollapsed } = node;
+  const nodeRef = useRef<SVGGElement>(null);
+  const { isLoaded } = useImagePreloader(person.photo);
 
   // Fonction pour récupérer le style en fonction du genre
   const getNodeStyle = (p: Person) => {
@@ -31,7 +32,7 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
           gradient: p.deathDate
             ? ['var(--color-gray-600)', 'var(--color-gray-800)']
             : ['var(--color-blue-400)', 'var(--color-blue-600)'],
-        }
+        };
       case 'female':
         return {
           fill: `${p.deathDate ? 'black' : 'var(--color-pink-400)'}`,
@@ -40,23 +41,23 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
           gradient: p.deathDate
             ? ['var(--color-gray-600)', 'var(--color-gray-800)']
             : ['var(--color-pink-400)', 'var(--color-pink-600)'],
-        }
+        };
       default:
         return {
           fill: '#E8E8E8',
           stroke: '#888',
           strokeWidth: 4,
           gradient: ['#E8E8E8', '#D0D0D0'],
-        }
+        };
     }
-  }
+  };
 
   // Effet pour ajouter les interactions D3
   useEffect(() => {
-    if (!nodeRef.current) return
+    if (!nodeRef.current) return;
 
-    const nodeSelection = d3.select(nodeRef.current)
-    nodeSelection.datum(node)
+    const nodeSelection = d3.select(nodeRef.current);
+    nodeSelection.datum(node);
 
     // Ajouter effet de survol
     nodeSelection
@@ -66,7 +67,7 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
           .duration(200)
           .attr('filter', 'url(#glow)')
           .select('rect')
-          .attr('stroke-width', 3)
+          .attr('stroke-width', 3);
       })
       .on('mouseleave', function () {
         d3.select(this)
@@ -74,24 +75,24 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
           .duration(200)
           .attr('filter', null)
           .select('rect')
-          .attr('stroke-width', nodeStyle.strokeWidth)
-      })
+          .attr('stroke-width', nodeStyle.strokeWidth);
+      });
 
     // Ajouter les événements de clic pour le repli/dépliage
     if (node.children && node.children.length > 0 && onToggleCollapse) {
       nodeSelection
         .select('.collapse-button')
         .style('cursor', 'pointer')
-        .on('click', function (event) {
-          event.stopPropagation()
-          onToggleCollapse(person.id)
-        })
+        .on('click', (event) => {
+          event.stopPropagation();
+          onToggleCollapse(person.id);
+        });
     }
-  }, [node, person.id, onToggleCollapse])
+  }, [node, person.id, onToggleCollapse]);
 
-  const nodeStyle = getNodeStyle(person)
-  const gradientId = `gradient-${person.id}`
-  const hasPhoto = !!person.photo
+  const nodeStyle = getNodeStyle(person);
+  const gradientId = `gradient-${person.id}`;
+  const hasPhoto = !!person.photo;
 
   return (
     <g ref={nodeRef} className="person-node">
@@ -149,15 +150,7 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
           clipPath={`url(#clip-${person.id})`}
           opacity={isLoaded ? 1 : 0}
         >
-          {isLoaded && (
-            <animate
-              attributeName="opacity"
-              from="0"
-              to="1"
-              dur="2s"
-              fill="freeze"
-            />
-          )}
+          {isLoaded && <animate attributeName="opacity" from="0" to="1" dur="2s" fill="freeze" />}
         </image>
       )}
 
@@ -209,5 +202,5 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
         </g>
       )}
     </g>
-  )
-}
+  );
+};

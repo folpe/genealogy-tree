@@ -21,4 +21,4 @@ export default {
     'bg-gray-600',
     'bg-gray-800',
   ],
-}
+};
