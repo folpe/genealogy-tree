@@ -196,7 +196,7 @@ Garde-fous sans friction :
 - Deux statuts seulement : **membre** (tout le monde) et **admin** (quelques personnes).
 - **Tout membre peut inviter** quelqu'un de son cercle proche ou de ses descendants : il choisit la fiche correspondante, l'invité reçoit un email. C'est le moteur d'adoption.
 - Les autres arrivées passent par une **demande d'accès** (nom, email, "qui es-tu dans la famille"), validée par un admin, qui relie la personne à sa fiche.
-- Connexion : **magic link** par email, puis **passkey** proposée (Face ID / Touch ID). Les passkeys sont rattachées au domaine racine `folpe.me` (RP ID) pour survivre à un changement de sous-domaine ; les emails partent de `famille@folpe.me` (SPF, DKIM et DMARC Resend sur `folpe.me`). Sessions en cookie httpOnly, `proxy.ts` sur les routes, policy revérifiée dans chaque service.
+- Connexion : **magic link** par email, puis **passkey** proposée (Face ID / Touch ID). Les passkeys sont rattachées au domaine racine `folpe.me` (RP ID) pour survivre à un changement de sous-domaine ; les emails partent de `famille@mail.folpe.me` (domaine d’envoi Resend `mail.folpe.me`, DKIM et SPF sur ce sous-domaine). Sessions en cookie httpOnly, `proxy.ts` sur les routes, policy revérifiée dans chaque service.
 - Rôle admin : valider les demandes d'accès, gérer les comptes, arbitrer les litiges, recevoir les suggestions escaladées, import / export GEDCOM. Le propriétaire (Folpe) ne peut pas être rétrogradé ; impossible de retirer le dernier admin.
 
 ### 6.6 Exemple (famille fictive des maquettes)

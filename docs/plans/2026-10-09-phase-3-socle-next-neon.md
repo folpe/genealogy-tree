@@ -77,7 +77,7 @@ scripts/
 
 - [x] Projet Vercel `ances-tree` (équipe `voidcorp`) relié au repo GitHub, preview par PR, production sur `main`, framework Next.js, Node 24.
 - [x] Variables posées par environnement sans transiter en clair : `DATABASE_URL` (rôle applicatif de la branche Neon correspondante), `BETTER_AUTH_SECRET` (distinct par environnement), `NEXT_PUBLIC_APP_URL` (production et développement ; en preview, déduite de `VERCEL_URL` au lot 4). Le rôle propriétaire n'est jamais posé dans Vercel.
-- [ ] `src/env.ts` (avec son premier consommateur, au lot 4) : `DATABASE_URL`, `DATABASE_URL_UNPOOLED` (migrations, hors app), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `PASSKEY_RP_ID=folpe.me`, `RESEND_API_KEY`, `EMAIL_FROM=famille@folpe.me`, `BLOB_READ_WRITE_TOKEN`, `NEXT_PUBLIC_APP_URL`, `NOTION_TOKEN` et `NOTION_DATABASE_ID` (scripts de migration uniquement, jamais exposés à l'app).
+- [ ] `src/env.ts` (avec son premier consommateur, au lot 4) : `DATABASE_URL`, `DATABASE_URL_UNPOOLED` (migrations, hors app), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `PASSKEY_RP_ID=folpe.me`, `RESEND_API_KEY`, `EMAIL_FROM=famille@mail.folpe.me`, `BLOB_READ_WRITE_TOKEN`, `NEXT_PUBLIC_APP_URL`, `NOTION_TOKEN` et `NOTION_DATABASE_ID` (scripts de migration uniquement, jamais exposés à l'app).
 - [ ] `.env.example` à jour, sans valeur réelle ; gitleaks vérifie.
 - **Acceptation :** un env manquant fait échouer le démarrage avec un message clair ; `vercel env pull` fournit un `.env.local` fonctionnel.
 
@@ -101,7 +101,7 @@ scripts/
 - [x] better-auth 1.6.33 avec adaptateur Drizzle (`src/server/auth/auth.ts`, fabrique testable) : `magicLink` (15 min, usage unique, jeton haché en base), `passkey` (RP ID `PASSKEY_RP_ID`, `folpe.me` en production, l'hôte de l'app ailleurs), sessions de 30 jours prolongées à chaque visite, rate limiting en base. Tables d'auth et de membres dans la migration `0001_auth_members`.
 - [x] Mode invitation seule (`members/admission.ts`) : un compte n'est créé que pour l'admin d'amorçage (`AUTH_BOOTSTRAP_ADMIN_EMAIL`, devient propriétaire) ou une adresse qui détient une invitation en cours (membre relié à la fiche, invitation consommée). Aucun lien n'est envoyé à une adresse inconnue, avec la même réponse qu'une adresse connue. Vérifié en intégration et de bout en bout sur le build.
 - [x] Proxy : sans cookie de session, toute route hors `/login`, `/invite/`, `/request-access` renvoie vers `/login` ; session revérifiée côté serveur (`requireSession`). Page `/login` branchée (lien, passkey), accueil provisoire `/tree` (activation de passkey, déconnexion).
-- [ ] Emails React Email + Resend depuis `famille@folpe.me` : lien de connexion, invitation, demande d'accès reçue (admins), demande acceptée. Gabarits au style Album (voir `docs/design/DESIGN.md` et la maquette `EmailVeille`).
+- [ ] Emails React Email + Resend depuis `famille@mail.folpe.me` : lien de connexion, invitation, demande d'accès reçue (admins), demande acceptée. Gabarits au style Album (voir `docs/design/DESIGN.md` et la maquette `EmailVeille`).
 - [x] `members` (`members.policy.ts` pur, `members.service.ts`) : invitation du cercle proche et de la descendance (un admin invite tout le monde, une fiche déjà reliée ne se réinvite pas), lien `/invite/<jeton>` valable 14 jours qui accueille l'invité par son prénom et préremplit son adresse ; demandes d'accès publiques (`/request-access`), prévenant les admins, acceptées en choisissant la fiche (`/admin`, 404 pour un non-admin) ; « Nommer admin » (`/members`) ; propriétaire non rétrogradable, dernier admin non retirable. Server actions qui prennent l'identité dans la session.
 - [x] Rate limiting : liens magiques 5 par minute ; demandes d'accès, une seule en attente par adresse (les admins ne sont prévenus qu'une fois) et 20 par heure au total.
 - [ ] Tests : unitaires sur le service members (droits d'inviter, cas propriétaire et dernier admin) ; intégration sur le cycle invitation -> compte -> membership ; e2e Playwright sur la connexion par magic link (boîte mail interceptée en test).
@@ -144,7 +144,8 @@ Script `scripts/migrate-notion/`, idempotent, mode `--dry-run`, cible choisie ex
 ### Lot 9 : bascule
 
 - [ ] Domaine `famille.folpe.me` branché sur Vercel (CNAME), certificat actif.
-- [ ] DNS email de `folpe.me` : SPF, DKIM et DMARC fournis par Resend, vérifiés ; envoi de test reçu en boîte principale chez Gmail et chez un webmail Orange (aînés).
+- [x] Domaine d'envoi Resend `mail.folpe.me` (créé par Folpe) : DKIM `resend._domainkey.mail.folpe.me`, MX et SPF sur `send.mail.folpe.me` ; DMARC hérité de `folpe.me`. Clé posée dans Vercel sur les 3 environnements, `EMAIL_FROM=Ances-Tree <famille@mail.folpe.me>`.
+- [ ] Envoi de test reçu en boîte principale chez Gmail et chez un webmail Orange (aînés).
 - [ ] Création des comptes : Folpe (propriétaire, admin) puis premières invitations envoyées par Folpe.
 - [ ] Redirection 301 de `ances-tree.netlify.app` vers `famille.folpe.me` (règle `[[redirects]]` dans `netlify.toml` d'une branche de redirection publiée une dernière fois sur Netlify).
 - [ ] Suppression de `netlify/functions`, du client Notion, de `netlify.toml` (après la publication de la redirection) et du dossier `legacy/`.
@@ -187,7 +188,7 @@ bun run migrate:notion -- --dry-run --target dev
 | Avant le lot 2 | Créer ou relier le projet Vercel (équipe et facturation), donner accès au repo GitHub. |
 | Avant le lot 3 | Créer le compte et le projet Neon (ou autoriser l'intégration Vercel-Neon), choisir la région. |
 | Lot 3 | Valider la première migration SQL sur la branche `main`. |
-| Avant le lot 4 | Compte Resend, ajout du domaine `folpe.me`, enregistrements DNS SPF, DKIM et DMARC chez le registrar. |
+| Avant le lot 4 | Compte Resend, domaine d'envoi `mail.folpe.me` (fait). |
 | Lot 4 | Fournir l'adresse email du compte propriétaire. |
 | Avant le lot 8 | Fournir un token Notion en lecture seule et l'ID de la base ; indiquer où stocker l'export brut chiffré. |
 | Lot 8 | Relire et valider le rapport de migration `preview`, arbitrer les anomalies, donner le feu vert pour `main`. |

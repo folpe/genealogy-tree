@@ -35,7 +35,7 @@ function load() {
       AUTH_BOOTSTRAP_ADMIN_EMAIL: z.email().optional(),
       PASSKEY_RP_ID: z.string().min(1).optional(),
       RESEND_API_KEY: z.string().startsWith('re_').optional(),
-      EMAIL_FROM: z.string().min(3).default('Ances-Tree <famille@folpe.me>'),
+      EMAIL_FROM: z.string().min(3).default('Ances-Tree <famille@mail.folpe.me>'),
       VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
       VERCEL_BRANCH_URL: z.string().optional(),
       VERCEL_URL: z.string().optional(),
