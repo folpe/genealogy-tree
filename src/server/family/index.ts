@@ -62,3 +62,6 @@ export {
   parseFuzzyDate,
   VERS_MARGIN_YEARS,
 } from './fuzzy-date.helper';
+export type { BloodRelationship, Relationship } from './kinship.helper';
+export { commonAncestors, findRelationshipPath, relationship } from './kinship.helper';
+export { describeDegree, describeRelationship } from './kinship.labels';

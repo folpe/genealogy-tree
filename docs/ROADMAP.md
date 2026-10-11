@@ -15,7 +15,7 @@ Point d'entrée pour savoir où en est la refonte et ce qu'il reste à faire. Le
 |---|---|---|---|
 | 0 | Hotfix sécurité | Écartée le 2026-10-09 (risque accepté jusqu'à la phase 3) | - |
 | 1 | [Fondations](plans/2026-10-09-phase-1-fondations.md) | Faite, PR à merger | CI verte |
-| 2 | [Domaine en TDD](plans/2026-10-09-phase-2-domaine.md) | En cours (lots 1 à 4) | Graphe, parenté, policies couverts |
+| 2 | [Domaine en TDD](plans/2026-10-09-phase-2-domaine.md) | En cours (lots 1 à 5) | Graphe, parenté, policies couverts |
 | 3 | [Socle Next, Neon, auth, migration Notion](plans/2026-10-09-phase-3-socle-next-neon.md) | À faire | App en ligne sur `famille.folpe.me` avec comptes et données migrées |
 | 4 | [Moteur de rendu](plans/2026-10-09-phase-4-moteur-rendu.md) | À faire | Arbre complet et fluide |
 | 5 | [Design et animations](plans/2026-10-09-phase-5-design-animations.md) | À faire | Maquettes implémentées |
