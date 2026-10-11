@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { LoginForm } from './login-form';
 
 export const metadata: Metadata = { title: 'Connexion' };
@@ -21,7 +22,13 @@ export default function LoginPage() {
         <LoginForm />
 
         <p className="mt-8 border-t border-rule pt-6 text-sm text-ink-2">
-          Un espace privé : seuls les membres invités voient l’arbre.
+          Un espace privé : seuls les membres invités voient l’arbre.{' '}
+          <Link
+            href="/request-access"
+            className="font-semibold text-ink underline underline-offset-4"
+          >
+            Pas encore invité ? Demander l’accès
+          </Link>
         </p>
       </div>
     </main>

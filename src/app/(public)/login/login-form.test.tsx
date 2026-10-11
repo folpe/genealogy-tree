@@ -56,4 +56,9 @@ describe('LoginForm', () => {
     expect(passkeySignIn).toHaveBeenCalled();
     expect(push).toHaveBeenCalledWith('/tree');
   });
+
+  it('préremplit l’adresse d’une invitation', () => {
+    render(<LoginForm defaultEmail="lea@exemple.fr" />);
+    expect(screen.getByRole('textbox', { name: 'Ton email' })).toHaveValue('lea@exemple.fr');
+  });
 });

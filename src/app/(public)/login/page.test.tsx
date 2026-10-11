@@ -21,5 +21,8 @@ describe('page de connexion', () => {
   it('rappelle que l’espace est privé', () => {
     render(<LoginPage />);
     expect(screen.getByText(/seuls les membres invités voient l’arbre/)).toBeVisible();
+    expect(
+      screen.getByRole('link', { name: 'Pas encore invité ? Demander l’accès' }),
+    ).toHaveAttribute('href', '/request-access');
   });
 });
