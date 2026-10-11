@@ -3,7 +3,7 @@
 Arbre généalogique familial. L'app actuelle (Farm, React 18, données Notion, Netlify) est en cours de refonte vers Next.js 16, Neon et Vercel sur `famille.folpe.me`.
 
 - Spec de la refonte : [docs/specs/2026-10-09-refonte-ances-tree.md](docs/specs/2026-10-09-refonte-ances-tree.md)
-- Journal de décisions : [docs/DECISIONS.md](docs/DECISIONS.md)
+- Journal de décisions : [docs/decisions-log/](docs/decisions-log/)
 
 ## Prérequis
 

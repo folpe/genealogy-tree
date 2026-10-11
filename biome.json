@@ -17,7 +17,9 @@
       "!**/test-results",
       "!public",
       "!docs/**/*.dc.html",
-      "!**/*.svg"
+      "!**/*.svg",
+      "!.claude",
+      "!.void/hooks"
     ]
   },
   "formatter": {

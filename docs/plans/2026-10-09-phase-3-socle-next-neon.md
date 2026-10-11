@@ -143,7 +143,7 @@ Script `scripts/migrate-notion/`, idempotent, mode `--dry-run`, cible choisie ex
 - [ ] Création des comptes : Folpe (propriétaire, admin) puis premières invitations envoyées par Folpe.
 - [ ] Redirection 301 de `ances-tree.netlify.app` vers `famille.folpe.me` (règle `[[redirects]]` dans `netlify.toml` d'une branche de redirection publiée une dernière fois sur Netlify).
 - [ ] Suppression de `netlify/functions`, du client Notion, de `netlify.toml` (après la publication de la redirection) et du dossier `legacy/`.
-- [ ] Mise à jour de la spec et de `docs/DECISIONS.md` si des écarts sont apparus.
+- [ ] Mise à jour de la spec et de `docs/decisions-log/` si des écarts sont apparus.
 - **Garde-fou destructif :** la révocation du token Notion et l'archivage de la base Notion n'ont lieu qu'après feu vert explicite de Folpe, une fois la production vérifiée pendant au moins une semaine.
 
 ## 6. Commandes de vérification
