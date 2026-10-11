@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
@@ -12,13 +12,24 @@ export default defineConfig({
     // Domaine et serveur en Node ; les composants déclarent `@vitest-environment jsdom`.
     environment: 'node',
     include: ['src/**/*.test.{ts,tsx}'],
+    // Les tests contre une vraie base passent par `bun run test:integration`.
+    exclude: [...configDefaults.exclude, 'src/**/*.integration.test.ts'],
     setupFiles: ['./tests/vitest.setup.ts'],
     passWithNoTests: true,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['src/server/**'],
-      exclude: ['**/*.test.{ts,tsx}', '**/index.ts', '**/*.types.ts'],
+      exclude: [
+        '**/*.test.{ts,tsx}',
+        '**/index.ts',
+        '**/*.types.ts',
+        // Couverts par les tests d'intégration (`bun run test:integration`).
+        '**/*.repository.ts',
+        'src/server/db/schema/**',
+        'src/server/db/migrations/**',
+        'src/server/db/types.ts',
+      ],
       // Seuils du domaine (plan de la phase 2, lot 8).
       thresholds: { lines: 95, branches: 90 },
     },

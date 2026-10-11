@@ -5,7 +5,8 @@
   "mutate": [
     "src/server/access/access.policy.ts",
     "src/server/family/kinship.helper.ts",
-    "src/server/family/fuzzy-date.helper.ts"
+    "src/server/family/fuzzy-date.helper.ts",
+    "src/server/family/family.mapper.ts"
   ],
   "reporters": ["clear-text", "progress"],
   "coverageAnalysis": "off",

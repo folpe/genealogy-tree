@@ -72,19 +72,55 @@ jobs:
           "$RUNNER_TEMP/gitleaks" version
       - run: '"$RUNNER_TEMP/gitleaks" git --redact --verbose'
 
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: ances_tree
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:test@localhost:5432/ances_tree
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - run: bun install --frozen-lockfile
+      # Le schéma versionné doit correspondre au code : aucune migration oubliée.
+      - name: Check migrations are up to date
+        run: |
+          bunx drizzle-kit generate --name ci-drift-check
+          git diff --exit-code -- src/server/db/migrations
+          test -z "$(git ls-files --others --exclude-standard src/server/db/migrations)"
+      - run: bun run test:integration
+
   # Point de contrôle unique pour la protection de branche.
   quality:
     if: ${{ always() }}
-    needs: [code, dependency-audit, secrets]
+    needs: [code, integration, dependency-audit, secrets]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Require every quality check
         env:
           CODE_RESULT: ${{ needs.code.result }}
+          INTEGRATION_RESULT: ${{ needs.integration.result }}
           AUDIT_RESULT: ${{ needs.dependency-audit.result }}
           SECRETS_RESULT: ${{ needs.secrets.result }}
         run: |
           test "$CODE_RESULT" = success
+          test "$INTEGRATION_RESULT" = success
           test "$AUDIT_RESULT" = success
           test "$SECRETS_RESULT" = success
