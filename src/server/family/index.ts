@@ -1,4 +1,35 @@
 export type {
+  DisplayedEdge,
+  DisplayedGraph,
+  DisplayedUnion,
+  DisplayOptions,
+} from './family.display';
+export { selectDisplayedGraph } from './family.display';
+export {
+  CycleError,
+  InconsistentDatesError,
+  SelfUnionError,
+  TooManyBiologicalParentsError,
+} from './family.errors';
+export type { FamilyIndex, Partner, Relative, Sibling } from './family.helper';
+export {
+  ancestorsOf,
+  buildFamilyIndex,
+  childrenOf,
+  descendantsOf,
+  FILIATION_KINDS,
+  isOngoing,
+  parentsOf,
+  partnersOf,
+  raisedBy,
+  siblingsOf,
+} from './family.helper';
+export {
+  assertCanAddParentChild,
+  assertCanAddUnion,
+  assertCanUpdateDates,
+} from './family.invariants';
+export type {
   FamilyGraph,
   FuzzyDate,
   FuzzyDatePrecision,
@@ -27,6 +58,7 @@ export {
   compareFuzzyDates,
   formatFuzzyDate,
   fuzzyDateRange,
+  isCertainlyBefore,
   parseFuzzyDate,
   VERS_MARGIN_YEARS,
 } from './fuzzy-date.helper';
