@@ -1,6 +1,6 @@
 # Ances-Tree
 
-Arbre généalogique familial. L'app actuelle (Farm, React 18, données Notion, Netlify) est en cours de refonte vers Next.js 16, Neon et Vercel sur `famille.folpe.me`.
+Arbre généalogique familial. Refonte en cours vers Next.js 16, Neon et Vercel sur `famille.folpe.me` (avancement : [docs/ROADMAP.md](docs/ROADMAP.md)). L'ancienne app (Farm, Notion, Netlify) reste en ligne sur Netlify jusqu'à la bascule ; son code est dans `legacy/`.
 
 - Spec de la refonte : [docs/specs/2026-10-09-refonte-ances-tree.md](docs/specs/2026-10-09-refonte-ances-tree.md)
 - Journal de décisions : [docs/decisions-log/](docs/decisions-log/)
@@ -15,9 +15,9 @@ Arbre généalogique familial. L'app actuelle (Farm, React 18, données Notion, 
 
 ```bash
 bun install          # installe les dépendances et les hooks Lefthook
-bun run dev          # serveur de dev Farm
-bun run netlify:dev  # dev avec les fonctions Netlify (/api)
-bun run build        # build de production dans dist/
+bun run dev          # serveur de dev Next (Turbopack)
+bun run build        # build de production Next
+bun run start        # sert le build
 ```
 
 ## Qualité

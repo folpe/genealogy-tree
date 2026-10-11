@@ -1,4 +1,7 @@
 [build]
+  # Phase 3 : le repo est passé à Next, servi par Vercel. Netlify ne rebâtit plus rien
+  # et garde en ligne le dernier déploiement de l'ancienne app jusqu'à la bascule (lot 9).
+  ignore = "exit 0"
   command = "bun run build"
   publish = "dist"
 

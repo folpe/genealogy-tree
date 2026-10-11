@@ -19,7 +19,10 @@
       "!docs/**/*.dc.html",
       "!**/*.svg",
       "!.claude",
-      "!.void/hooks"
+      "!.void/hooks",
+      "!legacy",
+      "!**/.next",
+      "!next-env.d.ts"
     ]
   },
   "formatter": {
@@ -84,20 +87,6 @@
         "rules": {
           "suspicious": {
             "noConsole": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["src/components/FamilyTree/**", "src/components/PersonCard/**"],
-      "linter": {
-        "rules": {
-          "correctness": {
-            "useExhaustiveDependencies": "off"
-          },
-          "a11y": {
-            "noStaticElementInteractions": "off",
-            "useKeyWithClickEvents": "off"
           }
         }
       }

@@ -127,6 +127,8 @@ Usage de l'accent, exclusivement : personne sélectionnée, "Toi", chemin du lie
 }
 ```
 
+Implémentation (`src/app/globals.css`) : mêmes valeurs, mais chaque token porte ses deux thèmes via `light-dark(clair, sombre)`, piloté par `color-scheme` sur `:root`. Le bloc sombre n'est donc écrit qu'une fois et l'absence de `data-theme` suit le système sans duplication.
+
 Bascule : attribut `data-theme` sur `<html>`, valeur `light`, `dark` ou absente (= suit `prefers-color-scheme`). Script inline dans le `<head>` du layout racine pour poser l'attribut avant la peinture (pas de flash). Préférence enregistrée en cookie (lisible côté serveur) et dans le profil du membre. `<meta name="theme-color">` mis à jour avec `--color-paper`.
 
 ### 3.2 Contrastes (WCAG 2.2) et correctifs à appliquer
