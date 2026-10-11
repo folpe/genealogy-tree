@@ -1,0 +1,13 @@
+title = "ances-tree gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Artefacts de build ignorés par git"
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)dist/''',
+  '''(^|/)\.netlify/''',
+  '''(^|/)coverage/''',
+]

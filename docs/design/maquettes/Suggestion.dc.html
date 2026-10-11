@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Suggérer une modification</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&amp;family=Figtree:wght@400..700&amp;display=swap">
+<style>
+*{font-variation-settings:"SOFT" 100,"WONK" 0}
+body{margin:0;background:#F6F2EA}
+a{color:#A4532F}a:hover{color:#7C3D21}
+button,input,textarea{font-family:inherit}
+input::placeholder,textarea::placeholder{color:#9A9186}
+</style>
+</helmet>
+<div style="min-height: 100vh; height: 100vh; display: flex; flex-direction: column; background: #F6F2EA; color: #1F1C19; font-family: 'Figtree', system-ui, sans-serif; overflow: hidden">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px 32px">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1 1 200px">
+      <span style="width: 40px; height: 40px; border-radius: 50%; background: #1F1C19; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#F6F2EA" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M16 28V16"></path><path d="M16 20C16 16 11 15 9 12"></path><path d="M16 18C16 14 21 13 23 10"></path><circle cx="9" cy="9" r="3"></circle><circle cx="23" cy="7.5" r="3"></circle><circle cx="16" cy="12" r="3"></circle></svg>
+      </span>
+      <span style="font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500; letter-spacing: -0.01em">Ances-Tree</span>
+    </div>
+    <nav aria-label="Vues" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid #E4DCCF; background: #FBF9F5">
+      <a href="Arbre.dc.html" aria-current="page" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 14px; font-weight: 600; text-decoration: none">Arbre</a>
+      <a href="Eventail.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Ancêtres</a>
+      <a href="Frise.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Frise</a>
+      <a href="Carte.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Carte</a>
+      <a href="Recits.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Récits</a>
+    </nav>
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 1 1 300px">
+      <span style="display: flex; align-items: center; gap: 10px; height: 46px; min-width: 220px; box-sizing: border-box; padding: 0 16px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FBF9F5; color: #6F675D; font-size: 15px">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <span style="flex: 1">Trouver quelqu'un</span>
+        <span style="font-size: 12px; color: #9A9186">⌘K</span>
+      </span>
+      <a href="Activite.dc.html" aria-label="Activité" style="width: 46px; height: 46px; box-sizing: border-box; border: 1px solid #E4DCCF; border-radius: 50%; background: #FBF9F5; color: #1F1C19; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+      </a>
+      <span style="width: 46px; height: 46px; box-sizing: border-box; border-radius: 50%; border: 2px solid #FFFFFF; background: #EAE3D7; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-weight: 500; font-size: 17px; box-shadow: 0 0 0 1px #E4DCCF">H</span>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; padding: 0 32px 32px; min-height: 0">
+    <main style="position: relative; flex: 1; min-width: 0; border-radius: 28px; border: 1px solid #E4DCCF; background-color: #F1EBE0; background-image: radial-gradient(rgba(31, 28, 25, 0.24) 1px, transparent 1.5px); background-size: 46px 46px; overflow: hidden">
+
+      <div aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: 760px; height: 560px; transform: translate(-50%, -50%); opacity: 0.35">
+        <svg width="760" height="560" viewBox="0 0 760 560" fill="none" stroke-linecap="round" style="position: absolute; left: 0; top: 0">
+          <path d="M250 90 L390 90" stroke="#C9BCA9" stroke-width="2"></path>
+          <path d="M320 90 C320 200 120 180 120 290 M320 90 C320 200 330 180 330 290" stroke="#C9BCA9" stroke-width="2"></path>
+          <path d="M330 290 L490 290" stroke="#C9BCA9" stroke-width="2"></path>
+          <path d="M410 290 C410 400 340 380 340 480 M410 290 C410 400 520 380 520 480" stroke="#C9BCA9" stroke-width="2"></path>
+        </svg>
+        <sc-for list="{{ bg }}" as="n" hint-placeholder-count="7">
+          <div style="{{ n.wrap }}">
+            <span style="{{ n.bubble }}">{{ n.ini }}</span>
+            <span style="font-family: 'Fraunces', serif; font-size: 16px">{{ n.first }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px">
+        <section role="dialog" aria-label="Suggérer une modification sur la fiche d'Anne" style="width: min(620px, 100%); max-height: 100%; box-sizing: border-box; display: flex; flex-direction: column; border-radius: 28px; background: #FFFFFF; box-shadow: 0 0 0 1px #E4DCCF, 0 30px 80px rgba(31, 28, 25, 0.18); overflow: hidden">
+
+          <sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; align-items: center; gap: 16px; padding: 26px 28px 18px">
+              <span style="width: 64px; height: 64px; flex: none; box-sizing: border-box; border-radius: 50%; border: 4px solid #FFFFFF; background: #EAE3D7; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 22px; box-shadow: 0 0 0 1px #E4DCCF, 0 8px 20px rgba(31, 28, 25, 0.1)">AM</span>
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+                <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">Suggestion pour ta tante</span>
+                <h2 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 28px; line-height: 1.1">Anne Marchand</h2>
+              </div>
+              <a href="Arbre.dc.html" aria-label="Fermer" style="flex: none; width: 44px; height: 44px; box-sizing: border-box; border: 1px solid #E4DCCF; border-radius: 50%; color: #1F1C19; display: inline-flex; align-items: center; justify-content: center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+              </a>
+            </div>
+            <p style="margin: 0 28px; padding: 12px 16px; border-radius: 16px; background: #F6F2EA; font-size: 14px; line-height: 1.5; color: #6F675D">Anne est hors de ta lignée : ta suggestion lui sera envoyée. Elle accepte ou refuse en un clic.</p>
+
+            <div style="flex: 1; overflow-y: auto; padding: 8px 28px 0">
+              <sc-for list="{{ fields }}" as="f" hint-placeholder-count="3">
+                <div style="display: flex; flex-direction: column; gap: 8px; padding: 16px 0; border-bottom: 1px solid #EFE9DF">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px">
+                    <label for="{{ f.id }}" style="font-size: 14px; font-weight: 600">{{ f.label }}</label>
+                    <span style="{{ f.currentStyle }}">{{ f.current }}</span>
+                  </div>
+                  <input id="{{ f.id }}" value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.placeholder }}" style="{{ f.inputStyle }}">
+                </div>
+              </sc-for>
+
+              <div style="display: flex; flex-direction: column; gap: 8px; padding: 16px 0; border-bottom: 1px solid #EFE9DF">
+                <span style="font-size: 14px; font-weight: 600">Justificatif <span style="font-weight: 400; color: #8A8278">facultatif</span></span>
+                <sc-if value="{{ noProof }}" hint-placeholder-val="{{ true }}">
+                  <button type="button" onClick="{{ addProof }}" style="display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 18px; border: 1px dashed #C9BCA9; border-radius: 18px; background: #FBF9F5; color: #6F675D; font-size: 14px; text-align: left; cursor: pointer">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"></rect><circle cx="12" cy="12" r="3"></circle></svg>
+                    Ajouter une photo d'acte ou de livret de famille
+                  </button>
+                </sc-if>
+                <sc-if value="{{ hasProof }}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 8px 0 10px; border-radius: 18px; background: #F6F2EA">
+                    <span style="width: 40px; height: 40px; border-radius: 10px; background: #EAE3D7; display: inline-flex; align-items: center; justify-content: center; color: #6F675D">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>
+                    </span>
+                    <span style="flex: 1; display: flex; flex-direction: column">
+                      <span style="font-size: 14px">acte-mariage-anne-2004.jpg</span>
+                      <span style="font-size: 12px; color: #8A8278">Le fait sera marqué « Sourcé »</span>
+                    </span>
+                    <button type="button" onClick="{{ removeProof }}" aria-label="Retirer le justificatif" style="width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; color: #6F675D; cursor: pointer; display: inline-flex; align-items: center; justify-content: center">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                    </button>
+                  </div>
+                </sc-if>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px; padding: 16px 0 20px">
+                <label for="msg" style="font-size: 14px; font-weight: 600">Un mot pour Anne</label>
+                <textarea id="msg" value="{{ message }}" onChange="{{ onMessage }}" rows="3" style="box-sizing: border-box; width: 100%; padding: 12px 16px; border: 1px solid #E4DCCF; border-radius: 18px; background: #FBF9F5; color: #1F1C19; font-size: 15px; line-height: 1.5; resize: none; outline: none"></textarea>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 12px; padding: 16px 28px 26px; border-top: 1px solid #EFE9DF">
+              <span style="flex: 1; font-size: 13px; color: #8A8278">{{ countLine }}</span>
+              <a href="Arbre.dc.html" style="display: inline-flex; align-items: center; height: 50px; padding: 0 22px; box-sizing: border-box; border: 1px solid #E4DCCF; border-radius: 999px; color: #1F1C19; font-size: 15px; font-weight: 600; text-decoration: none">Annuler</a>
+              <button type="button" onClick="{{ send }}" style="{{ sendStyle }}">Envoyer à Anne</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isSent }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 48px 40px 40px; text-align: center">
+              <span style="width: 72px; height: 72px; border-radius: 50%; background: #1F1C19; color: #F6F2EA; display: inline-flex; align-items: center; justify-content: center">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4z"></path></svg>
+              </span>
+              <span style="margin-top: 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">Suggestion envoyée</span>
+              <h2 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 32px; line-height: 1.15">Envoyé à Anne.</h2>
+              <p style="margin: 0; max-width: 420px; font-size: 15px; line-height: 1.55; color: #6F675D">Sans réponse sous 14 jours, un admin prendra le relais. Tu suis son avancement dans Activité, onglet « Mes suggestions ».</p>
+              <div style="display: flex; gap: 10px; margin-top: 12px">
+                <a href="Activite.dc.html" style="display: inline-flex; align-items: center; height: 50px; padding: 0 22px; box-sizing: border-box; border: 1px solid #E4DCCF; border-radius: 999px; color: #1F1C19; font-size: 15px; font-weight: 600; text-decoration: none">Voir mes suggestions</a>
+                <a href="Arbre.dc.html" style="display: inline-flex; align-items: center; height: 50px; padding: 0 22px; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 15px; font-weight: 600; text-decoration: none">Retour à l'arbre</a>
+              </div>
+            </div>
+          </sc-if>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const BG = [
+  { first: 'Paul', ini: 'PM', x: 250, y: 90, dead: true },
+  { first: 'Jeanne', ini: 'JM', x: 390, y: 90, dead: true },
+  { first: 'Anne', ini: 'AM', x: 120, y: 290 },
+  { first: 'Luc', ini: 'LM', x: 330, y: 290 },
+  { first: 'Sophie', ini: 'SM', x: 490, y: 290 },
+  { first: 'Léa', ini: 'LM', x: 340, y: 480 },
+  { first: 'Toi', ini: 'HM', x: 520, y: 480 }
+];
+const FIELDS = [
+  { id: 'conjoint', label: 'Conjoint', current: 'Non renseigné', empty: true, placeholder: 'Prénom et nom' },
+  { id: 'ville', label: 'Vit à', current: 'Bordeaux', placeholder: 'Nouvelle ville' },
+  { id: 'naissance', label: 'Naissance', current: '2 mai 1960, Toulouse', placeholder: 'Laisser vide si correct' }
+];
+
+class Component extends DCLogic {
+  state = { step: 'form', values: { conjoint: 'Marc Duval', ville: 'Arcachon', naissance: '' }, proof: true, message: 'Coucou Anne, j’ai vu le faire-part de Marc chez papa, je me suis dit qu’on pouvait l’ajouter.' };
+
+  renderVals() {
+    const s = this.state;
+    const changed = FIELDS.filter((f) => (s.values[f.id] || '').trim()).length;
+    return {
+      bg: BG.map((p) => ({
+        first: p.first,
+        ini: p.ini,
+        wrap: 'position: absolute; left: ' + (p.x - 60) + 'px; top: ' + (p.y - 36) + 'px; width: 120px; display: flex; flex-direction: column; align-items: center; gap: 6px',
+        bubble: 'width: 72px; height: 72px; box-sizing: border-box; border-radius: 50%; border: 4px solid #FFFFFF; background: ' + (p.dead ? '#E3DED6' : '#EAE3D7') + '; display: inline-flex; align-items: center; justify-content: center; font-family: Fraunces, serif; font-size: 22px; box-shadow: ' + (p.first === 'Anne' ? '0 0 0 2px #A4532F' : '0 0 0 1px #E4DCCF')
+      })),
+      isForm: s.step === 'form',
+      isSent: s.step === 'sent',
+      fields: FIELDS.map((f) => {
+        const v = s.values[f.id] || '';
+        const touched = !!v.trim();
+        return {
+          id: f.id,
+          label: f.label,
+          current: f.current,
+          placeholder: f.placeholder,
+          value: v,
+          onChange: (e) => this.setState({ values: Object.assign({}, s.values, { [f.id]: e.target.value }) }),
+          currentStyle: 'font-size: 13px; color: #8A8278' + (touched && !f.empty ? '; text-decoration: line-through' : ''),
+          inputStyle: 'box-sizing: border-box; width: 100%; height: 48px; padding: 0 16px; border: 1px solid ' + (touched ? '#1F1C19' : '#E4DCCF') + '; border-radius: 999px; background: ' + (touched ? '#FFFFFF' : '#FBF9F5') + '; color: #1F1C19; font-size: 15px; outline: none'
+        };
+      }),
+      noProof: !s.proof,
+      hasProof: s.proof,
+      addProof: () => this.setState({ proof: true }),
+      removeProof: () => this.setState({ proof: false }),
+      message: s.message,
+      onMessage: (e) => this.setState({ message: e.target.value }),
+      countLine: changed === 0 ? 'Aucune modification' : changed + ' modification' + (changed > 1 ? 's' : '') + ' proposée' + (changed > 1 ? 's' : ''),
+      sendStyle: 'height: 50px; padding: 0 24px; border: 0; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 15px; font-weight: 600; cursor: pointer; opacity: ' + (changed ? 1 : 0.4),
+      send: () => { if (changed) this.setState({ step: 'sent' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

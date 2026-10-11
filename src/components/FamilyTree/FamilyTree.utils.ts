@@ -1,132 +1,85 @@
-import { Person, FamilyTreeNode } from './FamilyTree.types'
+import type { FamilyTreeNode, Person } from './FamilyTree.types';
 
 // Construit un dictionnaire pour accéder rapidement aux personnes par ID
 export const buildPeopleMap = (people: Person[]): Record<string, Person> => {
-  const map: Record<string, Person> = {}
+  const map: Record<string, Person> = {};
   people.forEach((person) => {
-    map[person.id] = person
-  })
-  return map
-}
+    map[person.id] = person;
+  });
+  return map;
+};
 
 export const getMatchingIds = (people: Person[], query: string): string[] => {
-  if (!people || !query) return []
+  if (!people || !query) return [];
 
-  const queryLower = query.toLowerCase()
+  const queryLower = query.toLowerCase();
 
   return people
     .filter((person) => {
-      const firstName = (person.firstName || '').toLowerCase()
-      const lastName = (person.lastName || '').toLowerCase()
-      const maidenName = (person.maidenName || '').toLowerCase()
-      const fullName = `${firstName} ${lastName}`
+      const firstName = (person.firstName || '').toLowerCase();
+      const lastName = (person.lastName || '').toLowerCase();
+      const maidenName = (person.maidenName || '').toLowerCase();
+      const fullName = `${firstName} ${lastName}`;
 
-      return [firstName, lastName, fullName, maidenName].some((item) =>
-        item.includes(queryLower)
-      )
+      return [firstName, lastName, fullName, maidenName].some((item) => item.includes(queryLower));
     })
-    .map((person) => person.id)
-}
+    .map((person) => person.id);
+};
 
 // Trouve la racine de l'arbre si non spécifiée
 export const findRoot = (people: Person[]): Person | undefined => {
   // Personnes qui sont des enfants (ont des parents)
-  const hasParent = new Set<string>()
+  const hasParent = new Set<string>();
 
   people.forEach((person) => {
     person.childrenIds.forEach((childId) => {
-      hasParent.add(childId)
-    })
-  })
+      hasParent.add(childId);
+    });
+  });
 
   // Personnes qui sont des parents mais pas des enfants, triées par ordre d'âge
   const potentialRoots = people
-    .filter(
-      (person) => !hasParent.has(person.id) && person.childrenIds.length > 0
-    )
+    .filter((person) => !hasParent.has(person.id) && person.childrenIds.length > 0)
     .sort((a, b) => {
-      if (!a.birthDate) return 1
-      if (!b.birthDate) return -1
-      return a.birthDate.localeCompare(b.birthDate)
-    })
+      if (!a.birthDate) return 1;
+      if (!b.birthDate) return -1;
+      return a.birthDate.localeCompare(b.birthDate);
+    });
 
-  return potentialRoots[0]
-}
+  return potentialRoots[0];
+};
 
 // Construit un arbre à partir de la racine
 export const buildTree = (
   rootPerson: Person,
-  peopleMap: Record<string, Person>
+  peopleMap: Record<string, Person>,
 ): FamilyTreeNode => {
   // Créer le nœud pour cette personne
   const node: FamilyTreeNode = {
     person: rootPerson,
     children: [],
     isCollapsed: false,
-  }
+  };
 
   // Ajouter le partenaire s'il existe
-  if (rootPerson.partnerId.length > 0) {
-    const partnerId = rootPerson.partnerId[0] // Prendre le premier partenaire
-    node.partner = peopleMap[partnerId]
-  }
+  const partnerId = rootPerson.partnerId[0]; // Prendre le premier partenaire
+  const partner = partnerId ? peopleMap[partnerId] : undefined;
+  if (partner) node.partner = partner;
 
   // Récursivement ajouter les enfants
   rootPerson.childrenIds.forEach((childId) => {
-    const childPerson = peopleMap[childId]
+    const childPerson = peopleMap[childId];
     if (childPerson) {
       // Ne pas inclure les enfants qui sont aussi partenaires (éviter les cycles)
       if (rootPerson.partnerId.includes(childId)) {
-        return
+        return;
       }
 
       // Construire le sous-arbre pour cet enfant
-      const childNode = buildTree(childPerson, peopleMap)
-      node.children.push(childNode)
+      const childNode = buildTree(childPerson, peopleMap);
+      node.children.push(childNode);
     }
-  })
+  });
 
-  return node
-}
-
-// Prépare le positionnement des nœuds
-export const layoutTree = (
-  node: FamilyTreeNode,
-  x = 0,
-  y = 0,
-  nodeWidth = 120,
-  nodeHeight = 80,
-  horizontalGap = 20,
-  verticalGap = 60
-): void => {
-  // Positionner ce nœud
-  node.x = x
-  node.y = y
-  node.width = nodeWidth
-
-  if (node.isCollapsed || node.children.length === 0) {
-    return
-  }
-
-  // Calculer largeur totale nécessaire pour les enfants
-  const totalChildrenWidth = node.children.reduce((width) => {
-    return width + nodeWidth + horizontalGap
-  }, -horizontalGap)
-
-  // Position de départ pour le premier enfant
-  let startX = x - totalChildrenWidth / 2 + nodeWidth / 2
-
-  // Positionner chaque enfant
-  node.children.forEach((child) => {
-    layoutTree(
-      child,
-      startX,
-      y + nodeHeight + verticalGap,
-      nodeWidth,
-      nodeHeight,
-      horizontalGap,
-      verticalGap
-    )
-    startX += nodeWidth + horizontalGap
-  })
-}
+  return node;
+};

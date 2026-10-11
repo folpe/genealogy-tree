@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Carte des origines, thème sombre</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&amp;family=Figtree:wght@400..700&amp;display=swap">
+<style>
+*{font-variation-settings:"SOFT" 100,"WONK" 0}
+body{margin:0;background:#1D1A2B}
+a{color:#FFB86B}a:hover{color:#FFC98C}
+button{font-family:inherit}
+</style>
+</helmet>
+<!-- En production : MapLibre + tuiles OpenFreeMap, géocodage BAN / Nominatim. Les arcs sont tracés en GSAP (DrawSVG) au changement d'époque. -->
+<div style="min-height: 100vh; height: 100vh; display: flex; flex-direction: column; background: #1D1A2B; color: #F5EFE6; font-family: 'Figtree', system-ui, sans-serif; overflow: hidden">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px 32px">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1 1 200px">
+      <span style="width: 40px; height: 40px; border-radius: 50%; background: #F5EFE6; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#1D1A2B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M16 28V16"></path><path d="M16 20C16 16 11 15 9 12"></path><path d="M16 18C16 14 21 13 23 10"></path><circle cx="9" cy="9" r="3"></circle><circle cx="23" cy="7.5" r="3"></circle><circle cx="16" cy="12" r="3"></circle></svg>
+      </span>
+      <span style="font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500; letter-spacing: -0.01em">Ances-Tree</span>
+    </div>
+    <nav aria-label="Vues" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid #3A3456; background: #262238">
+      <a href="Arbre.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Arbre</a>
+      <a href="Eventail.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Ancêtres</a>
+      <a href="Frise.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Frise</a>
+      <span aria-current="page" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; background: #F5EFE6; color: #1D1A2B; font-size: 14px; font-weight: 600">Carte</span>
+      <a href="Recits.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Récits</a>
+    </nav>
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 1 1 300px">
+      <button type="button" style="display: flex; align-items: center; gap: 10px; height: 46px; min-width: 220px; padding: 0 16px; border: 1px solid #3A3456; border-radius: 999px; background: #262238; color: #B7AFC9; font-size: 15px; cursor: pointer">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <span style="flex: 1; text-align: left">Trouver quelqu'un</span>
+        <span style="font-size: 12px; color: #7C7398">⌘K</span>
+      </button>
+      <a href="Activite.dc.html" aria-label="Activité, 2 nouveautés" style="position: relative; width: 46px; height: 46px; box-sizing: border-box; border: 1px solid #3A3456; border-radius: 50%; background: #262238; color: #F5EFE6; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+        <span style="position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; border: 2px solid #1D1A2B; background: #FFB86B; color: #2A2640; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">2</span>
+      </a>
+      <span style="width: 46px; height: 46px; box-sizing: border-box; border-radius: 50%; border: 2px solid #2A2640; background: #3D3758; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-weight: 500; font-size: 17px; box-shadow: 0 0 0 1px #3A3456">H</span>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 20px; padding: 0 32px 32px; min-height: 0">
+    <main style="position: relative; flex: 999 1 560px; min-width: 0; min-height: 620px; border-radius: 28px; border: 1px solid #3A3456; background-color: #221E33; background-image: radial-gradient(rgba(245, 239, 230, 0.16) 1px, transparent 1.5px); background-size: 46px 46px; overflow: hidden">
+
+      <div style="position: absolute; left: 24px; top: 22px; display: flex; flex-direction: column; gap: 4px; max-width: 360px">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #FFB86B">Carte des origines</span>
+        <span style="font-family: 'Fraunces', serif; font-size: 28px; line-height: 1.15">{{ headline }}</span>
+      </div>
+
+      <div style="position: absolute; left: 50%; top: 48%; width: 780px; height: 740px; transform: translate(-50%, -50%) scale(0.86)">
+        <svg width="780" height="740" viewBox="0 0 780 740" fill="none" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+          <path d="M424 28 L395 36 L381 56 L368 107 L352 118 L297 152 L304 158 L269 166 L224 160 L220 136 L182 134 L188 162 L202 204 L207 221 L179 220 L134 232 L95 208 L25 240 L50 264 L39 276 L101 296 L134 312 L168 330 L179 356 L190 392 L227 420 L232 464 L224 496 L221 544 L210 600 L202 640 L192 643 L235 668 L291 684 L330 688 L386 712 L431 718 L469 716 L462 672 L476 652 L498 640 L515 628 L549 640 L591 648 L624 664 L661 656 L697 616 L711 610 L683 576 L678 544 L683 496 L672 448 L633 420 L633 384 L678 320 L717 308 L717 248 L739 208 L750 194 L706 180 L666 176 L627 156 L594 144 L560 112 L563 100 L526 116 L521 88 L476 72 L437 48 Z" fill="#3D3758" stroke="#3A3456" stroke-width="2"></path>
+        </svg>
+        <sc-for list="{{ arcs }}" as="a" hint-placeholder-count="7">
+          <svg width="780" height="740" viewBox="0 0 780 740" fill="none" stroke-linecap="round" style="position: absolute; left: 0; top: 0; pointer-events: none" aria-hidden="true">
+            <path d="{{ a.d }}" style="{{ a.style }}"></path>
+          </svg>
+        </sc-for>
+        <sc-for list="{{ places }}" as="p" hint-placeholder-count="10">
+          <button type="button" onClick="{{ p.pick }}" aria-label="{{ p.label }}" style="{{ p.wrap }}">
+            <span style="{{ p.dot }}"></span>
+            <span style="{{ p.name }}">{{ p.title }}</span>
+          </button>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ hasMove }}" hint-placeholder-val="{{ false }}">
+        <div style="position: absolute; right: 24px; top: 22px; display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 18px; border-radius: 999px; background: #2A2640; box-shadow: 0 0 0 1px #3A3456, 0 14px 30px rgba(8, 6, 18, 0.25)">
+          <span style="font-size: 14px">{{ move }}</span>
+          <button type="button" onClick="{{ clearPerson }}" aria-label="Retirer la sélection" style="width: 34px; height: 34px; border: 0; border-radius: 50%; background: #1D1A2B; color: #F5EFE6; cursor: pointer; display: inline-flex; align-items: center; justify-content: center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+      </sc-if>
+
+      <div style="position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; padding: 6px 6px 6px 20px; border-radius: 999px; background: #262238; border: 1px solid #3A3456; box-shadow: 0 14px 30px rgba(8, 6, 18, 0.2)">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #8E86A8">Époque</span>
+        <div role="radiogroup" aria-label="Époque" style="display: flex; gap: 2px">
+          <sc-for list="{{ eras }}" as="e" hint-placeholder-count="4">
+            <button type="button" role="radio" aria-checked="{{ e.on }}" onClick="{{ e.pick }}" style="{{ e.style }}">{{ e.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+    </main>
+
+    <aside aria-label="Lieu" style="flex: 1 1 360px; max-width: 420px; box-sizing: border-box; border-radius: 28px; border: 1px solid #3A3456; background: #2A2640; box-shadow: 0 20px 50px rgba(8, 6, 18, 0.18); overflow: hidden; display: flex; flex-direction: column">
+      <sc-if value="{{ hasPlace }}" hint-placeholder-val="{{ true }}">
+        <div style="position: relative; padding: 32px 28px 8px">
+          <button type="button" onClick="{{ showAll }}" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px 0 10px; margin-left: -6px; border: 0; border-radius: 999px; background: #1D1A2B; color: #B7AFC9; font-size: 13px; font-weight: 600; cursor: pointer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+            Tous les lieux
+          </button>
+          <span style="display: block; margin-top: 22px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #FFB86B">{{ place.tagline }}</span>
+          <h2 style="margin: 8px 0 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 40px; letter-spacing: -0.01em; line-height: 1.05">{{ place.title }}</h2>
+          <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.5; color: #B7AFC9">{{ place.intro }}</p>
+        </div>
+        <div style="display: flex; gap: 10px; padding: 16px 28px">
+          <sc-for list="{{ place.stats }}" as="st" hint-placeholder-count="3">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 14px 14px 12px; border-radius: 18px; background: #1D1A2B">
+              <span style="font-family: 'Fraunces', serif; font-size: 28px; line-height: 1">{{ st.n }}</span>
+              <span style="font-size: 13px; color: #B7AFC9">{{ st.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex: 1; overflow-y: auto; padding: 4px 28px 0">
+          <span style="display: block; padding: 10px 0; font-size: 14px; color: #B7AFC9; border-top: 1px solid #322D4A">Personnes liées</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{ place.people }}" as="c" hint-placeholder-count="5">
+              <button type="button" onClick="{{ c.pick }}" style="{{ c.style }}">
+                <span style="width: 30px; height: 30px; border-radius: 50%; background: #3D3758; color: #F5EFE6; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 12px">{{ c.initials }}</span>{{ c.name }}
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; padding: 18px 28px 28px">
+          <a href="Frise.dc.html" style="flex: 1; height: 50px; border: 1px solid #3A3456; border-radius: 999px; color: #F5EFE6; font-size: 15px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center">Sur la frise</a>
+          <a href="Recits.dc.html" style="flex: 1; height: 50px; border-radius: 999px; background: #F5EFE6; color: #1D1A2B; font-size: 15px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center">Récits liés</a>
+        </div>
+      </sc-if>
+      <sc-if value="{{ noPlace }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 32px 28px 12px">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #FFB86B">{{ eraLabel }}</span>
+          <h2 style="margin: 8px 0 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 32px; letter-spacing: -0.01em">Les lieux de la famille</h2>
+        </div>
+        <ol style="flex: 1; overflow-y: auto; margin: 0; padding: 0 16px 24px; list-style: none">
+          <sc-for list="{{ ranking }}" as="r" hint-placeholder-count="8">
+            <li>
+              <button type="button" onClick="{{ r.pick }}" style="width: 100%; display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 6px 12px; border: 0; border-top: 1px solid #322D4A; background: transparent; color: #F5EFE6; cursor: pointer; text-align: left">
+                <span style="width: 22px; font-size: 13px; color: #7C7398; font-variant-numeric: tabular-nums">{{ r.rank }}</span>
+                <span style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+                  <span style="font-family: 'Fraunces', serif; font-size: 18px">{{ r.title }}</span>
+                  <span style="font-size: 13px; color: #8E86A8">{{ r.tagline }}</span>
+                </span>
+                <span style="font-size: 14px; color: #B7AFC9; font-variant-numeric: tabular-nums">{{ r.count }}</span>
+              </button>
+            </li>
+          </sc-for>
+        </ol>
+      </sc-if>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const PLACES = [
+  { id: 'rodez', title: 'Rodez', x: 435, y: 564, since: 1902, side: 'right', tagline: 'Berceau des Marchand', intro: 'Henri y tient la quincaillerie de la rue Béteille. Quatre enfants Marchand y naissent entre 1902 et 1940.', births: 4, unions: 1, deaths: 2, people: ['henri', 'louise', 'paul', 'marie', 'claude'] },
+  { id: 'millau', title: 'Millau', x: 464, y: 584, since: 1905, side: 'right', tagline: 'Les Garnier', intro: 'Ville natale de Louise, gantière avant son mariage avec Henri en 1928.', births: 1, unions: 0, deaths: 0, people: ['louise'] },
+  { id: 'albi', title: 'Albi', x: 412, y: 598, since: 1934, side: 'left', tagline: 'Les Roux', intro: 'Jeanne y grandit avant de rejoindre Paul à Toulouse.', births: 1, unions: 0, deaths: 0, people: ['jeanne'] },
+  { id: 'toulouse', title: 'Toulouse', x: 372, y: 624, since: 1955, side: 'left', tagline: 'Le foyer de Luc et Sophie', intro: 'Paul et Jeanne s’y installent en 1955. Trois générations y vivent depuis.', births: 4, unions: 2, deaths: 1, people: ['paul', 'jeanne', 'anne', 'luc', 'sophie', 'lea', 'hugo'] },
+  { id: 'lyon', title: 'Lyon', x: 562, y: 451, since: 1959, side: 'right', tagline: 'La branche Lefèvre', intro: 'Marie suit Jacques à Lyon après leur mariage.', births: 1, unions: 1, deaths: 1, people: ['marie', 'jacques', 'isabelle'] },
+  { id: 'montpellier', title: 'Montpellier', x: 508, y: 623, since: 1965, side: 'right', tagline: 'Claude', intro: 'Claude y enseigne depuis 1965.', births: 0, unions: 0, deaths: 0, people: ['claude'] },
+  { id: 'nantes', title: 'Nantes', x: 204, y: 334, since: 1965, side: 'right', tagline: 'Les Blanc', intro: 'Ville natale de Sophie et de Maxime.', births: 2, unions: 0, deaths: 1, people: ['sophie', 'maxime', 'bernard', 'odette'] },
+  { id: 'bordeaux', title: 'Bordeaux', x: 259, y: 525, since: 1985, side: 'right', tagline: 'Anne', intro: 'Anne s’y installe en 1985.', births: 0, unions: 0, deaths: 0, people: ['anne'] },
+  { id: 'lille', title: 'Lille', x: 463, y: 62, since: 2009, side: 'right', tagline: 'Maxime', intro: 'Maxime y vit depuis 2009.', births: 0, unions: 0, deaths: 0, people: ['maxime'] },
+  { id: 'paris', title: 'Paris', x: 423, y: 203, since: 2014, side: 'right', tagline: 'Léa', intro: 'Léa y part pour ses études en 2014.', births: 0, unions: 0, deaths: 0, people: ['lea'] }
+];
+const PEOPLE = {
+  henri: 'Henri', louise: 'Louise', paul: 'Paul', jeanne: 'Jeanne', marie: 'Marie', jacques: 'Jacques', claude: 'Claude',
+  anne: 'Anne', luc: 'Luc', sophie: 'Sophie', isabelle: 'Isabelle', maxime: 'Maxime', lea: 'Léa', hugo: 'Toi', bernard: 'Bernard', odette: 'Odette'
+};
+const INI = { henri: 'HM', louise: 'LM', paul: 'PM', jeanne: 'JM', marie: 'ML', jacques: 'JL', claude: 'CM', anne: 'AM', luc: 'LM', sophie: 'SM', isabelle: 'IL', maxime: 'MM', lea: 'LM', hugo: 'HM', bernard: 'BB', odette: 'OB' };
+const MOVES = [
+  { who: 'paul', from: 'rodez', to: 'toulouse', year: 1955, verb: 'quitte' },
+  { who: 'jeanne', from: 'albi', to: 'toulouse', year: 1956, verb: 'quitte' },
+  { who: 'marie', from: 'rodez', to: 'lyon', year: 1959, verb: 'quitte' },
+  { who: 'anne', from: 'toulouse', to: 'bordeaux', year: 1985, verb: 'quitte' },
+  { who: 'sophie', from: 'nantes', to: 'toulouse', year: 1988, verb: 'quitte' },
+  { who: 'maxime', from: 'nantes', to: 'lille', year: 2009, verb: 'quitte' },
+  { who: 'lea', from: 'toulouse', to: 'paris', year: 2014, verb: 'quitte' }
+];
+const ERAS = [
+  { id: '1900', label: '1900', max: 1930, title: 'Vers 1900', headline: 'Tout commence en Aveyron' },
+  { id: '1950', label: '1950', max: 1960, title: 'Vers 1950', headline: 'Les premiers départs' },
+  { id: '2000', label: '2000', max: 2000, title: 'Vers 2000', headline: 'La famille s’étend' },
+  { id: 'now', label: 'Aujourd’hui', max: 2100, title: 'Aujourd’hui', headline: 'Dix villes, une famille' }
+];
+
+const byPlace = {};
+PLACES.forEach((p) => { byPlace[p.id] = p; });
+
+function arcPath(a, b) {
+  const mx = (a.x + b.x) / 2;
+  const my = (a.y + b.y) / 2;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const k = 0.28;
+  return 'M' + a.x + ' ' + a.y + ' Q' + Math.round(mx - dy * k) + ' ' + Math.round(my + dx * k) + ' ' + b.x + ' ' + b.y;
+}
+
+class Component extends DCLogic {
+  state = { era: 'now', place: 'rodez', person: null };
+
+  renderVals() {
+    const s = this.state;
+    const era = ERAS.find((e) => e.id === s.era);
+    const visible = PLACES.filter((p) => p.since <= era.max);
+    const visibleIds = new Set(visible.map((p) => p.id));
+    const moves = MOVES.filter((m) => m.year <= era.max);
+    const selMove = s.person ? MOVES.find((m) => m.who === s.person && m.year <= era.max) : null;
+
+    const arcs = moves.map((m) => {
+      const on = selMove && selMove.who === m.who;
+      return {
+        d: arcPath(byPlace[m.from], byPlace[m.to]),
+        style: 'stroke: ' + (on ? '#FFB86B' : '#5E5680') + '; stroke-width: ' + (on ? 3.5 : 2) + '; opacity: ' + (selMove && !on ? 0.35 : 1)
+      };
+    });
+
+    const places = visible.map((p) => {
+      const n = p.people.length;
+      const size = 14 + n * 2;
+      const isSel = s.place === p.id;
+      const touched = selMove && (selMove.from === p.id || selMove.to === p.id);
+      const left = p.side === 'left';
+      return {
+        pick: () => this.setState({ place: p.id }),
+        label: p.title + ', ' + n + ' personne' + (n > 1 ? 's' : ''),
+        title: p.title,
+        wrap: 'position: absolute; top: ' + (p.y - 22) + 'px; ' + (left ? 'right: ' + (780 - p.x - 22) + 'px; flex-direction: row-reverse' : 'left: ' + (p.x - 22) + 'px') + '; height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 10px 0 ' + (22 - size / 2) + 'px; border: 0; background: transparent; color: #F5EFE6; cursor: pointer' + (left ? '; padding: 0 ' + (22 - size / 2) + 'px 0 10px' : ''),
+        dot: 'flex: none; width: ' + size + 'px; height: ' + size + 'px; box-sizing: border-box; border-radius: 50%; border: 3px solid #2A2640; background: ' + (isSel || touched ? '#FFB86B' : '#F5EFE6') + '; box-shadow: ' + (isSel ? '0 0 0 2px #FFB86B, 0 8px 18px rgba(255, 184, 107, 0.3)' : '0 4px 10px rgba(8, 6, 18, 0.45)'),
+        name: 'font-family: Fraunces, serif; font-size: ' + (isSel ? 18 : 15) + 'px; white-space: nowrap; padding: 2px 8px; border-radius: 999px; background: ' + (isSel ? '#2A2640' : 'transparent') + '; color: ' + (isSel ? '#FFB86B' : '#F5EFE6')
+      };
+    });
+
+    const P = s.place && visibleIds.has(s.place) ? byPlace[s.place] : null;
+    let place = { stats: [], people: [] };
+    if (P) {
+      place = {
+        title: P.title,
+        tagline: P.tagline,
+        intro: P.intro,
+        stats: [
+          { n: P.births, label: P.births > 1 ? 'naissances' : 'naissance' },
+          { n: P.unions, label: P.unions > 1 ? 'mariages' : 'mariage' },
+          { n: P.deaths, label: P.deaths > 1 ? 'décès' : 'décès' }
+        ],
+        people: P.people.map((id) => {
+          const on = s.person === id;
+          return {
+            pick: () => this.setState({ person: on ? null : id }),
+            initials: INI[id],
+            name: PEOPLE[id],
+            style: 'display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 5px; border: 0; border-radius: 999px; cursor: pointer; font-size: 14px; background: ' + (on ? '#F5EFE6' : '#1D1A2B') + '; color: ' + (on ? '#1D1A2B' : '#F5EFE6')
+          };
+        })
+      };
+    }
+
+    const ranking = visible.slice().sort((a, b) => b.people.length - a.people.length).map((p, i) => ({
+      pick: () => this.setState({ place: p.id }),
+      rank: i + 1,
+      title: p.title,
+      tagline: p.tagline,
+      count: p.people.length + ' pers.'
+    }));
+
+    return {
+      headline: era.headline,
+      eraLabel: era.title,
+      arcs: arcs,
+      places: places,
+      hasMove: !!selMove,
+      move: selMove ? PEOPLE[selMove.who] + ' ' + selMove.verb + ' ' + byPlace[selMove.from].title + ' pour ' + byPlace[selMove.to].title + ', ' + selMove.year : '',
+      clearPerson: () => this.setState({ person: null }),
+      eras: ERAS.map((e) => ({
+        label: e.label,
+        on: e.id === s.era ? 'true' : 'false',
+        pick: () => this.setState({ era: e.id }),
+        style: 'height: 40px; padding: 0 16px; border: 0; border-radius: 999px; cursor: pointer; font-size: 14px; font-weight: 600; background: ' + (e.id === s.era ? '#F5EFE6' : 'transparent') + '; color: ' + (e.id === s.era ? '#1D1A2B' : '#B7AFC9')
+      })),
+      hasPlace: !!P,
+      noPlace: !P,
+      place: place,
+      ranking: ranking,
+      showAll: () => this.setState({ place: null, person: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { FamilyTreeProps, FamilyTreeNode, Person } from './FamilyTree.types'
-import { buildPeopleMap, findRoot, buildTree } from './FamilyTree.utils'
-import { PersonNode } from './elements'
-import { ZoomControls } from '../ZoomControls'
-import * as d3 from 'd3'
+import * as d3 from 'd3';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { ZoomControls } from '../ZoomControls';
+import { PersonNode } from './elements';
+import type { FamilyTreeNode, FamilyTreeProps, Person } from './FamilyTree.types';
+import { buildPeopleMap, buildTree, findRoot } from './FamilyTree.utils';
 
-const INITIAL_WIDTH = 1625
-const INITIAL_HEIGHT = 750
+const INITIAL_WIDTH = 1625;
+const INITIAL_HEIGHT = 750;
 
 export const FamilyTree: React.FC<FamilyTreeProps> = ({
   data,
@@ -20,40 +21,39 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
   shouldResetZoom = false,
   onZoomActionComplete = () => {},
 }) => {
-  const svgRef = useRef<SVGSVGElement>(null)
+  const svgRef = useRef<SVGSVGElement>(null);
   // const [dimensions, setDimensions] = useState({
   //   width: INITIAL_WIDTH,
   //   height: INITIAL_HEIGHT,
   // })
-  const [treeData, setTreeData] =
-    useState<d3.HierarchyNode<FamilyTreeNode> | null>(null)
-  const [transform, setTransform] = useState<d3.ZoomTransform>(d3.zoomIdentity)
-  const zoomBehaviorRef = useRef<any>(null)
+  const [treeData, setTreeData] = useState<d3.HierarchyNode<FamilyTreeNode> | null>(null);
+  const [transform, setTransform] = useState<d3.ZoomTransform>(d3.zoomIdentity);
+  const zoomBehaviorRef = useRef<any>(null);
 
   // Construire l'arbre initial
   useEffect(() => {
-    if (!data.length) return
+    if (!data.length) return;
 
     // Créer la carte des personnes
-    const peopleMap = buildPeopleMap(data)
+    const peopleMap = buildPeopleMap(data);
 
     // Trouver la racine
-    let rootPerson: Person | undefined
+    let rootPerson: Person | undefined;
     if (rootId && peopleMap[rootId]) {
-      rootPerson = peopleMap[rootId]
+      rootPerson = peopleMap[rootId];
     } else {
-      rootPerson = findRoot(data)
+      rootPerson = findRoot(data);
     }
 
-    if (!rootPerson) return
+    if (!rootPerson) return;
 
     // Construire l'arbre
-    const rootNode = buildTree(rootPerson, peopleMap)
+    const rootNode = buildTree(rootPerson, peopleMap);
 
     // Créer la hiérarchie D3
     const d3hierarchy = d3.hierarchy<FamilyTreeNode>(rootNode, (node) =>
-      node.isCollapsed ? [] : node.children
-    )
+      node.isCollapsed ? [] : node.children,
+    );
 
     // Configurer le layout
     const treeLayout = d3
@@ -61,81 +61,72 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
       .nodeSize([nodeWidth * 1.5, nodeHeight * 2.5])
       .separation((a, b) => {
         // Ajouter un espace supplémentaire pour les nœuds avec des partenaires
-        return (a.data.partner ? 2 : 1) + (b.data.partner ? 2 : 1)
-      })
+        return (a.data.partner ? 2 : 1) + (b.data.partner ? 2 : 1);
+      });
 
     // Appliquer le layout
-    const layoutedTree = treeLayout(d3hierarchy)
+    const layoutedTree = treeLayout(d3hierarchy);
 
-    setTreeData(layoutedTree)
+    setTreeData(layoutedTree);
 
     // Calculer les dimensions nécessaires pour le SVG
     // calculateTreeDimensions(layoutedTree)
 
     // Initialiser le zoom
-    initializeZoom()
-  }, [data, rootId])
+    initializeZoom();
+  }, [data, rootId]);
 
   // Initialisation du zoom
   const initializeZoom = () => {
-    if (!svgRef.current) return
+    if (!svgRef.current) return;
 
     const svg = d3
       .select(svgRef.current)
       .style('user-select', 'none')
-      .attr('preserveAspectRatio', 'xMidYMid meet')
+      .attr('preserveAspectRatio', 'xMidYMid meet');
 
     const d3zoom = d3
       .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 3])
       .on('zoom', (event) => {
-        setTransform(event.transform)
-      })
+        setTransform(event.transform);
+      });
 
     // Stocker le comportement de zoom pour y accéder plus tard
-    zoomBehaviorRef.current = d3zoom
+    zoomBehaviorRef.current = d3zoom;
 
-    svg.call(d3zoom)
+    svg.call(d3zoom);
 
     // Centrer l'arbre initialement
     const initialTransform = d3.zoomIdentity
       .translate(INITIAL_WIDTH / 2, INITIAL_HEIGHT / 4)
-      .scale(0.8)
+      .scale(0.8);
 
     try {
-      svg.call(d3zoom.transform, initialTransform)
-    } catch (error) {
-      console.error(
-        "Erreur lors de l'application de la transformation initiale:",
-        error
-      )
+      svg.call(d3zoom.transform, initialTransform);
+    } catch {
       // Fallback si la méthode transform échoue
       svg
         .select('g')
         .attr(
           'transform',
-          `translate(${initialTransform.x}, ${initialTransform.y}) scale(${initialTransform.k})`
-        )
+          `translate(${initialTransform.x}, ${initialTransform.y}) scale(${initialTransform.k})`,
+        );
       // Vous pourriez essayer une approche alternative ici si nécessaire
     }
-  }
+  };
 
   //
   //---------------------------------------------------------------------------------
   //
   // Effet pour gérer le zoom sur les nœuds en surbrillance
   useEffect(() => {
-    if (
-      shouldFocusOnNodes &&
-      treeData &&
-      svgRef.current &&
-      highlightedNodes.length > 0
-    ) {
-      focusOnNodes(highlightedNodes)
+    if (shouldFocusOnNodes && treeData && svgRef.current && highlightedNodes.length > 0) {
+      focusOnNodes(highlightedNodes);
       // Indiquer que l'action a été exécutée
-      onZoomActionComplete()
+      onZoomActionComplete();
     }
-  }, [shouldFocusOnNodes, highlightedNodes, treeData])
+  }, [shouldFocusOnNodes, highlightedNodes, treeData]);
 
   //
   //---------------------------------------------------------------------------------
@@ -143,18 +134,18 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
   // Effet pour gérer la réinitialisation du zoom
   useEffect(() => {
     if (shouldResetZoom && svgRef.current) {
-      resetZoom()
+      resetZoom();
       // Indiquer que l'action a été exécutée
-      onZoomActionComplete()
+      onZoomActionComplete();
     }
-  }, [shouldResetZoom])
+  }, [shouldResetZoom]);
 
   //
   //---------------------------------------------------------------------------------
   //
   // Fonction pour centrer et zoomer sur les nœuds spécifiques
   const focusOnNodes = (nodeIds: string[]) => {
-    if (!treeData || !svgRef.current || nodeIds.length === 0) return
+    if (!treeData || !svgRef.current || nodeIds.length === 0) return;
 
     // Trouver les nœuds correspondants
     const matchingNodes = treeData
@@ -162,86 +153,83 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
       .filter(
         (node) =>
           nodeIds.includes(node.data.person.id) ||
-          (node.data.partner && nodeIds.includes(node.data.partner.id))
-      )
+          (node.data.partner && nodeIds.includes(node.data.partner.id)),
+      );
 
-    if (matchingNodes.length === 0) return
+    if (matchingNodes.length === 0) return;
 
     // Calculer les limites des nœuds correspondants
-    const padding = 50 // Espace supplémentaire autour des nœuds
+    const padding = 50; // Espace supplémentaire autour des nœuds
     let minX = Infinity,
       minY = Infinity,
       maxX = -Infinity,
-      maxY = -Infinity
+      maxY = -Infinity;
 
     matchingNodes.forEach((node) => {
       // Position du nœud principal
-      minX = Math.min(minX, node.x! - nodeWidth / 2)
-      minY = Math.min(minY, node.y! - nodeHeight / 2)
-      maxX = Math.max(maxX, node.x! + nodeWidth / 2)
-      maxY = Math.max(maxY, node.y! + nodeHeight / 2)
+      minX = Math.min(minX, node.x! - nodeWidth / 2);
+      minY = Math.min(minY, node.y! - nodeHeight / 2);
+      maxX = Math.max(maxX, node.x! + nodeWidth / 2);
+      maxY = Math.max(maxY, node.y! + nodeHeight / 2);
 
       // Si le nœud a un partenaire, inclure sa position aussi
       if (node.data.partner) {
-        minX = Math.min(minX, node.x! + nodeWidth / 2 + horizontalGap)
-        maxX = Math.max(
-          maxX,
-          node.x! + nodeWidth / 2 + horizontalGap + nodeWidth
-        )
+        minX = Math.min(minX, node.x! + nodeWidth / 2 + horizontalGap);
+        maxX = Math.max(maxX, node.x! + nodeWidth / 2 + horizontalGap + nodeWidth);
       }
-    })
+    });
 
     // Ajouter le padding
-    minX -= padding
-    minY -= padding
-    maxX += padding
-    maxY += padding
+    minX -= padding;
+    minY -= padding;
+    maxX += padding;
+    maxY += padding;
 
     // Calculer les dimensions de la boîte englobante
-    const width = maxX - minX
-    const height = maxY - minY
+    const width = maxX - minX;
+    const height = maxY - minY;
 
     // Calculer le centre de la boîte
-    const centerX = (minX + maxX) / 2
-    const centerY = (minY + maxY) / 2
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
 
     // Calculer le facteur de zoom pour afficher tous les nœuds
-    const svgWidth = INITIAL_WIDTH
-    const svgHeight = INITIAL_HEIGHT
-    const scaleX = svgWidth / width
-    const scaleY = svgHeight / height
-    const scale = Math.min(Math.min(scaleX, scaleY), 1.5) // Limitation du zoom max
+    const svgWidth = INITIAL_WIDTH;
+    const svgHeight = INITIAL_HEIGHT;
+    const scaleX = svgWidth / width;
+    const scaleY = svgHeight / height;
+    const scale = Math.min(Math.min(scaleX, scaleY), 1.5); // Limitation du zoom max
 
     // Appliquer la transformation
-    const svg = d3.select(svgRef.current)
-    const zoomInstance = zoomBehaviorRef.current
+    const svg = d3.select(svgRef.current);
+    const zoomInstance = zoomBehaviorRef.current;
 
     if (zoomInstance) {
       // Calculer la transformation pour centrer sur la boîte
       const newTransform = d3.zoomIdentity
         .translate(svgWidth / 2, svgHeight / 2)
         .scale(scale)
-        .translate(-centerX, -centerY)
+        .translate(-centerX, -centerY);
 
       // Animation fluide du zoom
-      svg.transition().duration(750).call(zoomInstance.transform, newTransform)
+      svg.transition().duration(750).call(zoomInstance.transform, newTransform);
     }
-  }
+  };
 
   //
   //---------------------------------------------------------------------------------
   //
   const applyResetTransform = () => {
-    if (!svgRef.current || !zoomBehaviorRef.current) return
+    if (!svgRef.current || !zoomBehaviorRef.current) return;
 
-    const svg = d3.select(svgRef.current)
-    const zoomInstance = zoomBehaviorRef.current
+    const svg = d3.select(svgRef.current);
+    const zoomInstance = zoomBehaviorRef.current;
 
     if (zoomInstance) {
       // Création d'une transformation qui centre l'arbre
       const newTransform = d3.zoomIdentity
         .translate(INITIAL_WIDTH / 2, INITIAL_HEIGHT / 4)
-        .scale(0.8)
+        .scale(0.8);
       // .translate(-centerTreeX, -centerTreeY)
 
       // Application de la transformation
@@ -250,21 +238,21 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
         .duration(750)
         .call(zoomInstance.transform, newTransform)
         .on('end', () => {
-          setTransform(newTransform)
-        })
+          setTransform(newTransform);
+        });
 
       // Mise à jour explicite de l'état React
       // setTransform(newTransform)
     }
-  }
+  };
 
   //
   //---------------------------------------------------------------------------------
   //
   //Fonction pour réinitialiser le zoom
   const resetZoom = () => {
-    applyResetTransform()
-  }
+    applyResetTransform();
+  };
 
   //
   //---------------------------------------------------------------------------------
@@ -304,97 +292,95 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
 
   // Gestion du repliage/dépliage d'un nœud
   const handleToggleCollapse = (id: string) => {
-    if (!treeData) return
+    if (!treeData) return;
 
     // Fonction pour mettre à jour de manière récursive
     const updateNodeCollapse = (node: FamilyTreeNode): FamilyTreeNode => {
       if (node.person.id === id) {
-        return { ...node, isCollapsed: !node.isCollapsed }
+        return { ...node, isCollapsed: !node.isCollapsed };
       }
 
       return {
         ...node,
         children: node.children.map((child) => updateNodeCollapse(child)),
-      }
-    }
+      };
+    };
 
     // Mettre à jour la racine
-    const updatedRoot = updateNodeCollapse(treeData.data)
+    const updatedRoot = updateNodeCollapse(treeData.data);
 
     // Créer une nouvelle hiérarchie
     const d3hierarchy = d3.hierarchy<FamilyTreeNode>(updatedRoot, (node) =>
-      node.isCollapsed ? [] : node.children
-    )
+      node.isCollapsed ? [] : node.children,
+    );
 
     // Configurer le layout
-    const treeLayout = d3
-      .tree<FamilyTreeNode>()
-      .nodeSize([nodeWidth * 1.5, nodeHeight * 2.5])
+    const treeLayout = d3.tree<FamilyTreeNode>().nodeSize([nodeWidth * 1.5, nodeHeight * 2.5]);
 
     // Appliquer le layout avec une animation
-    const layoutedTree = treeLayout(d3hierarchy)
+    const layoutedTree = treeLayout(d3hierarchy);
 
-    setTreeData(layoutedTree)
+    setTreeData(layoutedTree);
     // calculateTreeDimensions(layoutedTree)
-  }
+  };
 
   // Highlights avec la recherche
   useEffect(() => {
-    if (!svgRef.current) return
+    if (!svgRef.current) return;
 
     if (highlightedNodes.length === 0) {
       // Réinitialiser tous les nœuds à une opacité normale (1)
-      d3.select(svgRef.current).selectAll('.person-node').attr('opacity', 1)
-      return
+      d3.select(svgRef.current).selectAll('.person-node').attr('opacity', 1);
+      return;
     }
 
     // Réduire l'opacité de tous les nœuds
-    d3.select(svgRef.current).selectAll('.person-node').attr('opacity', 0.2)
+    d3.select(svgRef.current).selectAll('.person-node').attr('opacity', 0.2);
 
     // Rétablir l'opacité normale pour les nœuds correspondants uniquement
     d3.select(svgRef.current)
       .selectAll('.person-node')
       .each(function (d: any) {
         if (highlightedNodes.includes(d.person.id)) {
-          d3.select(this).attr('opacity', 1)
+          d3.select(this).attr('opacity', 1);
         }
-      })
-  }, [highlightedNodes])
+      });
+  }, [highlightedNodes]);
 
   // Générer les liens entre parents et enfants
   const generateParentChildLinks = () => {
-    if (!treeData) return null
+    if (!treeData) return null;
 
     const orthogonalLink = (d: any) => {
-      const sourceX = d.source.x
-      const sourceY = d.source.y
-      const targetX = d.target.x
-      const targetY = d.target.y
+      const sourceX = d.source.x;
+      const sourceY = d.source.y;
+      const targetX = d.target.x;
+      const targetY = d.target.y;
 
       // Calculer le point intermédiaire (à mi-chemin entre source et cible sur l'axe Y)
-      const midY = sourceY + (targetY - sourceY) / 2
+      const midY = sourceY + (targetY - sourceY) / 2;
 
       return `
         M${sourceX},${sourceY}
         V${midY}
         H${targetX}
         V${targetY}
-      `
-    }
+      `;
+    };
 
     // Créer les liens
     return treeData.links().map((link) => {
       const source = {
         x: link.source.x,
         y: link.source.y! + nodeHeight / 2,
-      }
+      };
 
       const target = {
         x: link.target.x,
         y: link.target.y! - nodeHeight / 2,
-      }
+      };
 
-      const path = orthogonalLink({ source, target })
+      const path = orthogonalLink({ source, target });
 
       return (
         <path
@@ -405,24 +391,22 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
           strokeWidth={1.5}
           strokeOpacity={0.7}
         />
-      )
-    })
-  }
+      );
+    });
+  };
 
   // Générer les liens entre partenaires
   const generatePartnerLinks = () => {
-    if (!treeData) return null
+    if (!treeData) return null;
 
     // Filtrer les nœuds avec des partenaires
-    const nodesWithPartners = treeData
-      .descendants()
-      .filter((node) => node.data.partner)
+    const nodesWithPartners = treeData.descendants().filter((node) => node.data.partner);
 
     return nodesWithPartners.map((node) => {
-      const startX = node.x! + nodeWidth / 2
-      const startY = node.y
-      const endX = node.x! + nodeWidth / 2 + horizontalGap
-      const endY = node.y
+      const startX = node.x! + nodeWidth / 2;
+      const startY = node.y;
+      const endX = node.x! + nodeWidth / 2 + horizontalGap;
+      const endY = node.y;
 
       return (
         <g key={`partner-link-${node.data.person.id}`}>
@@ -445,18 +429,18 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
             fillOpacity={0.7}
           />
         </g>
-      )
-    })
-  }
+      );
+    });
+  };
 
   // Gérer le clic sur une personne
   const handlePersonClick = (person: Person) => {
-    selectPersonFunc(person)
-  }
+    selectPersonFunc(person);
+  };
 
   // Générer les nœuds de personnes
   const generatePersonNodes = () => {
-    if (!treeData) return null
+    if (!treeData) return null;
 
     const allNodes = treeData.descendants().flatMap((node) => {
       // Créer un tableau avec le nœud principal
@@ -473,7 +457,7 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
             onToggleCollapse={handleToggleCollapse}
           />
         </g>,
-      ]
+      ];
 
       // Ajouter le nœud du partenaire s'il existe
       if (node.data.partner) {
@@ -493,20 +477,20 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
               width={nodeWidth}
               height={nodeHeight}
             />
-          </g>
-        )
+          </g>,
+        );
       }
 
-      return nodes
-    })
+      return nodes;
+    });
 
-    return allNodes
-  }
+    return allNodes;
+  };
 
   // Rendu du composant
   return (
     <div style={{ position: 'relative', width: '100%', height: '700px' }}>
-      <svg ref={svgRef} width="100%" height="100%">
+      <svg ref={svgRef} width="100%" height="100%" role="img" aria-label="Arbre généalogique">
         <g transform={transform.toString()}>
           {/* Liens et nœuds */}
           <g className="links">
@@ -525,5 +509,5 @@ export const FamilyTree: React.FC<FamilyTreeProps> = ({
         resetZoomFunc={resetZoom}
       />
     </div>
-  )
-}
+  );
+};

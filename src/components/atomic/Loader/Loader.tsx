@@ -1,15 +1,15 @@
-import React from 'react'
+import type React from 'react';
 
-import Logo from '../../../assets/logo.svg'
-import { Dots } from './elements/Dots'
+import Logo from '../../../assets/logo.svg';
+import { Dots } from './elements/Dots';
 
 interface ILoader {
-  dots?: boolean
+  dots?: boolean;
 }
 
 export const Loader: React.FC<ILoader> = ({ dots = false }) => {
   if (dots) {
-    return <Dots size="small" />
+    return <Dots size="small" />;
   }
 
   return (
@@ -35,5 +35,5 @@ export const Loader: React.FC<ILoader> = ({ dots = false }) => {
 
       <Dots />
     </div>
-  )
-}
+  );
+};

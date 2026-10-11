@@ -1,1 +1,1 @@
-export { FamilyTree } from './FamilytTree'
+export { FamilyTree } from './FamilytTree';

@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Famille connectée</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&amp;family=Figtree:wght@400..700&amp;display=swap">
+<style>
+*{font-variation-settings:"SOFT" 100,"WONK" 0}
+body{margin:0;background:#F6F2EA}
+a{color:#A4532F}a:hover{color:#7C3D21}
+button{font-family:inherit}
+input::placeholder{color:#9A9186}
+</style>
+</helmet>
+<div style="min-height: 100vh; height: 100vh; display: flex; flex-direction: column; background: #F6F2EA; color: #1F1C19; font-family: 'Figtree', system-ui, sans-serif; overflow: hidden">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px 32px">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1 1 200px">
+      <span style="width: 40px; height: 40px; border-radius: 50%; background: #1F1C19; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#F6F2EA" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M16 28V16"></path><path d="M16 20C16 16 11 15 9 12"></path><path d="M16 18C16 14 21 13 23 10"></path><circle cx="9" cy="9" r="3"></circle><circle cx="23" cy="7.5" r="3"></circle><circle cx="16" cy="12" r="3"></circle></svg>
+      </span>
+      <span style="font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500; letter-spacing: -0.01em">Ances-Tree</span>
+    </div>
+    <nav aria-label="Vues" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid #E4DCCF; background: #FBF9F5">
+      <a href="Arbre.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Arbre</a>
+      <a href="Eventail.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Ancêtres</a>
+      <a href="Frise.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Frise</a>
+      <a href="Carte.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Carte</a>
+      <a href="Recits.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #6F675D; font-size: 14px; font-weight: 500; text-decoration: none">Récits</a>
+    </nav>
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 1 1 300px">
+      <button type="button" style="display: flex; align-items: center; gap: 10px; height: 46px; min-width: 220px; padding: 0 16px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FBF9F5; color: #6F675D; font-size: 15px; cursor: pointer">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <span style="flex: 1; text-align: left">Trouver quelqu'un</span>
+        <span style="font-size: 12px; color: #9A9186">⌘K</span>
+      </button>
+      <a href="Activite.dc.html" aria-label="Activité, 2 nouveautés" style="position: relative; width: 46px; height: 46px; box-sizing: border-box; border: 1px solid #E4DCCF; border-radius: 50%; background: #FBF9F5; color: #1F1C19; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+        <span style="position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; border: 2px solid #F6F2EA; background: #A4532F; color: #FFFFFF; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">2</span>
+      </a>
+      <span style="width: 46px; height: 46px; box-sizing: border-box; border-radius: 50%; border: 2px solid #FFFFFF; background: #EAE3D7; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-weight: 500; font-size: 17px; box-shadow: 0 0 0 1px #A4532F">{{ meInitial }}</span>
+    </div>
+  </header>
+
+  <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 8px 32px 32px">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">{{ kicker }}</span>
+        <h1 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 40px; letter-spacing: -0.01em; line-height: 1.1">Famille connectée</h1>
+        <p style="margin: 0; font-size: 15px; color: #6F675D">{{ intro }}</p>
+      </div>
+      <div style="display: flex; gap: 10px">
+        <span style="display: inline-flex; flex-direction: column; justify-content: center; height: 64px; padding: 0 22px; border-radius: 22px; border: 1px solid #E4DCCF; background: #FBF9F5"><span style="font-family: 'Fraunces', serif; font-size: 24px">{{ memberCount }}</span><span style="font-size: 12px; color: #8A8278">inscrits</span></span>
+        <span style="display: inline-flex; flex-direction: column; justify-content: center; height: 64px; padding: 0 22px; border-radius: 22px; border: 1px solid #E4DCCF; background: #FBF9F5"><span style="font-family: 'Fraunces', serif; font-size: 24px">14</span><span style="font-size: 12px; color: #8A8278">personnes dans l'arbre</span></span>
+      </div>
+    </div>
+
+    <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+      <section aria-label="À traiter" style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px">
+        <div style="flex: 1 1 520px; border-radius: 28px; border: 1px solid #E4DCCF; background: #FFFFFF; box-shadow: 0 20px 50px rgba(31, 28, 25, 0.07); padding: 24px 28px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px">
+            <h2 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 24px">Demandes d'accès</h2>
+            <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">Admin</span>
+          </div>
+          <sc-for list="{{ demandes }}" as="d" hint-placeholder-count="2">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 14px 0; border-top: 1px solid #EFE9DF">
+              <span style="width: 46px; height: 46px; flex: none; box-sizing: border-box; border-radius: 50%; border: 2px dashed #C9BCA9; background: #FBF9F5; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 16px; color: #6F675D">{{ d.ini }}</span>
+              <span style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 3px">
+                <span style="font-size: 15px; font-weight: 600">{{ d.name }}</span>
+                <span style="font-size: 13px; line-height: 1.4; color: #6F675D">« {{ d.who }} »</span>
+              </span>
+              <sc-if value="{{ d.pending }}" hint-placeholder-val="{{ true }}">
+                <span style="display: flex; align-items: center; gap: 8px">
+                  <span style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 4px; border-radius: 999px; border: 1px solid #E4DCCF; background: #FBF9F5; font-size: 13px">
+                    <span style="width: 32px; height: 32px; border-radius: 50%; background: #EAE3D7; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 12px">{{ d.ficheIni }}</span>Relier à {{ d.fiche }}
+                  </span>
+                  <button type="button" onClick="{{ d.accept }}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 13px; font-weight: 600; cursor: pointer">Valider</button>
+                  <button type="button" onClick="{{ d.refuse }}" style="height: 40px; padding: 0 14px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 13px; font-weight: 600; cursor: pointer">Refuser</button>
+                </span>
+              </sc-if>
+              <sc-if value="{{ d.handled }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size: 13px; color: #6F675D">{{ d.result }}</span>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex: 1 1 380px; border-radius: 28px; border: 1px solid #E4DCCF; background: #FFFFFF; box-shadow: 0 20px 50px rgba(31, 28, 25, 0.07); padding: 24px 28px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px">
+            <h2 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 24px">Suggestions escaladées</h2>
+            <span style="font-size: 13px; color: #8A8278">sans réponse depuis 14 jours</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 0 0; border-top: 1px solid #EFE9DF">
+            <span style="font-size: 15px; line-height: 1.45">Isabelle propose « Jeanne Roux, née à Albi le 3 mars 1934 »</span>
+            <span style="font-size: 13px; color: #6F675D">Gardiens prévenus : Anne et Luc, sans réponse</span>
+            <div style="display: flex; gap: 8px; margin-top: 4px">
+              <button type="button" style="height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 13px; font-weight: 600; cursor: pointer">Accepter</button>
+              <button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 13px; font-weight: 600; cursor: pointer">Refuser</button>
+              <button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 13px; font-weight: 600; cursor: pointer">Relancer Anne et Luc</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </sc-if>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <section aria-label="Membres inscrits" style="flex: 999 1 560px; min-width: 0; border-radius: 28px; border: 1px solid #E4DCCF; background: #FFFFFF; box-shadow: 0 20px 50px rgba(31, 28, 25, 0.07); padding: 24px 28px">
+        <h2 style="margin: 0 0 8px; font-family: 'Fraunces', serif; font-weight: 400; font-size: 24px">Membres inscrits</h2>
+        <sc-for list="{{ members }}" as="m" hint-placeholder-count="5">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 14px 0; border-top: 1px solid #EFE9DF">
+            <span style="{{ m.bubble }}">{{ m.ini }}</span>
+            <span style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 3px">
+              <span style="font-size: 15px; font-weight: 600">{{ m.name }}</span>
+              <span style="font-size: 13px; color: #6F675D">{{ m.link }}</span>
+            </span>
+            <span style="font-size: 13px; color: #8A8278; min-width: 150px">{{ m.seen }}</span>
+            <span style="{{ m.badge }}">{{ m.status }}</span>
+            <sc-if value="{{ m.canPromote }}" hint-placeholder-val="{{ false }}">
+              <button type="button" onClick="{{ m.toggle }}" style="height: 40px; padding: 0 14px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap">{{ m.toggleLabel }}</button>
+            </sc-if>
+          </div>
+        </sc-for>
+        <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 8px 0 0; font-size: 13px; color: #8A8278">Le compte propriétaire reste admin, et il y a toujours au moins un admin.</p>
+        </sc-if>
+
+        <h3 style="margin: 24px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #9A9186">Invitations en cours</h3>
+        <sc-for list="{{ invites }}" as="i" hint-placeholder-count="2">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid #EFE9DF">
+            <span style="width: 42px; height: 42px; flex: none; box-sizing: border-box; border-radius: 50%; border: 2px dashed #C9BCA9; background: #FBF9F5; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 15px; color: #6F675D">{{ i.ini }}</span>
+            <span style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 3px">
+              <span style="font-size: 15px">{{ i.name }}</span>
+              <span style="font-size: 13px; color: #8A8278">{{ i.meta }}</span>
+            </span>
+            <button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FFFFFF; color: #1F1C19; font-size: 13px; font-weight: 600; cursor: pointer">Relancer</button>
+          </div>
+        </sc-for>
+      </section>
+
+      <aside aria-label="Inviter un proche" style="flex: 1 1 360px; max-width: 440px; box-sizing: border-box; border-radius: 28px; border: 1px solid #E4DCCF; background: #FFFFFF; box-shadow: 0 20px 50px rgba(31, 28, 25, 0.07); padding: 28px; display: flex; flex-direction: column; gap: 18px">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A4532F">Tout le monde peut inviter</span>
+          <h2 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 28px; line-height: 1.15">Inviter un proche</h2>
+          <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #6F675D">Choisis sa fiche dans ton cercle proche ou parmi tes descendants. Il arrivera directement relié à elle.</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <sc-for list="{{ candidates }}" as="c" hint-placeholder-count="4">
+            <button type="button" onClick="{{ c.pick }}" style="{{ c.style }}">
+              <span style="width: 40px; height: 40px; flex: none; border-radius: 50%; background: #EAE3D7; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 14px; color: #1F1C19">{{ c.ini }}</span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 2px; text-align: left">
+                <span style="font-size: 15px; color: #1F1C19">{{ c.name }}</span>
+                <span style="font-size: 12px; color: #8A8278">{{ c.rel }}</span>
+              </span>
+              <span style="font-size: 12px; color: #6F675D">{{ c.state }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 14px; font-weight: 600">Email de {{ pickedFirst }}</span>
+          <input value="{{ email }}" onChange="{{ onEmail }}" type="email" placeholder="prenom@exemple.fr" style="height: 50px; box-sizing: border-box; padding: 0 20px; border: 1px solid #E4DCCF; border-radius: 999px; background: #FBF9F5; color: #1F1C19; font-size: 15px; font-family: inherit; outline: none">
+        </label>
+        <button type="button" onClick="{{ sendInvite }}" style="height: 50px; border: 0; border-radius: 999px; background: #1F1C19; color: #F6F2EA; font-size: 15px; font-weight: 600; cursor: pointer">Envoyer l'invitation</button>
+        <sc-if value="{{ sentMsg }}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 0; font-size: 13px; color: #A4532F; text-align: center">{{ sentText }}</p>
+        </sc-if>
+      </aside>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"vue":{"editor":"enum","options":["membre","admin"],"default":"membre"},"$preview":{"width":1440,"height":900}}'>
+const MEMBERS = [
+  { id: 'folpe', name: 'Folpe', ini: 'F', link: 'Propriétaire de l\u2019espace', alink: 'Propriétaire de l\u2019espace', seen: 'Actif aujourd’hui', admin: true, owner: true },
+  { id: 'hugo', name: 'Hugo Marchand', ini: 'HM', link: 'Relié à sa fiche, toi', alink: 'Relié à Hugo Marchand', seen: 'En ligne', me: true },
+  { id: 'luc', name: 'Luc Marchand', ini: 'LM', link: 'Ton père', alink: 'Relié à Luc Marchand', seen: 'Il y a 2 jours' },
+  { id: 'anne', name: 'Anne Marchand', ini: 'AM', link: 'Ta tante', alink: 'Relié à Anne Marchand', seen: 'Il y a 5 jours' },
+  { id: 'isabelle', name: 'Isabelle Lefèvre', ini: 'IL', link: 'La cousine de ton père', alink: 'Relié à Isabelle Lefèvre', seen: 'Hier' }
+];
+const CANDIDATES = [
+  { id: 'lea', name: 'Léa Marchand', ini: 'LM', rel: 'Ta sœur' },
+  { id: 'maxime', name: 'Maxime Marchand', ini: 'MM', rel: 'Ton demi-frère' },
+  { id: 'sophie', name: 'Sophie Marchand', ini: 'SM', rel: 'Ta mère' },
+  { id: 'luc', name: 'Luc Marchand', ini: 'LM', rel: 'Ton père', member: true }
+];
+const DEMANDES = [
+  { id: 'd1', name: 'Camille Marchand', ini: 'CM', who: 'Fille de Claude, petite-fille d’Henri et Louise', fiche: 'une nouvelle fiche sous Claude', ficheIni: '+' },
+  { id: 'd2', name: 'Odette Blanc', ini: 'OB', who: 'Je suis la maman de Sophie', fiche: 'Odette Pichon', ficheIni: 'OP' }
+];
+
+class Component extends DCLogic {
+  state = { picked: 'lea', email: '', invited: [{ id: 'maxime', email: 'maxime.m@exemple.fr', when: 'il y a 3 jours' }], sent: '', admins: { folpe: true }, done: {} };
+
+  renderVals() {
+    const s = this.state;
+    const isAdmin = this.props.vue === 'admin';
+    const invitedIds = s.invited.map((i) => i.id);
+    const picked = CANDIDATES.find((c) => c.id === s.picked) || CANDIDATES[0];
+    return {
+      isAdmin: isAdmin,
+      meInitial: isAdmin ? 'F' : 'H',
+      kicker: isAdmin ? 'Administration' : 'Les tiens dans l’arbre',
+      intro: isAdmin ? 'Valide les arrivées, arbitre ce qui reste sans réponse, nomme d’autres admins.' : 'Plus il y a de proches inscrits, plus l’arbre se complète tout seul.',
+      memberCount: MEMBERS.length,
+      members: MEMBERS.map((m) => {
+        const admin = !!s.admins[m.id];
+        return {
+          name: m.name + (m.me && !isAdmin ? ' (toi)' : ''),
+          ini: m.ini,
+          link: isAdmin ? m.alink : m.link,
+          seen: m.seen,
+          status: m.owner ? 'Propriétaire' : admin ? 'Admin' : 'Membre',
+          badge: 'display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 999px; font-size: 12px; font-weight: 600; ' + (admin ? 'background: #1F1C19; color: #F6F2EA' : 'border: 1px solid #E4DCCF; color: #6F675D'),
+          bubble: 'width: 46px; height: 46px; flex: none; box-sizing: border-box; border-radius: 50%; border: 3px solid #FFFFFF; background: #EAE3D7; display: inline-flex; align-items: center; justify-content: center; font-family: Fraunces, serif; font-size: 16px; box-shadow: ' + (m.me && !isAdmin ? '0 0 0 2px #A4532F' : '0 0 0 1px #E4DCCF'),
+          canPromote: isAdmin && !m.owner,
+          me: m.me,
+          toggleLabel: admin ? 'Retirer admin' : 'Nommer admin',
+          toggle: () => this.setState({ admins: Object.assign({}, s.admins, { [m.id]: !admin }) })
+        };
+      }),
+      invites: s.invited.map((i) => {
+        const c = CANDIDATES.find((x) => x.id === i.id);
+        return { ini: c.ini, name: c.name, meta: i.email + ', invité par Hugo ' + i.when };
+      }),
+      candidates: CANDIDATES.map((c) => {
+        const on = c.id === picked.id;
+        const st = c.member ? 'Déjà inscrit' : invitedIds.includes(c.id) ? 'Invité' : '';
+        return {
+          ini: c.ini, name: c.name, rel: c.rel, state: st,
+          pick: c.member ? () => {} : () => this.setState({ picked: c.id, sent: '' }),
+          style: 'width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 14px 8px 8px; border-radius: 999px; cursor: ' + (c.member ? 'default' : 'pointer') + '; opacity: ' + (c.member ? 0.5 : 1) + '; border: ' + (on ? '2px solid #1F1C19' : '1px solid #E4DCCF') + '; background: ' + (on ? '#FBF9F5' : '#FFFFFF')
+        };
+      }),
+      pickedFirst: picked.name.split(' ')[0],
+      email: s.email,
+      onEmail: (e) => this.setState({ email: e.target.value }),
+      sendInvite: () => {
+        const email = s.email || picked.name.split(' ')[0].toLowerCase() + '@exemple.fr';
+        const others = s.invited.filter((i) => i.id !== picked.id);
+        this.setState({ invited: others.concat([{ id: picked.id, email: email, when: 'à l’instant' }]), email: '', sent: picked.name.split(' ')[0] });
+      },
+      sentMsg: !!s.sent,
+      sentText: 'Invitation envoyée à ' + s.sent + '. Elle arrivera reliée à sa fiche.',
+      demandes: DEMANDES.map((d) => ({
+        name: d.name, ini: d.ini, who: d.who, fiche: d.fiche, ficheIni: d.ficheIni,
+        pending: !s.done[d.id],
+        handled: !!s.done[d.id],
+        result: s.done[d.id] === 'ok' ? 'Validée : lien de connexion envoyé' : 'Refusée',
+        accept: () => this.setState({ done: Object.assign({}, s.done, { [d.id]: 'ok' }) }),
+        refuse: () => this.setState({ done: Object.assign({}, s.done, { [d.id]: 'ko' }) })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

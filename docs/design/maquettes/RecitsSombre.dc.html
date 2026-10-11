@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Récits de famille, thème sombre</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&amp;family=Figtree:wght@400..700&amp;display=swap">
+<style>
+*{font-variation-settings:"SOFT" 100,"WONK" 0}
+body{margin:0;background:#1D1A2B}
+a{color:#FFB86B}a:hover{color:#FFC98C}
+button{font-family:inherit}
+</style>
+</helmet>
+<!-- Les scènes sont des compositions GSAP (SplitText pour les titres, DrawSVG pour les tracés, timeline calée sur l'audio et la transcription horodatée). Le même découpage en scènes est rejoué par Remotion pour l'export vidéo. -->
+<div style="min-height: 100vh; height: 100vh; display: flex; flex-direction: column; background: #1D1A2B; color: #F5EFE6; font-family: 'Figtree', system-ui, sans-serif; overflow: hidden">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px 32px">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1 1 200px">
+      <span style="width: 40px; height: 40px; border-radius: 50%; background: #F5EFE6; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#1D1A2B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M16 28V16"></path><path d="M16 20C16 16 11 15 9 12"></path><path d="M16 18C16 14 21 13 23 10"></path><circle cx="9" cy="9" r="3"></circle><circle cx="23" cy="7.5" r="3"></circle><circle cx="16" cy="12" r="3"></circle></svg>
+      </span>
+      <span style="font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500; letter-spacing: -0.01em">Ances-Tree</span>
+    </div>
+    <nav aria-label="Vues" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid #3A3456; background: #262238">
+      <a href="Arbre.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Arbre</a>
+      <a href="Eventail.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Ancêtres</a>
+      <a href="Frise.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Frise</a>
+      <a href="Carte.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Carte</a>
+      <span aria-current="page" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; background: #F5EFE6; color: #1D1A2B; font-size: 14px; font-weight: 600">Récits</span>
+    </nav>
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 1 1 300px">
+      <button type="button" style="display: flex; align-items: center; gap: 10px; height: 46px; min-width: 220px; padding: 0 16px; border: 1px solid #3A3456; border-radius: 999px; background: #262238; color: #B7AFC9; font-size: 15px; cursor: pointer">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <span style="flex: 1; text-align: left">Trouver quelqu'un</span>
+        <span style="font-size: 12px; color: #7C7398">⌘K</span>
+      </button>
+      <a href="Activite.dc.html" aria-label="Activité, 2 nouveautés" style="position: relative; width: 46px; height: 46px; box-sizing: border-box; border: 1px solid #3A3456; border-radius: 50%; background: #262238; color: #F5EFE6; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+        <span style="position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; border: 2px solid #1D1A2B; background: #FFB86B; color: #2A2640; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">2</span>
+      </a>
+      <span style="width: 46px; height: 46px; box-sizing: border-box; border-radius: 50%; border: 2px solid #2A2640; background: #3D3758; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-weight: 500; font-size: 17px; box-shadow: 0 0 0 1px #3A3456">H</span>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 20px; padding: 0 32px 32px; min-height: 0">
+
+    <aside aria-label="Bibliothèque de récits" style="flex: 1 1 320px; max-width: 360px; box-sizing: border-box; border-radius: 28px; border: 1px solid #3A3456; background: #2A2640; box-shadow: 0 20px 50px rgba(8, 6, 18, 0.18); overflow: hidden; display: flex; flex-direction: column">
+      <div style="padding: 28px 24px 12px">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #FFB86B">Récits</span>
+        <h2 style="margin: 6px 0 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 30px; letter-spacing: -0.01em">Leurs voix</h2>
+      </div>
+      <ul style="flex: 1; overflow-y: auto; margin: 0; padding: 0 12px; list-style: none; display: flex; flex-direction: column; gap: 4px">
+        <sc-for list="{{ stories }}" as="st" hint-placeholder-count="3">
+          <li>
+            <button type="button" onClick="{{ st.pick }}" style="{{ st.style }}">
+              <span style="{{ st.avatar }}">{{ st.initials }}</span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; text-align: left">
+                <span style="font-family: 'Fraunces', serif; font-size: 18px; line-height: 1.2">{{ st.title }}</span>
+                <span style="font-size: 13px; color: #B7AFC9">{{ st.by }}</span>
+                <span style="font-size: 12px; color: #8E86A8">{{ st.meta }}</span>
+              </span>
+            </button>
+          </li>
+        </sc-for>
+        <li style="display: flex; gap: 14px; padding: 14px 12px; border-top: 1px solid #322D4A; margin-top: 6px">
+          <span style="width: 48px; height: 48px; flex: none; box-sizing: border-box; border-radius: 50%; border: 2px dashed #5E5680; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 15px; color: #8E86A8">CM</span>
+          <span style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+            <span style="font-family: 'Fraunces', serif; font-size: 18px; line-height: 1.2; color: #B7AFC9">Les années d'école normale</span>
+            <span style="font-size: 13px; color: #8E86A8">Raconté par Claude, enregistré hier</span>
+            <span style="display: flex; gap: 4px" aria-label="Étape 2 sur 3 : transcription en cours">
+              <span style="flex: 1; height: 4px; border-radius: 999px; background: #F5EFE6"></span>
+              <span style="flex: 1; height: 4px; border-radius: 999px; background: #FFB86B"></span>
+              <span style="flex: 1; height: 4px; border-radius: 999px; background: #3A3456"></span>
+            </span>
+            <span style="font-size: 12px; color: #FFB86B">Transcription...</span>
+          </span>
+        </li>
+      </ul>
+      <div style="padding: 16px 24px 24px; display: flex; flex-direction: column; gap: 10px">
+        <button type="button" style="height: 52px; border: 0; border-radius: 999px; background: #F5EFE6; color: #1D1A2B; font-size: 15px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px">
+          <span style="width: 12px; height: 12px; border-radius: 50%; background: #FFB86B; box-shadow: 0 0 0 3px #1D1A2B"></span>
+          Enregistrer un récit
+        </button>
+        <span style="font-size: 13px; line-height: 1.45; color: #8E86A8; text-align: center">On te propose des questions à poser, la mise en scène se fait toute seule.</span>
+      </div>
+    </aside>
+
+    <main style="flex: 999 1 640px; min-width: 0; box-sizing: border-box; border-radius: 28px; border: 1px solid #3A3456; background: #2A2640; box-shadow: 0 20px 50px rgba(8, 6, 18, 0.18); display: flex; flex-direction: column; gap: 14px; padding: 22px 28px 22px; overflow: hidden">
+
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px">
+        <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px">
+          <h1 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 28px; letter-spacing: -0.01em">{{ story.title }}</h1>
+          <span style="font-size: 14px; color: #B7AFC9">{{ story.by }}</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{ story.tags }}" as="t" hint-placeholder-count="5">
+            <a href="{{ t.href }}" style="display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 999px; background: #1D1A2B; color: #F5EFE6; font-size: 13px; text-decoration: none">
+              <span style="{{ t.mark }}"></span>{{ t.label }}
+            </a>
+          </sc-for>
+        </div>
+        <button type="button" style="height: 44px; padding: 0 18px; border: 1px solid #3A3456; border-radius: 999px; background: #2A2640; color: #F5EFE6; font-size: 14px; font-weight: 600; cursor: pointer">Exporter en vidéo</button>
+      </div>
+
+      <section aria-label="Scène" style="position: relative; width: 100%; max-width: 704px; aspect-ratio: 16 / 9; align-self: center; flex: none; border-radius: 22px; overflow: hidden; background-color: #221E33; background-image: radial-gradient(rgba(245, 239, 230, 0.16) 1px, transparent 1.5px); background-size: 46px 46px; box-shadow: 0 0 0 1px #3A3456">
+        <div style="position: absolute; left: 44px; top: 40px; width: 52%; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #FFB86B">{{ scene.kicker }}</span>
+          <span style="font-family: 'Fraunces', serif; font-size: 44px; line-height: 1.02; letter-spacing: -0.015em">{{ scene.title }}</span>
+          <span style="font-size: 14px; color: #B7AFC9">{{ scene.when }}</span>
+        </div>
+        <div style="position: absolute; right: 30px; top: 34px; width: 300px; height: 220px">
+          <sc-if value="{{ scene.isTrain }}" hint-placeholder-val="{{ true }}">
+            <svg viewBox="0 0 300 220" width="300" height="220" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g>
+              <path d="M40 170 C90 150 120 110 170 96 C210 84 240 60 262 40" stroke="#5E5680" stroke-width="2" stroke-dasharray="2 9"></path>
+              <path d="M40 170 C90 150 120 110 170 96" stroke="#FFB86B" stroke-width="3"></path>
+              <circle cx="40" cy="170" r="9" fill="#F5EFE6" stroke="#2A2640" stroke-width="3"></circle>
+              <circle cx="262" cy="40" r="9" fill="#F5EFE6" stroke="#2A2640" stroke-width="3"></circle>
+              <rect x="150" y="80" width="40" height="22" rx="8" fill="#2A2640" stroke="#F5EFE6" stroke-width="2" transform="rotate(-18 170 91)"></rect>
+              <text x="40" y="200" text-anchor="middle" fill="#B7AFC9" style="font-family: Figtree, sans-serif; font-size: 13px">Toulouse</text>
+              <text x="262" y="22" text-anchor="middle" fill="#B7AFC9" style="font-family: Figtree, sans-serif; font-size: 13px">Rodez</text>
+            </g></svg>
+          </sc-if>
+          <sc-if value="{{ scene.isHouse }}" hint-placeholder-val="{{ false }}">
+            <svg viewBox="0 0 300 220" width="300" height="220" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g stroke="#F5EFE6" stroke-width="2.5">
+              <path d="M70 190 V100 L150 46 L230 100 V190 Z" fill="#262238"></path>
+              <path d="M128 190 V140 H172 V190"></path>
+              <rect x="92" y="112" width="30" height="26" rx="4"></rect>
+              <rect x="178" y="112" width="30" height="26" rx="4" fill="#3F3343"></rect>
+              <path d="M40 190 H260" stroke="#5E5680"></path>
+              <path d="M196 70 V44 H214 V82" fill="#262238"></path>
+            </g></svg>
+          </sc-if>
+          <sc-if value="{{ scene.isTree }}" hint-placeholder-val="{{ false }}">
+            <svg viewBox="0 0 300 220" width="300" height="220" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g>
+              <path d="M110 50 L190 50 M150 50 C150 110 70 90 70 150 M150 50 C150 110 150 90 150 150 M150 50 C150 110 230 90 230 150" stroke="#5E5680" stroke-width="2"></path>
+              <path d="M150 50 C150 110 150 90 150 150" stroke="#FFB86B" stroke-width="3"></path>
+              <circle cx="110" cy="50" r="18" fill="#2F2A45" stroke="#2A2640" stroke-width="4"></circle>
+              <circle cx="190" cy="50" r="18" fill="#2F2A45" stroke="#2A2640" stroke-width="4"></circle>
+              <circle cx="70" cy="155" r="18" fill="#3D3758" stroke="#2A2640" stroke-width="4"></circle>
+              <circle cx="150" cy="155" r="22" fill="#3D3758" stroke="#FFB86B" stroke-width="3"></circle>
+              <circle cx="230" cy="155" r="18" fill="#3D3758" stroke="#2A2640" stroke-width="4"></circle>
+              <text x="150" y="200" text-anchor="middle" fill="#F5EFE6" style="font-family: Fraunces, serif; font-size: 15px">Marie</text>
+            </g></svg>
+          </sc-if>
+          <sc-if value="{{ scene.isEnd }}" hint-placeholder-val="{{ false }}">
+            <svg viewBox="0 0 300 220" width="300" height="220" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g>
+              <path d="M30 170 C90 170 110 120 150 120 C190 120 210 170 270 170" stroke="#5E5680" stroke-width="2"></path>
+              <circle cx="150" cy="80" r="34" stroke="#FFB86B" stroke-width="2.5"></circle>
+              <path d="M150 30 V20 M150 140 V130 M100 80 H90 M210 80 H200" stroke="#FFB86B" stroke-width="2.5"></path>
+            </g></svg>
+          </sc-if>
+        </div>
+        <div style="position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); width: calc(100% - 88px); display: flex; justify-content: center">
+          <span style="max-width: 100%; padding: 12px 22px; border-radius: 18px; background: #2A2640; box-shadow: 0 10px 26px rgba(8, 6, 18, 0.25); font-family: 'Fraunces', serif; font-size: 19px; line-height: 1.35; font-style: italic; text-align: center">« {{ scene.quote }} »</span>
+        </div>
+      </section>
+
+      <div style="display: flex; align-items: center; gap: 16px">
+        <button type="button" onClick="{{ togglePlay }}" aria-label="{{ playLabel }}" style="flex: none; width: 52px; height: 52px; border: 0; border-radius: 50%; background: #F5EFE6; color: #1D1A2B; cursor: pointer; display: inline-flex; align-items: center; justify-content: center">
+          <sc-if value="{{ playing }}" hint-placeholder-val="{{ true }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.5"></rect><rect x="14" y="5" width="4" height="14" rx="1.5"></rect></svg>
+          </sc-if>
+          <sc-if value="{{ paused }}" hint-placeholder-val="{{ false }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"></path></svg>
+          </sc-if>
+        </button>
+        <div style="flex: 1; display: flex; gap: 4px">
+          <sc-for list="{{ chapters }}" as="c" hint-placeholder-count="4">
+            <button type="button" onClick="{{ c.pick }}" aria-label="{{ c.aria }}" style="{{ c.wrap }}">
+              <span style="{{ c.bar }}"><span style="{{ c.fill }}"></span></span>
+              <span style="{{ c.label }}">{{ c.title }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <span style="flex: none; font-size: 13px; color: #B7AFC9; font-variant-numeric: tabular-nums">{{ time }}</span>
+      </div>
+
+      <div aria-label="Transcription" style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 14px 18px; border-radius: 18px; background: #262238; border: 1px solid #322D4A">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #8E86A8">Transcription</span>
+        <sc-for list="{{ lines }}" as="l" hint-placeholder-count="3">
+          <button type="button" onClick="{{ l.pick }}" style="{{ l.style }}">{{ l.text }}</button>
+        </sc-for>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const STORIES = [
+  {
+    id: 'etes', title: 'Les étés à Rodez', by: 'Raconté par Marie, née en 1936', meta: 'Récit animé, 12 min', initials: 'ML', total: '12:04',
+    tags: [
+      { label: 'Marie', kind: 'p', href: 'Arbre.dc.html' }, { label: 'Henri', kind: 'p', href: 'Arbre.dc.html' },
+      { label: 'Louise', kind: 'p', href: 'Arbre.dc.html' }, { label: 'Rodez', kind: 'l', href: 'Carte.dc.html' }, { label: 'Toulouse', kind: 'l', href: 'Carte.dc.html' }
+    ],
+    chapters: [
+      { title: 'Le train', start: '0:00', at: '1:48', ill: 'train', when: 'Juillet 1946', quote: 'On prenait le train de Rodez le premier juillet...',
+        lines: ['Maman nous réveillait avant le jour, les valises étaient prêtes depuis la veille.', 'On prenait le train de Rodez le premier juillet, toujours le même, celui de six heures.', 'Paul collait son nez à la vitre et comptait les viaducs.'] },
+      { title: 'La maison', start: '3:10', at: '4:02', ill: 'house', when: 'Rue Béteille, Rodez', quote: 'La quincaillerie sentait l’huile et le fer.',
+        lines: ['Papa tenait la quincaillerie au rez-de-chaussée.', 'La quincaillerie sentait l’huile et le fer, on avait interdiction de toucher aux clous.', 'On dormait tous les trois sous le toit, la fenêtre ouverte sur la cathédrale.'] },
+      { title: 'Les foins', start: '6:40', at: '7:15', ill: 'tree', when: 'Été 1948', quote: 'Henri nous laissait conduire la charrette.',
+        lines: ['Chez les cousins de Maman, à Millau, on faisait les foins.', 'Henri nous laissait conduire la charrette, Claude était trop petit, il pleurait.', 'Le soir, Louise chantait en patois.'] },
+      { title: 'Le dernier été', start: '9:50', at: '10:30', ill: 'end', when: 'Août 1959', quote: 'Après mon mariage, je ne suis plus jamais revenue l’été.',
+        lines: ['En 1959 j’ai épousé Jacques et nous sommes partis pour Lyon.', 'Après mon mariage, je ne suis plus jamais revenue l’été.', 'Mais je sens encore l’odeur du train.'] }
+    ]
+  },
+  {
+    id: 'depart', title: 'Le départ pour Toulouse', by: 'Raconté par Luc, né en 1963', meta: 'Récit animé, 8 min', initials: 'LM', total: '8:21',
+    tags: [{ label: 'Luc', kind: 'p', href: 'Arbre.dc.html' }, { label: 'Paul', kind: 'p', href: 'Arbre.dc.html' }, { label: 'Toulouse', kind: 'l', href: 'Carte.dc.html' }],
+    chapters: [
+      { title: 'L’annonce', start: '0:00', at: '0:42', ill: 'house', when: 'Printemps 1955', quote: 'Papa avait trouvé une place à l’usine.',
+        lines: ['Je ne suis pas né à Rodez, mais j’ai grandi avec cette histoire.', 'Papa avait trouvé une place à l’usine, Maman ne voulait pas partir.', 'Elle a cédé quand elle a vu l’appartement.'] },
+      { title: 'La route', start: '2:50', at: '3:30', ill: 'train', when: 'Septembre 1955', quote: 'Tout tenait dans une camionnette.',
+        lines: ['Tout tenait dans une camionnette prêtée par un client.', 'Ils sont partis à l’aube et arrivés à la nuit.', 'Papa disait que c’était le plus beau jour de sa vie.'] },
+      { title: 'Toulouse', start: '5:40', at: '6:05', ill: 'tree', when: '1963', quote: 'Je suis né deux rues plus loin.',
+        lines: ['Anne est née en 1960, moi trois ans après.', 'Je suis né deux rues plus loin, à la clinique du quartier.', 'On n’est jamais repartis.'] }
+    ]
+  },
+  {
+    id: 'henri', title: 'Mon grand-père Henri', by: 'Raconté par Paul, 1931-2008', meta: 'Archive audio, cassette de 1994', initials: 'PM', total: '6:12',
+    tags: [{ label: 'Paul', kind: 'p', href: 'Arbre.dc.html' }, { label: 'Henri', kind: 'p', href: 'Arbre.dc.html' }, { label: 'Rodez', kind: 'l', href: 'Carte.dc.html' }],
+    chapters: [
+      { title: 'La boutique', start: '0:00', at: '1:05', ill: 'house', when: 'Enregistré en 1994', quote: 'Il connaissait chaque client par son prénom.',
+        lines: ['Mon père, Henri, a ouvert la boutique en 1927.', 'Il connaissait chaque client par son prénom.', 'Le dimanche, il réparait les vélos du quartier pour rien.'] },
+      { title: 'La guerre', start: '3:20', at: '3:58', ill: 'end', when: '1940-1944', quote: 'Il n’en parlait jamais.',
+        lines: ['Sur la guerre, je sais très peu de choses.', 'Il n’en parlait jamais.', 'Maman disait qu’il avait caché des gens dans la réserve.'] }
+    ]
+  }
+];
+
+class Component extends DCLogic {
+  state = { story: 'etes', chapter: 0, line: 1, playing: true };
+
+  renderVals() {
+    const s = this.state;
+    const story = STORIES.find((x) => x.id === s.story);
+    const ch = story.chapters[s.chapter];
+
+    return {
+      stories: STORIES.map((x) => {
+        const on = x.id === s.story;
+        return {
+          pick: () => this.setState({ story: x.id, chapter: 0, line: 1, playing: true }),
+          title: x.title,
+          by: x.by,
+          meta: x.meta,
+          initials: x.initials,
+          style: 'width: 100%; display: flex; gap: 14px; padding: 14px 12px; border: 0; border-radius: 20px; cursor: pointer; color: #F5EFE6; background: ' + (on ? '#1D1A2B' : 'transparent'),
+          avatar: 'width: 48px; height: 48px; flex: none; box-sizing: border-box; border-radius: 50%; border: 3px solid #2A2640; background: ' + (x.id === 'henri' ? '#2F2A45' : '#3D3758') + '; display: inline-flex; align-items: center; justify-content: center; font-family: Fraunces, serif; font-size: 15px; box-shadow: ' + (on ? '0 0 0 2px #FFB86B' : '0 0 0 1px #3A3456')
+        };
+      }),
+      story: {
+        title: story.title,
+        by: story.by,
+        tags: story.tags.map((t) => ({
+          label: t.label,
+          href: t.href,
+          mark: t.kind === 'p'
+            ? 'width: 8px; height: 8px; border-radius: 50%; background: #F5EFE6'
+            : 'width: 8px; height: 8px; border-radius: 2px; transform: rotate(45deg); background: #FFB86B'
+        }))
+      },
+      scene: {
+        kicker: 'Chapitre ' + (s.chapter + 1),
+        title: ch.title,
+        when: ch.when,
+        quote: ch.quote,
+        isTrain: ch.ill === 'train',
+        isHouse: ch.ill === 'house',
+        isTree: ch.ill === 'tree',
+        isEnd: ch.ill === 'end'
+      },
+      playing: s.playing,
+      paused: !s.playing,
+      playLabel: s.playing ? 'Pause' : 'Lecture',
+      togglePlay: () => this.setState({ playing: !s.playing }),
+      time: ch.at + ' / ' + story.total,
+      chapters: story.chapters.map((c, i) => {
+        const done = i < s.chapter;
+        const cur = i === s.chapter;
+        return {
+          pick: () => this.setState({ chapter: i, line: 1 }),
+          aria: 'Chapitre ' + (i + 1) + ' : ' + c.title + ', ' + c.start,
+          title: c.title,
+          wrap: 'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px 0; border: 0; background: transparent; cursor: pointer; text-align: left',
+          bar: 'position: relative; display: block; height: 6px; border-radius: 999px; overflow: hidden; background: #3A3456',
+          fill: 'position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: ' + (cur ? '#FFB86B' : '#F5EFE6') + '; width: ' + (done ? '100%' : cur ? '40%' : '0'),
+          label: 'font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: ' + (cur ? '#F5EFE6' : '#8E86A8') + '; font-weight: ' + (cur ? 600 : 400)
+        };
+      }),
+      lines: ch.lines.map((t, i) => ({
+        text: t,
+        pick: () => this.setState({ line: i }),
+        style: 'display: block; width: 100%; padding: 2px 0; border: 0; background: transparent; cursor: pointer; text-align: left; font-family: Fraunces, serif; line-height: 1.4; font-size: ' + (i === s.line ? 20 : 17) + 'px; color: ' + (i === s.line ? '#F5EFE6' : '#7C7398')
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

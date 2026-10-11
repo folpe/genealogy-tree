@@ -1,11 +1,11 @@
-import React from 'react'
-import * as d3 from 'd3'
+import * as d3 from 'd3';
+import type React from 'react';
 
 interface ZoomControlsProps {
-  svgRef: React.RefObject<SVGSVGElement>
-  transform: d3.ZoomTransform
-  setTransform: (transform: d3.ZoomTransform) => void
-  resetZoomFunc: () => void
+  svgRef: React.RefObject<SVGSVGElement>;
+  transform: d3.ZoomTransform;
+  setTransform: (transform: d3.ZoomTransform) => void;
+  resetZoomFunc: () => void;
 }
 
 export const ZoomControls: React.FC<ZoomControlsProps> = ({
@@ -16,46 +16,42 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
 }) => {
   // Zoom in handler
   const handleZoomIn = () => {
-    if (!svgRef.current) return
-    const svg = d3.select(svgRef.current)
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
     const d3zoom = d3.zoom<SVGSVGElement, unknown>().on('zoom', (event) => {
-      setTransform(event.transform)
-    })
+      setTransform(event.transform);
+    });
 
     svg
       .transition()
       .duration(750)
       .call(
         d3zoom.transform,
-        d3.zoomIdentity
-          .scale(transform.k * 1.2)
-          .translate(transform.x / 1.2, transform.y / 1.2)
-      )
-  }
+        d3.zoomIdentity.scale(transform.k * 1.2).translate(transform.x / 1.2, transform.y / 1.2),
+      );
+  };
 
   // Zoom out handler
   const handleZoomOut = () => {
-    if (!svgRef.current) return
-    const svg = d3.select(svgRef.current)
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
     const d3zoom = d3.zoom<SVGSVGElement, unknown>().on('zoom', (event) => {
-      setTransform(event.transform)
-    })
+      setTransform(event.transform);
+    });
 
     svg
       .transition()
       .duration(750)
       .call(
         d3zoom.transform,
-        d3.zoomIdentity
-          .scale(transform.k / 1.2)
-          .translate(transform.x * 1.2, transform.y * 1.2)
-      )
-  }
+        d3.zoomIdentity.scale(transform.k / 1.2).translate(transform.x * 1.2, transform.y * 1.2),
+      );
+  };
 
   // Reset zoom handler
   const handleResetZoom = () => {
-    resetZoomFunc()
-  }
+    resetZoomFunc();
+  };
 
   // Button style to avoid duplication
   const buttonStyle: React.CSSProperties = {
@@ -66,7 +62,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
     backgroundColor: '#333',
     color: 'white',
     cursor: 'pointer',
-  }
+  };
 
   return (
     <div
@@ -79,6 +75,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
       }}
     >
       <button
+        type="button"
         onClick={handleZoomIn}
         style={{
           ...buttonStyle,
@@ -88,6 +85,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
         +
       </button>
       <button
+        type="button"
         onClick={handleZoomOut}
         style={{
           ...buttonStyle,
@@ -97,6 +95,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
         -
       </button>
       <button
+        type="button"
         onClick={handleResetZoom}
         style={{
           ...buttonStyle,
@@ -106,5 +105,5 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
         R
       </button>
     </div>
-  )
-}
+  );
+};

@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Arbre familial, thème sombre</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&amp;family=Figtree:wght@400..700&amp;display=swap">
+<style>
+*{font-variation-settings:"SOFT" 100,"WONK" 0}
+body{margin:0;background:#1D1A2B}
+a{color:#FFB86B}a:hover{color:#FFC98C}
+button{font-family:inherit}
+input::placeholder{color:#7C7398}
+</style>
+</helmet>
+<div style="min-height: 100vh; height: 100vh; display: flex; flex-direction: column; background: #1D1A2B; color: #F5EFE6; font-family: 'Figtree', system-ui, sans-serif; overflow: hidden">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px 32px">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1 1 200px">
+      <span style="width: 40px; height: 40px; border-radius: 50%; background: #F5EFE6; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="#1D1A2B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M16 28V16"></path><path d="M16 20C16 16 11 15 9 12"></path><path d="M16 18C16 14 21 13 23 10"></path><circle cx="9" cy="9" r="3"></circle><circle cx="23" cy="7.5" r="3"></circle><circle cx="16" cy="12" r="3"></circle></svg>
+      </span>
+      <span style="font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500; letter-spacing: -0.01em">Ances-Tree</span>
+    </div>
+    <nav aria-label="Vues" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid #3A3456; background: #262238">
+      <span aria-current="page" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; background: #F5EFE6; color: #1D1A2B; font-size: 14px; font-weight: 600">Arbre</span>
+      <a href="Eventail.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Ancêtres</a>
+      <a href="Frise.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Frise</a>
+      <a href="Carte.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Carte</a>
+      <a href="Recits.dc.html" style="display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; color: #B7AFC9; font-size: 14px; font-weight: 500; text-decoration: none">Récits</a>
+    </nav>
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 1 1 300px">
+      <button type="button" onClick="{{ openSearch }}" style="display: flex; align-items: center; gap: 10px; height: 46px; min-width: 220px; padding: 0 16px; border: 1px solid #3A3456; border-radius: 999px; background: #262238; color: #B7AFC9; font-size: 15px; cursor: pointer">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <span style="flex: 1; text-align: left">Trouver quelqu'un</span>
+        <span style="font-size: 12px; color: #7C7398">⌘K</span>
+      </button>
+      <a href="Activite.dc.html" aria-label="Activité, 2 nouveautés" style="position: relative; width: 46px; height: 46px; box-sizing: border-box; border: 1px solid #3A3456; border-radius: 50%; background: #262238; color: #F5EFE6; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+        <span style="position: absolute; right: -2px; top: -2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; border: 2px solid #1D1A2B; background: #FFB86B; color: #2A2640; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">2</span>
+      </a>
+      <span style="width: 46px; height: 46px; box-sizing: border-box; border-radius: 50%; border: 2px solid #2A2640; background: #3D3758; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-weight: 500; font-size: 17px; box-shadow: 0 0 0 1px #3A3456">{{ meInitial }}</span>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 20px; padding: 0 32px 32px; min-height: 0">
+    <main style="position: relative; flex: 999 1 560px; min-width: 0; min-height: 620px; border-radius: 28px; border: 1px solid #3A3456; background-color: #221E33; background-image: radial-gradient(rgba(245, 239, 230, 0.16) 1px, transparent 1.5px); background-size: 46px 46px; overflow: hidden">
+
+      <div style="position: absolute; left: 50%; top: 50%; width: 960px; height: 740px; transform: translate(-50%, -50%) scale(0.82)">
+        <sc-for list="{{ edges }}" as="e" hint-placeholder-count="20">
+          <svg width="960" height="740" viewBox="0 0 960 740" fill="none" stroke-linecap="round" style="position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none" aria-hidden="true">
+            <path d="{{ e.d }}" style="{{ e.style }}"></path>
+          </svg>
+        </sc-for>
+        <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="14">
+          <button type="button" onClick="{{ n.pick }}" aria-label="{{ n.label }}" style="{{ n.wrap }}">
+            <span style="{{ n.bubble }}">{{ n.initials }}</span>
+            <span style="{{ n.name }}">{{ n.first }}</span>
+            <span style="font-size: 12px; color: #8E86A8; font-variant-numeric: tabular-nums">{{ n.years }}</span>
+          </button>
+        </sc-for>
+
+        <sc-if value="{{ showQuick }}" hint-placeholder-val="{{ true }}">
+          <div style="{{ quickStyle }}">
+            <sc-if value="{{ sel.canEdit }}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; gap: 6px; padding: 5px; border-radius: 999px; background: #2A2640; box-shadow: 0 0 0 1px #3A3456, 0 10px 24px rgba(8, 6, 18, 0.25)">
+                <button type="button" style="height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: #1D1A2B; color: #F5EFE6; font-size: 13px; font-weight: 600; cursor: pointer">+ Parent</button>
+                <button type="button" style="height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: #1D1A2B; color: #F5EFE6; font-size: 13px; font-weight: 600; cursor: pointer">+ Enfant</button>
+                <button type="button" style="height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: #1D1A2B; color: #F5EFE6; font-size: 13px; font-weight: 600; cursor: pointer">+ Conjoint</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ sel.canSuggest }}" hint-placeholder-val="{{ false }}">
+              <a href="Suggestion.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 999px; background: #2A2640; box-shadow: 0 0 0 1px #3A3456, 0 10px 24px rgba(8, 6, 18, 0.25); color: #F5EFE6; font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap">Suggérer un ajout</a>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ lienOn }}" hint-placeholder-val="{{ false }}">
+        <section aria-label="Lien de parenté" style="position: absolute; left: 50%; top: 20px; transform: translateX(-50%); width: min(600px, calc(100% - 40px)); box-sizing: border-box; padding: 22px 26px; border-radius: 24px; background: #2A2640; box-shadow: 0 0 0 1px #3A3456, 0 24px 60px rgba(8, 6, 18, 0.3)">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px">
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #FFB86B">Votre lien</span>
+              <p style="margin: 0; font-family: 'Fraunces', serif; font-size: 26px; line-height: 1.2">{{ lien.sentence }}</p>
+            </div>
+            <button type="button" onClick="{{ endLien }}" aria-label="Fermer" style="flex: none; width: 44px; height: 44px; border: 1px solid #3A3456; border-radius: 50%; background: #2A2640; color: #F5EFE6; cursor: pointer; display: inline-flex; align-items: center; justify-content: center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </button>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 16px">
+            <sc-for list="{{ lien.steps }}" as="st" hint-placeholder-count="5">
+              <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px">
+                <span style="padding: 6px 12px; border-radius: 999px; background: #1D1A2B">{{ st.name }}</span>
+                <sc-if value="{{ st.more }}" hint-placeholder-val="{{ true }}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7C7398" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+                </sc-if>
+              </span>
+            </sc-for>
+          </div>
+          <sc-if value="{{ lien.hasCommon }}" hint-placeholder-val="{{ true }}">
+            <p style="margin: 14px 0 0; font-size: 14px; color: #B7AFC9">Ancêtres communs : <span style="color: #F5EFE6">{{ lien.common }}</span></p>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <div style="position: absolute; left: 20px; bottom: 20px; display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 8px 0 18px; border-radius: 999px; background: #262238; border: 1px solid #3A3456">
+        <span style="font-size: 14px; color: #F5EFE6">Ce que je peux modifier</span>
+        <button type="button" role="switch" aria-checked="{{ perimOn }}" onClick="{{ togglePerim }}" aria-label="Afficher mon périmètre" style="{{ switchStyle }}">
+          <span style="{{ knobStyle }}"></span>
+        </button>
+      </div>
+
+      <div style="position: absolute; right: 20px; bottom: 20px; display: flex; gap: 8px">
+        <button type="button" aria-label="Zoomer" style="width: 46px; height: 46px; border: 1px solid #3A3456; border-radius: 50%; background: #262238; color: #F5EFE6; display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+        <button type="button" aria-label="Dézoomer" style="width: 46px; height: 46px; border: 1px solid #3A3456; border-radius: 50%; background: #262238; color: #F5EFE6; display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+        <button type="button" onClick="{{ centerMe }}" style="height: 46px; padding: 0 18px; border: 0; border-radius: 999px; background: #F5EFE6; color: #1D1A2B; font-size: 14px; font-weight: 600; cursor: pointer">Me retrouver</button>
+      </div>
+    </main>
+
+    <aside aria-label="Fiche" style="flex: 1 1 360px; max-width: 420px; box-sizing: border-box; border-radius: 28px; border: 1px solid #3A3456; background: #2A2640; box-shadow: 0 20px 50px rgba(8, 6, 18, 0.18); overflow: hidden; display: flex; flex-direction: column">
+      <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ true }}">
+        <div style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 28px 20px; text-align: center">
+          <button type="button" onClick="{{ closeSheet }}" aria-label="Fermer la fiche" style="position: absolute; right: 16px; top: 16px; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; color: #B7AFC9; cursor: pointer; display: inline-flex; align-items: center; justify-content: center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+          <span style="{{ sel.avatar }}">{{ sel.initials }}</span>
+          <span style="margin-top: 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #FFB86B">{{ sel.rel }}</span>
+          <h2 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 400; font-size: 32px; letter-spacing: -0.01em; line-height: 1.1">{{ sel.name }}</h2>
+          <sc-if value="{{ sel.hasBirthName }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size: 14px; color: #B7AFC9">{{ sel.birthName }}</span>
+          </sc-if>
+          <span style="font-size: 14px; color: #B7AFC9">{{ sel.lifeLine }}</span>
+          <sc-if value="{{ sel.sourced }}" hint-placeholder-val="{{ false }}">
+            <span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; border: 1px solid #3A3456; font-size: 12px; color: #B7AFC9">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+              Sourcé : acte de décès
+            </span>
+          </sc-if>
+        </div>
+        <dl style="flex: 1; overflow-y: auto; margin: 0; padding: 0 28px; display: flex; flex-direction: column">
+          <div style="display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-top: 1px solid #322D4A">
+            <dt style="font-size: 14px; color: #B7AFC9">{{ sel.placeLabel }}</dt>
+            <dd style="{{ sel.placeStyle }}">{{ sel.placeLine }}</dd>
+          </div>
+          <sc-for list="{{ sel.groups }}" as="g" hint-placeholder-count="3">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 14px 0; border-top: 1px solid #322D4A">
+              <dt style="padding-top: 9px; font-size: 14px; color: #B7AFC9; white-space: nowrap">{{ g.title }}</dt>
+              <dd style="margin: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px">
+                <sc-for list="{{ g.items }}" as="c" hint-placeholder-count="2">
+                  <button type="button" onClick="{{ c.pick }}" style="display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px 0 4px; border: 0; border-radius: 999px; background: #1D1A2B; color: #F5EFE6; font-size: 14px; cursor: pointer">
+                    <span style="width: 30px; height: 30px; border-radius: 50%; background: #3D3758; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 12px">{{ c.initials }}</span>{{ c.name }}
+                  </button>
+                </sc-for>
+              </dd>
+            </div>
+          </sc-for>
+          <sc-if value="{{ sel.hasNote }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 14px 0; border-top: 1px solid #322D4A; font-size: 14px; line-height: 1.5; color: #B7AFC9">{{ sel.note }}</div>
+          </sc-if>
+        </dl>
+        <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px 28px 28px">
+          <div style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 16px; background: #1D1A2B; font-size: 13px; line-height: 1.45; color: #B7AFC9">
+            <span style="{{ sel.dot }}"></span>
+            <span>{{ sel.rightsLine }}</span>
+          </div>
+          <div style="display: flex; gap: 10px">
+            <sc-if value="{{ sel.notMe }}" hint-placeholder-val="{{ true }}">
+              <button type="button" onClick="{{ startLien }}" style="flex: 1; height: 50px; border: 1px solid #3A3456; border-radius: 999px; background: #2A2640; color: #F5EFE6; font-size: 15px; font-weight: 600; cursor: pointer">Notre lien</button>
+            </sc-if>
+            <sc-if value="{{ sel.canEdit }}" hint-placeholder-val="{{ true }}">
+              <button type="button" style="flex: 1; height: 50px; border: 0; border-radius: 999px; background: #F5EFE6; color: #1D1A2B; font-size: 15px; font-weight: 600; cursor: pointer">Modifier</button>
+            </sc-if>
+            <sc-if value="{{ sel.canSuggest }}" hint-placeholder-val="{{ false }}">
+              <a href="Suggestion.dc.html" style="flex: 1; height: 50px; border-radius: 999px; background: #F5EFE6; color: #1D1A2B; font-size: 15px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center">Suggérer</a>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ noSel }}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 40px; text-align: center">
+          <p style="margin: 0; font-family: 'Fraunces', serif; font-size: 24px">Touche une personne</p>
+          <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #B7AFC9">Sa fiche s'ouvre ici, avec votre lien de parenté et ce que tu peux y changer.</p>
+        </div>
+      </sc-if>
+    </aside>
+  </div>
+
+  <sc-if value="{{ searchOn }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: 10; display: flex; justify-content: center; align-items: flex-start; padding: 110px 16px 16px; background: rgba(8, 6, 18, 0.7)">
+      <div role="dialog" aria-label="Trouver quelqu'un" style="width: min(600px, 100%); border-radius: 28px; background: #2A2640; box-shadow: 0 30px 80px rgba(8, 6, 18, 0.62); overflow: hidden">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 22px; border-bottom: 1px solid #322D4A">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#B7AFC9" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Prénom, nom, nom de naissance" aria-label="Trouver quelqu'un" style="flex: 1; height: 50px; border: 0; outline: none; background: transparent; color: #F5EFE6; font-size: 18px; font-family: inherit">
+          <button type="button" onClick="{{ closeSearch }}" style="height: 36px; padding: 0 14px; border: 1px solid #3A3456; border-radius: 999px; background: #2A2640; color: #B7AFC9; font-size: 13px; cursor: pointer">Échap</button>
+        </div>
+        <div style="padding: 10px 10px 14px">
+          <span style="display: block; padding: 8px 14px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #7C7398">{{ resultsTitle }}</span>
+          <sc-for list="{{ results }}" as="r" hint-placeholder-count="5">
+            <button type="button" onClick="{{ r.pick }}" style="{{ r.style }}">
+              <span style="width: 42px; height: 42px; flex: none; border-radius: 50%; background: #3D3758; display: inline-flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 15px">{{ r.initials }}</span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 2px; text-align: left">
+                <span style="font-size: 16px">{{ r.name }}</span>
+                <span style="font-size: 13px; color: #8E86A8">{{ r.sub }}</span>
+              </span>
+              <span style="font-size: 13px; color: #FFB86B">{{ r.rel }}</span>
+            </button>
+          </sc-for>
+          <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 0; padding: 18px 14px; font-size: 15px; color: #B7AFC9">Personne ne correspond. Essaie un nom de naissance.</p>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"vue":{"editor":"enum","options":["hugo","isabelle"],"default":"hugo"},"$preview":{"width":1440,"height":900}}'>
+const PEOPLE = [
+  { id: 'henri', first: 'Henri', last: 'Marchand', g: 'm', b: 1902, d: 1979, place: 'Rodez', x: 470, y: 70, sourced: true },
+  { id: 'louise', first: 'Louise', last: 'Marchand', birthLast: 'Garnier', g: 'f', b: 1905, d: 1991, place: 'Millau', x: 610, y: 70 },
+  { id: 'paul', first: 'Paul', last: 'Marchand', g: 'm', b: 1931, d: 2008, place: 'Rodez', x: 170, y: 260 },
+  { id: 'jeanne', first: 'Jeanne', last: 'Marchand', birthLast: 'Roux', g: 'f', b: 1934, d: 2019, place: 'Albi', x: 310, y: 260 },
+  { id: 'marie', first: 'Marie', last: 'Lefèvre', birthLast: 'Marchand', g: 'f', b: 1936, place: 'Rodez', city: 'Rodez', full: '4 juin 1936', x: 560, y: 260 },
+  { id: 'jacques', first: 'Jacques', last: 'Lefèvre', g: 'm', b: 1933, d: 2015, place: 'Lyon', x: 700, y: 260 },
+  { id: 'claude', first: 'Claude', last: 'Marchand', g: 'm', b: 1940, place: 'Rodez', city: 'Montpellier', full: '17 février 1940', x: 870, y: 260 },
+  { id: 'anne', first: 'Anne', last: 'Marchand', g: 'f', b: 1960, place: 'Toulouse', city: 'Bordeaux', full: '2 mai 1960', x: 90, y: 450, member: true },
+  { id: 'luc', first: 'Luc', last: 'Marchand', g: 'm', b: 1963, place: 'Toulouse', city: 'Toulouse', full: '21 août 1963', x: 260, y: 450, member: true },
+  { id: 'sophie', first: 'Sophie', last: 'Marchand', birthLast: 'Blanc', g: 'f', b: 1965, place: 'Nantes', city: 'Toulouse', full: '9 janvier 1965', x: 420, y: 450 },
+  { id: 'isabelle', first: 'Isabelle', last: 'Lefèvre', g: 'f', b: 1962, place: 'Lyon', city: 'Lyon', full: '30 octobre 1962', x: 630, y: 450, member: true },
+  { id: 'maxime', first: 'Maxime', last: 'Marchand', g: 'm', b: 1987, place: 'Nantes', city: 'Lille', full: '14 mars 1987', x: 150, y: 640 },
+  { id: 'lea', first: 'Léa', last: 'Marchand', g: 'f', b: 1992, place: 'Toulouse', city: 'Paris', full: '3 juillet 1992', x: 330, y: 640 },
+  { id: 'hugo', first: 'Hugo', last: 'Marchand', g: 'm', b: 1995, place: 'Toulouse', city: 'Toulouse', full: '26 novembre 1995', x: 480, y: 640, member: true }
+];
+// Unions en cours uniquement. u5 : Maxime, né d'une union précédente de Luc, est rattaché à Luc seul.
+const UNIONS = [
+  { id: 'u0', a: 'henri', b: 'louise', kids: ['paul', 'marie', 'claude'] },
+  { id: 'u1', a: 'paul', b: 'jeanne', kids: ['anne', 'luc'] },
+  { id: 'u2', a: 'marie', b: 'jacques', kids: ['isabelle'] },
+  { id: 'u3', a: 'luc', b: 'sophie', kids: ['lea', 'hugo'] },
+  { id: 'u5', a: 'luc', b: null, kids: ['maxime'], past: true }
+];
+const VIEWS = {
+  hugo: {
+    me: 'hugo',
+    edit: ['hugo', 'luc', 'sophie', 'lea', 'maxime', 'paul', 'jeanne', 'henri', 'louise', 'claude'],
+    guards: { marie: 'Isabelle', jacques: 'Isabelle', isabelle: 'Isabelle', anne: 'Anne' },
+    rel: {
+      henri: 'Ton arrière-grand-père', louise: 'Ton arrière-grand-mère', paul: 'Ton grand-père', jeanne: 'Ta grand-mère',
+      marie: 'Ta grand-tante', jacques: 'Ton grand-oncle par alliance', claude: 'Ton grand-oncle', anne: 'Ta tante',
+      luc: 'Ton père', sophie: 'Ta mère', isabelle: 'La cousine de ton père', maxime: 'Ton demi-frère', lea: 'Ta sœur', hugo: 'C’est toi'
+    }
+  },
+  isabelle: {
+    me: 'isabelle',
+    edit: ['isabelle', 'marie', 'jacques', 'henri', 'louise', 'claude'],
+    guards: { paul: 'Anne et Luc', jeanne: 'Anne et Luc', anne: 'Anne', luc: 'Luc', sophie: 'Luc et Hugo', maxime: 'Luc et Hugo', lea: 'Luc et Hugo', hugo: 'Hugo' },
+    rel: {
+      henri: 'Ton grand-père', louise: 'Ta grand-mère', paul: 'Ton oncle', jeanne: 'Ta tante par alliance',
+      marie: 'Ta mère', jacques: 'Ton père', claude: 'Ton oncle', anne: 'Ta cousine germaine',
+      luc: 'Ton cousin germain', sophie: 'L’épouse de ton cousin Luc', isabelle: 'C’est toi', maxime: 'Ton petit-cousin', lea: 'Ta petite-cousine', hugo: 'Ton petit-cousin'
+    }
+  }
+};
+const OPEN = ['claude'];
+const SHARED = ['henri', 'louise'];
+
+const byId = {};
+PEOPLE.forEach((p) => { byId[p.id] = p; });
+function initials(p) { return p.first.charAt(0) + p.last.charAt(0); }
+function fold(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+function yearsOf(p) { return p.d ? p.b + '-' + p.d : String(p.b); }
+function unionPoint(u) {
+  const a = byId[u.a];
+  if (!u.b) return { x: a.x, y: a.y + 42 };
+  return { x: (a.x + byId[u.b].x) / 2, y: a.y };
+}
+
+class Component extends DCLogic {
+  state = { sel: 'maxime', search: false, query: '', lien: null, perim: false };
+
+  edges() {
+    const out = [];
+    UNIONS.forEach((u) => {
+      const m = unionPoint(u);
+      if (u.b) {
+        out.push({ a: u.a, b: u.id, d: 'M' + byId[u.a].x + ' ' + m.y + ' L' + m.x + ' ' + m.y });
+        out.push({ a: u.b, b: u.id, d: 'M' + m.x + ' ' + m.y + ' L' + byId[u.b].x + ' ' + m.y });
+      } else {
+        out.push({ a: u.a, b: u.id, d: '' });
+      }
+      u.kids.forEach((kid) => {
+        const k = byId[kid];
+        out.push({ a: u.id, b: kid, d: 'M' + m.x + ' ' + m.y + ' C' + m.x + ' ' + (m.y + 110) + ' ' + k.x + ' ' + (k.y - 100) + ' ' + k.x + ' ' + k.y });
+      });
+    });
+    return out;
+  }
+
+  route(from, to, edges) {
+    const adj = {};
+    edges.forEach((e) => {
+      (adj[e.a] = adj[e.a] || []).push(e.b);
+      (adj[e.b] = adj[e.b] || []).push(e.a);
+    });
+    const prev = { [from]: null };
+    const queue = [from];
+    while (queue.length) {
+      const cur = queue.shift();
+      if (cur === to) break;
+      (adj[cur] || []).forEach((n) => { if (!(n in prev)) { prev[n] = cur; queue.push(n); } });
+    }
+    const out = [];
+    let cur = to;
+    while (cur) { out.unshift(cur); cur = prev[cur]; }
+    return out[0] === from ? out : [];
+  }
+
+  renderVals() {
+    const viewKey = this.props.vue === 'isabelle' ? 'isabelle' : 'hugo';
+    const V = VIEWS[viewKey];
+    const s = this.state;
+    const selId = s.sel;
+    const edit = new Set(V.edit);
+    const edges = this.edges();
+    const pick = (id) => () => this.setState({ sel: id, search: false, query: '', lien: null });
+
+    const lienOn = !!s.lien && s.lien !== V.me;
+    let onPath = null;
+    let lien = { sentence: '', steps: [], common: '', hasCommon: false };
+    if (lienOn) {
+      const r = this.route(V.me, s.lien, edges);
+      onPath = new Set(r);
+      const commons = [];
+      r.forEach((id, i) => {
+        const u = UNIONS.find((x) => x.id === id);
+        if (u && u.b && i > 0 && i < r.length - 1 && u.kids.includes(r[i - 1]) && u.kids.includes(r[i + 1])) {
+          commons.push(byId[u.a].first + ' et ' + byId[u.b].first + ' ' + byId[u.a].last);
+        }
+      });
+      const persons = r.filter((id) => byId[id]);
+      const t = byId[s.lien];
+      lien = {
+        sentence: t.first + ' est ' + V.rel[t.id].charAt(0).toLowerCase() + V.rel[t.id].slice(1) + '.',
+        steps: persons.map((id, i) => ({ name: id === V.me ? 'Toi' : byId[id].first, more: i < persons.length - 1 })),
+        common: commons.join(', '),
+        hasCommon: commons.length > 0
+      };
+    }
+
+    const edgeList = edges.filter((e) => e.d).map((e) => {
+      const lit = onPath && onPath.has(e.a) && onPath.has(e.b);
+      const touchesOut = s.perim && ((byId[e.a] && !edit.has(e.a)) || (byId[e.b] && !edit.has(e.b)));
+      const op = (onPath && !lit) || touchesOut ? 0.3 : 1;
+      return { d: e.d, style: 'stroke: ' + (lit ? '#FFB86B' : '#5E5680') + '; stroke-width: ' + (lit ? 3 : 2) + '; opacity: ' + op };
+    });
+
+    const nodes = PEOPLE.map((p) => {
+      const isSel = selId === p.id;
+      const isMe = p.id === V.me;
+      const out = s.perim && !edit.has(p.id);
+      const dim = (onPath && !onPath.has(p.id)) || out;
+      const ring = isSel
+        ? '0 0 0 2px #FFB86B, 0 12px 28px rgba(255, 184, 107, 0.22)'
+        : s.perim && !out ? '0 0 0 2px #F5EFE6, 0 8px 20px rgba(8, 6, 18, 0.25)' : '0 0 0 1px #3A3456, 0 8px 20px rgba(8, 6, 18, 0.25)';
+      return {
+        pick: pick(p.id),
+        label: p.first + ' ' + p.last + ', ' + yearsOf(p),
+        initials: initials(p),
+        first: isMe ? 'Toi' : p.first,
+        years: yearsOf(p),
+        wrap: 'position: absolute; left: ' + (p.x - 70) + 'px; top: ' + (p.y - 38) + 'px; width: 140px; padding: 0; border: 0; background: transparent; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; color: inherit; opacity: ' + (dim ? 0.32 : 1),
+        bubble: 'width: 76px; height: 76px; box-sizing: border-box; border-radius: 50%; border: 4px solid #2A2640; margin-bottom: 6px; background: ' + (p.d ? '#2F2A45' : '#3D3758') + '; display: inline-flex; align-items: center; justify-content: center; font-family: Fraunces, serif; font-size: 24px; color: ' + (p.d ? '#8E86A8' : '#F5EFE6') + '; box-shadow: ' + ring,
+        name: 'font-family: Fraunces, serif; font-size: 17px; white-space: nowrap; color: ' + (isMe ? '#FFB86B' : p.d ? '#B7AFC9' : '#F5EFE6')
+      };
+    });
+
+    let sel = { groups: [] };
+    const P = selId ? byId[selId] : null;
+    if (P) {
+      const fem = P.g === 'f';
+      const canEdit = edit.has(P.id);
+      const close = canEdit || P.id === V.me;
+      const chip = (p) => ({ pick: pick(p.id), initials: initials(p), name: p.id === V.me ? 'Toi' : p.first });
+      const groups = [];
+      const parentsU = UNIONS.find((u) => u.kids.includes(P.id));
+      if (parentsU) {
+        const parents = [byId[parentsU.a]].concat(parentsU.b ? [byId[parentsU.b]] : []);
+        groups.push({ title: parents.length > 1 ? 'Parents' : 'Son père', items: parents.map(chip) });
+        const sibs = UNIONS.filter((u) => u.a === parentsU.a || u.b === parentsU.a || (parentsU.b && (u.a === parentsU.b || u.b === parentsU.b)))
+          .reduce((acc, u) => acc.concat(u.kids), [])
+          .filter((k, i, arr) => k !== P.id && arr.indexOf(k) === i);
+        if (sibs.length) groups.push({ title: 'Frères et sœurs', items: sibs.map((k) => chip(byId[k])) });
+      }
+      const own = UNIONS.filter((u) => u.b && (u.a === P.id || u.b === P.id));
+      own.forEach((u) => groups.push({ title: fem ? 'Conjoint' : 'Conjointe', items: [chip(byId[u.a === P.id ? u.b : u.a])] }));
+      const kids = UNIONS.filter((u) => u.a === P.id || u.b === P.id).reduce((acc, u) => acc.concat(u.kids), []);
+      if (kids.length) groups.push({ title: 'Enfants', items: kids.map((k) => chip(byId[k])) });
+
+      let rightsLine;
+      if (P.id === V.me) rightsLine = 'C’est ta fiche : toi seul décides de ce que la famille voit.';
+      else if (canEdit && SHARED.includes(P.id)) rightsLine = 'Ancêtre commun à plusieurs branches : tu modifies directement, toute sa lignée est prévenue et peut annuler.';
+      else if (canEdit && OPEN.includes(P.id)) rightsLine = 'Fiche ouverte : aucun proche de ' + P.first + ' n’est inscrit, tu peux la compléter.';
+      else if (canEdit) rightsLine = 'Dans ta lignée : tu modifies directement.';
+      else rightsLine = 'Hors de ta lignée : ta suggestion ira à ' + V.guards[P.id] + '.';
+
+      const living = !P.d;
+      let placeLabel = 'Naissance';
+      let placeLine = (fem ? 'Née' : 'Né') + ' en ' + P.b + ' à ' + P.place;
+      let placeStyle = 'margin: 0; font-size: 15px; text-align: right';
+      if (living && close) { placeLabel = 'Vit à'; placeLine = P.city; }
+      else if (living) { placeLabel = 'Vit à'; placeLine = 'Visible par ses proches'; placeStyle += '; color: #7C7398'; }
+      else { placeLabel = 'Inhumé' + (fem ? 'e' : '') + ' à'; placeLine = P.place; }
+
+      sel = {
+        name: P.first + ' ' + P.last,
+        initials: initials(P),
+        rel: V.rel[P.id],
+        hasBirthName: !!P.birthLast,
+        birthName: (fem ? 'née ' : 'né ') + P.birthLast,
+        lifeLine: P.d ? P.b + ' - ' + P.d + ', ' + (P.d - P.b) + ' ans, ' + P.place : (close ? (fem ? 'Née le ' : 'Né le ') + P.full : (fem ? 'Née en ' : 'Né en ') + P.b) + ' à ' + P.place,
+        sourced: !!P.sourced,
+        placeLabel: placeLabel,
+        placeLine: placeLine,
+        placeStyle: placeStyle,
+        groups: groups,
+        hasNote: P.id === 'maxime',
+        note: 'Né d’une précédente union de Luc. Il a grandi entre Nantes et Toulouse.',
+        avatar: 'width: 120px; height: 120px; box-sizing: border-box; border-radius: 50%; border: 5px solid #2A2640; background: ' + (P.d ? '#2F2A45' : '#3D3758') + '; display: inline-flex; align-items: center; justify-content: center; font-family: Fraunces, serif; font-size: 42px; font-weight: 400; color: ' + (P.d ? '#B7AFC9' : '#F5EFE6') + '; box-shadow: 0 0 0 1px #3A3456, 0 14px 30px rgba(8, 6, 18, 0.3)',
+        dot: 'flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: ' + (canEdit ? '#F5EFE6' : '#FFB86B'),
+        rightsLine: rightsLine,
+        canEdit: canEdit,
+        canSuggest: !canEdit,
+        notMe: P.id !== V.me
+      };
+    }
+
+    const q = fold(s.query.trim());
+    const pool = q
+      ? PEOPLE.filter((p) => fold(p.first + ' ' + p.last + ' ' + (p.birthLast || '')).includes(q))
+      : ['luc', 'jeanne', 'isabelle', 'maxime', 'henri'].map((id) => byId[id]);
+    const results = pool.slice(0, 6).map((p, i) => ({
+      pick: pick(p.id),
+      initials: initials(p),
+      name: p.first + ' ' + p.last,
+      sub: (p.birthLast ? (p.g === 'f' ? 'née ' : 'né ') + p.birthLast + ', ' : '') + yearsOf(p),
+      rel: p.id === V.me ? 'toi' : V.rel[p.id].toLowerCase(),
+      style: 'width: 100%; display: flex; align-items: center; gap: 14px; padding: 10px 14px; border: 0; border-radius: 18px; background: ' + (i === 0 ? '#1D1A2B' : 'transparent') + '; color: #F5EFE6; cursor: pointer'
+    }));
+
+    return {
+      meInitial: viewKey === 'hugo' ? 'H' : 'I',
+      edges: edgeList,
+      nodes: nodes,
+      hasSel: !!P,
+      noSel: !P,
+      sel: sel,
+      showQuick: !!P && !lienOn,
+      quickStyle: P ? 'position: absolute; left: ' + (P.x - 170) + 'px; top: ' + (P.y - 100) + 'px; width: 340px; display: flex; justify-content: center; z-index: 2' : '',
+      lienOn: lienOn,
+      lien: lien,
+      perimOn: s.perim ? 'true' : 'false',
+      switchStyle: 'position: relative; width: 48px; height: 30px; border: 0; border-radius: 999px; cursor: pointer; background: ' + (s.perim ? '#F5EFE6' : '#3A3456'),
+      knobStyle: 'position: absolute; top: 3px; left: ' + (s.perim ? 21 : 3) + 'px; width: 24px; height: 24px; border-radius: 50%; background: #2A2640; box-shadow: 0 1px 3px rgba(8, 6, 18, 0.5)',
+      togglePerim: () => this.setState({ perim: !s.perim, lien: null }),
+      searchOn: s.search,
+      query: s.query,
+      onQuery: (e) => this.setState({ query: e.target.value }),
+      results: results,
+      resultsTitle: q ? results.length + ' résultat' + (results.length > 1 ? 's' : '') : 'Récemment consultés',
+      noResults: !!q && results.length === 0,
+      openSearch: () => this.setState({ search: true }),
+      closeSearch: () => this.setState({ search: false, query: '' }),
+      closeSheet: () => this.setState({ sel: null, lien: null }),
+      startLien: () => this.setState({ lien: selId, perim: false }),
+      endLien: () => this.setState({ lien: null }),
+      centerMe: () => this.setState({ sel: V.me, lien: null })
+    };
+  }
+}
+</script>
+</body>
+</html>
