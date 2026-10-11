@@ -3,7 +3,7 @@ schemaVersion: 1
 id: "adr:92c82dd2-1732-4620-a4c0-fa1d589051f3"
 createdAt: "2026-10-11T14:29:39.584Z"
 title: "CSP à nonce, sans cacheComponents"
-status: proposed
+status: accepted
 deciders: ["folpe"]
 supersedes: []
 ---

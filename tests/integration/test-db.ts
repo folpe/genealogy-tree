@@ -5,6 +5,15 @@ import * as schema from '../../src/server/db/schema';
 import type { Db } from '../../src/server/db/types';
 
 const TABLES = [
+  'access_requests',
+  'invitations',
+  'memberships',
+  'passkeys',
+  'rate_limits',
+  'verifications',
+  'accounts',
+  'sessions',
+  'users',
   'sourced_facts',
   'media_persons',
   'residences',

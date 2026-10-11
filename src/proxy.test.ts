@@ -19,13 +19,21 @@ describe('proxy matcher', () => {
     '/_next/image',
     '/favicon.ico',
     '/robots.txt',
+    '/favicon-96x96.png',
+    '/site.webmanifest',
   ])('reste exclu : %s', (path) => {
     expect(matches(path)).toBe(false);
   });
 });
 
 describe('proxy', () => {
-  const run = (path = '/login') => proxy(new NextRequest(`https://famille.folpe.me${path}`));
+  const SESSION = 'better-auth.session_token=abc.def';
+  const run = (path = '/login', cookie?: string) =>
+    proxy(
+      new NextRequest(`https://famille.folpe.me${path}`, {
+        headers: cookie ? { cookie } : {},
+      }),
+    );
 
   it('pose une CSP avec un nonce, et le transmet au rendu', () => {
     const response = run();
@@ -43,6 +51,28 @@ describe('proxy', () => {
   });
 
   it('expose le chemin demandé aux Server Components', () => {
-    expect(run('/people/abc').headers.get('x-middleware-request-x-pathname')).toBe('/people/abc');
+    expect(run('/people/abc', SESSION).headers.get('x-middleware-request-x-pathname')).toBe(
+      '/people/abc',
+    );
+  });
+
+  it.each(['/tree', '/people/abc', '/'])('sans session, %s renvoie vers la connexion', (path) => {
+    const response = run(path);
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get('location') ?? '');
+    expect(location.pathname).toBe('/login');
+    expect(response.headers.get('Content-Security-Policy')).toBeTruthy();
+  });
+
+  it.each(['/login', '/invite/jeton', '/request-access'])(
+    '%s reste ouvert sans session',
+    (path) => {
+      expect(run(path).status).toBe(200);
+    },
+  );
+
+  it('avec un cookie de session, laisse passer (la session est revérifiée côté serveur)', () => {
+    expect(run('/tree', SESSION).status).toBe(200);
+    expect(run('/tree', `__Secure-${SESSION}`).status).toBe(200);
   });
 });

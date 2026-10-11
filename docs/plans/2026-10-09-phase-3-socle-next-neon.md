@@ -98,11 +98,12 @@ scripts/
 
 ### Lot 4 : auth, comptes et invitations
 
-- [ ] better-auth 1.6 avec adaptateur Drizzle : plugin `magicLink` (expiration 15 min, usage unique), plugin `passkey` (RP ID `folpe.me`, origine `https://famille.folpe.me`), sessions en cookie httpOnly, `Secure`, `SameSite=Lax`.
-- [ ] Mode invitation seule (repris de `access-mode.ts` et `invitation.service.ts` du starter) : un compte n'est créé que pour l'admin d'amorçage ou une adresse qui détient une invitation valide.
+- [x] better-auth 1.6.33 avec adaptateur Drizzle (`src/server/auth/auth.ts`, fabrique testable) : `magicLink` (15 min, usage unique, jeton haché en base), `passkey` (RP ID `PASSKEY_RP_ID`, `folpe.me` en production, l'hôte de l'app ailleurs), sessions de 30 jours prolongées à chaque visite, rate limiting en base. Tables d'auth et de membres dans la migration `0001_auth_members`.
+- [x] Mode invitation seule (`members/admission.ts`) : un compte n'est créé que pour l'admin d'amorçage (`AUTH_BOOTSTRAP_ADMIN_EMAIL`, devient propriétaire) ou une adresse qui détient une invitation en cours (membre relié à la fiche, invitation consommée). Aucun lien n'est envoyé à une adresse inconnue, avec la même réponse qu'une adresse connue. Vérifié en intégration et de bout en bout sur le build.
+- [x] Proxy : sans cookie de session, toute route hors `/login`, `/invite/`, `/request-access` renvoie vers `/login` ; session revérifiée côté serveur (`requireSession`). Page `/login` branchée (lien, passkey), accueil provisoire `/tree` (activation de passkey, déconnexion).
 - [ ] Emails React Email + Resend depuis `famille@folpe.me` : lien de connexion, invitation, demande d'accès reçue (admins), demande acceptée. Gabarits au style Album (voir `docs/design/DESIGN.md` et la maquette `EmailVeille`).
 - [ ] `members` : `inviteMember(viewer, personId, email)` autorisé si la fiche est dans le cercle proche ou la descendance du membre (policy de phase 2) ; acceptation d'invitation qui crée le membership lié à la fiche ; demandes d'accès validées par un admin qui choisit la fiche ; « Nommer admin » ; le propriétaire ne peut pas être rétrogradé, le dernier admin ne peut pas être retiré.
-- [ ] Rate limiting sur l'envoi de liens magiques et les demandes d'accès.
+- [ ] Rate limiting sur l'envoi de liens magiques (fait : 5 par minute) et les demandes d'accès (lot 4b).
 - [ ] Tests : unitaires sur le service members (droits d'inviter, cas propriétaire et dernier admin) ; intégration sur le cycle invitation -> compte -> membership ; e2e Playwright sur la connexion par magic link (boîte mail interceptée en test).
 - **Acceptation :** parcours de la maquette `Connexion` et `Membres` fonctionnels de bout en bout en preview.
 
