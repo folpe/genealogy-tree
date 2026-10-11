@@ -1,6 +1,5 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["farm.config.ts", "netlify/functions/*.js", "src/server/*/index.ts"],
-  "project": ["src/**/*.{ts,tsx,css}", "tests/**/*.ts", "netlify/**/*.js"],
-  "ignoreDependencies": ["@farmfe/plugin-react", "react-refresh"]
+  "entry": ["netlify/functions/*.js", "src/server/*/index.ts"],
+  "project": ["src/**/*.{ts,tsx,css}", "tests/**/*.ts", "netlify/**/*.js"]
 }

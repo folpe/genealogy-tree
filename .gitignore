@@ -45,3 +45,7 @@ mocks/*
 # Stryker
 .stryker-tmp/
 reports/
+
+# Next
+.next/
+next-env.d.ts

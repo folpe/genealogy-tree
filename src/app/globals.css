@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/* Tokens de docs/design/DESIGN.md, section 3. Chaque couleur porte ses deux thèmes
+   via light-dark() : `data-theme` sur <html> force un thème, son absence suit le système. */
+
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
+
+@theme {
+  --color-paper: light-dark(oklch(96.2% 0.011 84.6), oklch(23% 0.033 291.7));
+  --color-canvas: light-dark(oklch(94.2% 0.016 82.8), oklch(25% 0.039 292));
+  --color-surface: light-dark(oklch(98.3% 0.006 84.6), oklch(26.7% 0.041 291.7));
+  --color-card: light-dark(oklch(100% 0 0), oklch(28.6% 0.047 290.1));
+  --color-ink: light-dark(oklch(22.9% 0.007 67.4), oklch(95.4% 0.014 78.3));
+  --color-ink-2: light-dark(oklch(51.8% 0.018 73.5), oklch(76.9% 0.038 299.6));
+  --color-ink-3: light-dark(oklch(61.1% 0.018 73.6), oklch(63.9% 0.051 295.7));
+  --color-ink-4: light-dark(oklch(66.1% 0.019 73), oklch(57.7% 0.057 295.7));
+  --color-line: light-dark(oklch(89.7% 0.02 80.1), oklch(34.7% 0.059 291.1));
+  --color-rule: light-dark(oklch(93.6% 0.015 80.7), oklch(31.6% 0.051 291.1));
+  --color-bubble: light-dark(oklch(91.8% 0.018 81.3), oklch(35.8% 0.057 291.6));
+  --color-bubble-past: light-dark(oklch(90.2% 0.012 79.8), oklch(30.3% 0.048 291.8));
+  --color-link: light-dark(oklch(80.1% 0.03 77.5), oklch(47.8% 0.067 292.4));
+  --color-accent: light-dark(oklch(53.4% 0.118 43.4), oklch(83.4% 0.125 66.9));
+  --color-accent-strong: light-dark(oklch(43.5% 0.097 43.4), oklch(87% 0.099 69.3));
+  --color-accent-soft: light-dark(oklch(92.8% 0.021 56.1), oklch(34.1% 0.032 317.6));
+  --color-on-ink: var(--color-paper);
+
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-pill: 999px;
+  --radius-card: 28px;
+  --radius-panel: 24px;
+  --radius-field: 16px;
+
+  --color-shadow: light-dark(oklch(22.9% 0.007 67.4 / 0.07), oklch(10% 0.02 290 / 0.18));
+  --color-shadow-strong: light-dark(oklch(22.9% 0.007 67.4 / 0.1), oklch(10% 0.02 290 / 0.25));
+  --shadow-card: 0 20px 50px var(--color-shadow);
+  --shadow-float: 0 0 0 1px var(--color-line), 0 10px 24px var(--color-shadow-strong);
+  --shadow-bubble: 0 0 0 1px var(--color-line), 0 8px 20px var(--color-shadow-strong);
+  --shadow-bubble-selected:
+    0 0 0 2px var(--color-accent), 0 12px 28px oklch(from var(--color-accent) l c h / 0.22);
+
+  --color-grid-dot: light-dark(oklch(22.9% 0.007 67.4 / 0.24), oklch(95.4% 0.014 78.3 / 0.16));
+}
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .font-display {
+    font-variation-settings:
+      "SOFT" 100,
+      "WONK" 0;
+  }
+}
+
+/* Trame de points du canevas (DESIGN.md section 4) : elle suit la caméra. */
+@utility canvas-grid {
+  background-color: var(--color-canvas);
+  background-image: radial-gradient(var(--color-grid-dot) 1px, transparent 1.5px);
+  background-size: calc(46px * var(--cam-k, 1)) calc(46px * var(--cam-k, 1));
+  background-position: var(--cam-x, 0) var(--cam-y, 0);
+}

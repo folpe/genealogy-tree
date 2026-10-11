@@ -64,13 +64,13 @@ scripts/
 ### Lot 1 : bascule de Farm vers Next 16 (sans données)
 
 - [ ] **Avant de merger ce lot sur `main`**, Folpe verrouille le déploiement de production Netlify (« Lock published deploy ») : l'ancienne app reste servie telle quelle pendant que `main` évolue.
-- [ ] Ajouter Next 16, React 19, `@types/react@19` ; retirer Farm, React Router, `@farmfe/*`, `react-refresh`, `postcss.config.js` remplacé par `postcss.config.mjs` (Tailwind 4).
-- [ ] `next.config.ts` : `cacheComponents: true`, `typedRoutes`, en-têtes de sécurité et CSP stricte (reprendre `security-headers` du starter), `images.remotePatterns` limité au domaine Blob.
-- [ ] `src/app/layout.tsx` (lang `fr`, `noindex`), `robots.ts` qui interdit tout, polices Fraunces et Figtree via `next/font`, viewport avec `user-scalable=no` (ADR 07).
-- [ ] Tokens de `docs/design/DESIGN.md` posés dans `globals.css` (`@theme`, OKLCH, thèmes clair et sombre).
-- [ ] Ancien code UI déplacé dans `legacy/` puis supprimé en fin de phase ; `src/server/**` de la phase 2 conservé tel quel.
-- [ ] Tests : `proxy.test.ts` (matcher, exclusions `api/auth` et assets), test de rendu de la page de connexion.
-- [ ] Mettre à jour `knip.json` (entrées Next), `tsconfig.json` (plugin `next`, `jsx: preserve`), Lefthook et CI (build Next).
+- [x] Ajouter Next 16, React 19, `@types/react@19` ; retirer Farm, React Router, `@farmfe/*`, `react-refresh`, `postcss.config.js` remplacé par `postcss.config.mjs` (Tailwind 4).
+- [x] `next.config.ts` : `typedRoutes`, en-têtes de sécurité, `images.remotePatterns` limité au domaine Blob. CSP stricte à nonce posée par `src/proxy.ts`. **Écart :** pas de `cacheComponents`, incompatible avec une CSP à nonce ([décision](../decisions-log/2026-10-11-csp-nonce-sans-cache-components--92c82dd2-1732-4620-a4c0-fa1d589051f3.md)).
+- [x] `src/app/layout.tsx` (lang `fr`, `noindex`), `robots.ts` qui interdit tout, polices Fraunces et Figtree via `next/font`, viewport avec `user-scalable=no` (ADR 07).
+- [x] Tokens de `docs/design/DESIGN.md` posés dans `globals.css` (`@theme`, OKLCH, thèmes clair et sombre via `light-dark()`, système par défaut).
+- [x] Ancien code UI déplacé dans `legacy/` (suppression au lot 9) ; `src/server/**` de la phase 2 conservé tel quel.
+- [x] Tests : `proxy.test.ts` (matcher, exclusions `api/auth` et assets), test de rendu de la page de connexion.
+- [x] Mettre à jour `knip.json` (entrées Next), `tsconfig.json` (plugin `next` ; Next impose `jsx: react-jsx`), CI (build Next inchangé : `bun run build`). Builds Netlify coupés (`ignore = "exit 0"`) : la production Netlify reste figée sur l'ancienne app.
 - **Acceptation :** `bun run build` produit un build Next ; CI verte ; la preview Vercel affiche la page de connexion.
 
 ### Lot 2 : environnement et Vercel
