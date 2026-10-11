@@ -5,6 +5,7 @@ import {
   compareFuzzyDates,
   formatFuzzyDate,
   fuzzyDateRange,
+  isCertainlyBefore,
   parseFuzzyDate,
   VERS_MARGIN_YEARS,
 } from './fuzzy-date.helper';
@@ -199,5 +200,79 @@ describe('ageAt', () => {
 
   it('refuse un âge négatif certain', () => {
     expect(ageAt(exacte(2000, 1, 1), exacte(1990, 1, 1))).toBeNull();
+  });
+});
+
+describe('durcissement (mutation testing)', () => {
+  it.each([
+    'le 12/03/1987',
+    '12/03/1987 environ',
+    'x1987-03-12',
+    '1987-03-12 midi',
+    'le 3 mars 1987',
+    'entre 1880 et 1885 env',
+    'an 1987',
+    '1987 env',
+  ])('rejette « %s » (saisie entourée de texte)', (input) => {
+    expect(parseFuzzyDate(input)).toBeNull();
+  });
+
+  it('tolère les espaces multiples', () => {
+    expect(parseFuzzyDate('12   mars    1987')).toEqual(exacte(1987, 3, 12));
+  });
+
+  it('départage par la précision à point de tri égal', () => {
+    const vers: FuzzyDate = { precision: 'vers', year: 1900 };
+    const entre: FuzzyDate = { precision: 'entre', from: 1895, to: 1905 };
+    expect(compareFuzzyDates(entre, vers)).toBeLessThan(0);
+    expect(compareFuzzyDates(vers, entre)).toBeGreaterThan(0);
+  });
+
+  it('départage par la fin de période à précision égale', () => {
+    const court: FuzzyDate = { precision: 'entre', from: 1880, to: 1885 };
+    const long: FuzzyDate = { precision: 'entre', from: 1880, to: 1890 };
+    expect(compareFuzzyDates(court, long)).toBeLessThan(0);
+    expect(compareFuzzyDates(long, court)).toBeGreaterThan(0);
+  });
+
+  it('égalité entre deux dates ouvertes identiques', () => {
+    expect(
+      compareFuzzyDates({ precision: 'apres', year: 1900 }, { precision: 'apres', year: 1900 }),
+    ).toBe(0);
+  });
+
+  it('isCertainlyBefore', () => {
+    expect(isCertainlyBefore(annee(1900), annee(1901))).toBe(true);
+    expect(isCertainlyBefore(exacte(1900, 5, 1), exacte(1900, 5, 1))).toBe(false);
+    expect(isCertainlyBefore(annee(1900), annee(1900))).toBe(false);
+    expect(isCertainlyBefore({ precision: 'apres', year: 1900 }, annee(1950))).toBe(false);
+    expect(isCertainlyBefore(annee(1950), { precision: 'avant', year: 1900 })).toBe(false);
+    expect(
+      isCertainlyBefore({ precision: 'avant', year: 1900 }, { precision: 'apres', year: 1900 }),
+    ).toBe(true);
+  });
+
+  it('âge avec une naissance « après »', () => {
+    expect(ageAt({ precision: 'apres', year: 1900 }, annee(1950))).toEqual({
+      value: 49,
+      min: null,
+      max: 49,
+      approx: true,
+    });
+  });
+
+  it('âge nul le jour de la naissance', () => {
+    expect(ageAt(exacte(2000, 1, 1), exacte(2000, 1, 1))).toEqual({
+      value: 0,
+      min: 0,
+      max: 0,
+      approx: false,
+    });
+  });
+
+  it('âge inconnu quand aucune borne ne permet de le calculer', () => {
+    expect(
+      ageAt({ precision: 'apres', year: 1900 }, { precision: 'apres', year: 1950 }),
+    ).toBeNull();
   });
 });

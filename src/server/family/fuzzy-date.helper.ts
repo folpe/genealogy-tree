@@ -31,7 +31,11 @@ const MONTHS = [
   'décembre',
 ] as const;
 
-const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const fold = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
 
 const MONTH_BY_NAME = new Map(MONTHS.map((name, i) => [fold(name), i + 1]));
 

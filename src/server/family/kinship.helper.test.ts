@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { aChildOf, anUnion, aPerson } from '../../../tests/fixtures/builders';
 import { marchandFamily } from '../../../tests/fixtures/marchand-family';
 import { buildFamilyIndex } from './family.helper';
 import { commonAncestors, findRelationshipPath, relationship } from './kinship.helper';
@@ -86,5 +87,85 @@ describe('findRelationshipPath', () => {
 
   it('retourne une liste vide sans chemin', () => {
     expect(findRelationshipPath(index, 'hugo', 'inconnu')).toEqual([]);
+  });
+});
+
+describe('durcissement (mutation testing)', () => {
+  it('une ligne directe n’est jamais « demi »', () => {
+    expect(relationship(index, 'hugo', 'paul')).toMatchObject({ half: false, parentOnPath: 'luc' });
+    expect(relationship(index, 'paul', 'hugo')).toMatchObject({ half: false, parentOnPath: null });
+  });
+
+  it('trouve le parent par lequel passe le lien, côté mère', () => {
+    expect(relationship(index, 'hugo', 'odette')).toMatchObject({ parentOnPath: 'sophie' });
+  });
+
+  it('le chemin ne passe pas par la filiation « a élevé »', () => {
+    expect(findRelationshipPath(index, 'hugo', 'maxime')).toEqual([
+      'hugo',
+      'u-luc-sophie',
+      'luc',
+      'u-luc-claire',
+      'maxime',
+    ]);
+  });
+
+  it('suit une filiation sans union vers le bas', () => {
+    expect(findRelationshipPath(index, 'lea', 'jade')).toEqual(['lea', 'jade']);
+  });
+
+  it('retourne une liste vide si le départ est inconnu', () => {
+    expect(findRelationshipPath(index, 'inconnu', 'hugo')).toEqual([]);
+  });
+
+  it('ignore les proches d’un ancien conjoint', () => {
+    const graph = {
+      ...marchandFamily,
+      persons: [...marchandFamily.persons, aPerson('mere-claire', { gender: 'femme' })],
+      parentChildren: [...marchandFamily.parentChildren, aChildOf('mere-claire', 'claire')],
+    };
+    const idx = buildFamilyIndex(graph);
+    expect(relationship(idx, 'luc', 'mere-claire')).toMatchObject({
+      type: 'none',
+      connected: true,
+    });
+  });
+
+  it('retient le parent de sang le plus proche quand plusieurs conviennent', () => {
+    // Jacques a été marié à Marie (grand-tante de Hugo) puis à Anne (tante de Hugo).
+    const graph = {
+      ...marchandFamily,
+      unions: [...marchandFamily.unions, anUnion('u-anne-jacques', 'anne', 'jacques')],
+    };
+    const idx = buildFamilyIndex(graph);
+    expect(relationship(idx, 'hugo', 'jacques')).toMatchObject({
+      type: 'spouseOfRelative',
+      relativeId: 'anne',
+    });
+    const reversed = {
+      ...graph,
+      unions: [anUnion('u-anne-jacques', 'anne', 'jacques'), ...marchandFamily.unions],
+    };
+    expect(relationship(buildFamilyIndex(reversed), 'hugo', 'jacques')).toMatchObject({
+      relativeId: 'anne',
+    });
+  });
+
+  it('demi-cousins : branches issues de deux unions différentes', () => {
+    const graph = {
+      ...marchandFamily,
+      persons: [...marchandFamily.persons, aPerson('kid-max'), aPerson('kid-lea')],
+      parentChildren: [
+        ...marchandFamily.parentChildren,
+        aChildOf('maxime', 'kid-max'),
+        aChildOf('lea', 'kid-lea'),
+      ],
+    };
+    expect(relationship(buildFamilyIndex(graph), 'kid-max', 'kid-lea')).toMatchObject({
+      up: 2,
+      down: 2,
+      half: true,
+      common: ['luc'],
+    });
   });
 });

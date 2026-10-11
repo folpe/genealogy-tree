@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "testRunner": "vitest",
+  "plugins": ["@stryker-mutator/vitest-runner"],
+  "mutate": [
+    "src/server/access/access.policy.ts",
+    "src/server/family/kinship.helper.ts",
+    "src/server/family/fuzzy-date.helper.ts"
+  ],
+  "reporters": ["clear-text", "progress"],
+  "coverageAnalysis": "off",
+  "thresholds": {
+    "high": 95,
+    "low": 85,
+    "break": null
+  },
+  "tempDirName": ".stryker-tmp",
+  "disableTypeChecks": false,
+  "tsconfigFile": "tsconfig.stryker.json",
+  "_comment": "TypeScript 7 n'expose plus l'API JS : tsconfigFile pointe vers un fichier absent pour que Stryker ne r\u00e9\u00e9crive pas le tsconfig (inutile ici : ni extends ni references). coverageAnalysis off : le runner Vitest de Stryker attribue mal la couverture des contextes de test construits hors des tests.",
+  "vitest": {
+    "related": false
+  },
+  "concurrency": 8
+}

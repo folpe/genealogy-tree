@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { aChildOf, aPerson, emptyGraph, exact } from '../../../tests/fixtures/builders';
 import { marchandFamily, marchandMembers } from '../../../tests/fixtures/marchand-family';
 import { buildFamilyIndex } from '../family/family.helper';
@@ -18,9 +18,14 @@ import {
 import type { Member } from './access.types';
 
 const TODAY = exact(2026, 10, 9);
-const ctx = buildAccessContext(buildFamilyIndex(marchandFamily), [...marchandMembers]);
+// Reconstruit avant chaque test : le mutation testing active les mutants sans
+// recharger les modules, un contexte construit une seule fois serait périmé.
+let ctx: AccessContext;
+beforeEach(() => {
+  ctx = buildAccessContext(buildFamilyIndex(marchandFamily), [...marchandMembers]);
+});
 const member = (id: string): Member => {
-  const found = ctx.members.find((m) => m.id === id);
+  const found = marchandMembers.find((m) => m.id === id);
   if (!found) throw new Error(id);
   return found;
 };
@@ -311,5 +316,117 @@ describe('escalade', () => {
 
   it('jamais une suggestion déjà tranchée', () => {
     expect(escalationDue({ createdAt: 0, answeredAt: DAY }, 30 * DAY)).toBe(false);
+  });
+});
+
+describe('durcissement (mutation testing)', () => {
+  const small = (graph: Parameters<typeof buildFamilyIndex>[0], members: Member[]) =>
+    buildAccessContext(buildFamilyIndex(graph), members);
+
+  it('gardiens à distance 2, départagés par ancienneté, trois au plus', () => {
+    expect(guardiansOf(ctx, 'henri')).toEqual(['m-luc', 'm-anne', 'm-isabelle']);
+  });
+
+  it('gardiens en remontant par les parents : Jade -> Luc', () => {
+    expect(guardiansOf(ctx, 'jade')).toEqual(['m-luc']);
+  });
+
+  it('le conjoint passe avant un enfant inscrit plus tôt, l’enfant avant le parent', () => {
+    const graph = {
+      ...emptyGraph(['p', 'conjoint', 'aine', 'enfant', 'parent'].map((id) => aPerson(id))),
+      unions: [
+        { id: 'u', partnerIds: ['p', 'conjoint'] as [string, string], kind: 'mariage' as const },
+      ],
+      parentChildren: [aChildOf('p', 'aine'), aChildOf('p', 'enfant'), aChildOf('parent', 'p')],
+    };
+    const c = small(graph, [
+      { id: 'm-parent', personId: 'parent', isAdmin: false, joinedAt: 1 },
+      { id: 'm-enfant', personId: 'enfant', isAdmin: false, joinedAt: 2 },
+      { id: 'm-conjoint', personId: 'conjoint', isAdmin: false, joinedAt: 3 },
+    ]);
+    expect(guardiansOf(c, 'p')).toEqual(['m-conjoint', 'm-enfant', 'm-parent']);
+  });
+
+  it('jamais plus de trois gardiens à même distance', () => {
+    const kids = ['a', 'b', 'c', 'd'];
+    const graph = {
+      ...emptyGraph([aPerson('p'), ...kids.map((id) => aPerson(id))]),
+      parentChildren: kids.map((id) => aChildOf('p', id)),
+    };
+    const c = small(
+      graph,
+      kids.map((id, i) => ({ id: `m-${id}`, personId: id, isAdmin: false, joinedAt: 10 - i })),
+    );
+    expect(guardiansOf(c, 'p')).toEqual(['m-d', 'm-c', 'm-b']);
+  });
+
+  it('aucun gardien sans membre', () => {
+    expect(guardiansOf(small(emptyGraph([aPerson('p')]), []), 'p')).toEqual([]);
+  });
+
+  it('un partenaire inconnu n’entre pas dans le cercle proche', () => {
+    const graph = {
+      ...emptyGraph([aPerson('a')]),
+      unions: [{ id: 'u', partnerIds: ['a', null] as [string, null], kind: 'inconnu' as const }],
+    };
+    expect([...closeCircle(buildFamilyIndex(graph), 'a')]).toEqual(['a']);
+  });
+
+  it('un admin sans fiche n’est jamais dans la veille de lignée, même d’une fiche ouverte', () => {
+    expect(watchersOf(ctx, 'claude', { authorId: 'm-hugo' })).toEqual([
+      'm-anne',
+      'm-isabelle',
+      'm-luc',
+    ]);
+  });
+
+  it('un gardien n’est pas destinataire de sa propre suggestion', () => {
+    expect(canEdit(ctx, luc, 'sophie', { fields: ['residence'], reappliesReverted: true })).toEqual(
+      {
+        mode: 'suggest',
+        reason: 'reverted',
+        guardians: ['m-hugo'],
+      },
+    );
+  });
+
+  it('un seul champ sourcé suffit à demander une source', () => {
+    expect(canEdit(ctx, hugo, 'henri', { fields: ['birth.place', 'death.date'] }).reason).toBe(
+      'sourced',
+    );
+  });
+
+  it('une modification directe n’a pas de destinataire', () => {
+    expect(canEdit(ctx, hugo, 'luc', change())).toEqual({
+      mode: 'direct',
+      reason: 'circle',
+      guardians: [],
+    });
+  });
+
+  it('majeur le jour de ses 18 ans', () => {
+    const graph = emptyGraph([
+      aPerson('majeur', { birth: { date: exact(2008, 10, 9) } }),
+      aPerson('mineur', { birth: { date: exact(2008, 10, 10) } }),
+      aPerson('sans-date'),
+      aPerson('moi'),
+    ]);
+    const c = small(graph, [{ id: 'm-moi', personId: 'moi', isAdmin: false, joinedAt: 1 }]);
+    const viewer = c.members[0] as Member;
+    // Fiches ouvertes : visibles en entier, sauf le mineur.
+    expect(visibilityOf(c, viewer, 'majeur', TODAY).level).toBe('full');
+    expect(visibilityOf(c, viewer, 'mineur', TODAY).level).toBe('minor');
+    expect(visibilityOf(c, viewer, 'sans-date', TODAY).level).toBe('full');
+  });
+
+  it('un membre sans fiche ne voit pas les fiches ouvertes en entier', () => {
+    const pending: Member = { id: 'm-x', personId: null, isAdmin: false, joinedAt: 9 };
+    expect(visibilityOf(ctx, pending, 'claude', TODAY).level).toBe('family');
+  });
+
+  it('escalade calculée depuis la date de création', () => {
+    const DAY = 24 * 60 * 60 * 1000;
+    expect(escalationDue({ createdAt: 10 * DAY }, 20 * DAY)).toBe(false);
+    expect(escalationDue({ createdAt: 10 * DAY }, 24 * DAY)).toBe(true);
   });
 });

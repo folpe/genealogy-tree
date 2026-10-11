@@ -148,3 +148,68 @@ describe('describeDegree', () => {
     expect(describeDegree(relationship(index, from, to))).toBe(expected);
   });
 });
+
+describe('couverture des cas rares', () => {
+  // Arbre synthétique : aïeux a+b, lignées de quatre générations, conjoints variés.
+  const people = [
+    aPerson('a', { firstName: 'Auguste', gender: 'homme' }),
+    aPerson('b', { firstName: 'Berthe', gender: 'femme' }),
+    aPerson('f1', { gender: 'femme' }),
+    aPerson('f2', { gender: 'femme' }),
+    aPerson('f3', { gender: 'femme' }),
+    aPerson('f4', { gender: 'femme' }),
+    aPerson('g1', { gender: 'homme' }),
+    aPerson('g2', { gender: 'inconnu' }),
+    aPerson('g3', { gender: 'femme' }),
+    aPerson('ex', { gender: 'homme' }),
+    aPerson('epouse', { gender: 'femme' }),
+    aPerson('tante-epouse', { gender: 'femme' }),
+    aPerson('grand-mere-epouse', { gender: 'femme' }),
+    aPerson('mere-epouse', { gender: 'femme' }),
+  ];
+  const graph: FamilyGraph = {
+    ...emptyGraph(people),
+    unions: [
+      anUnion('u-ab', 'a', 'b'),
+      anUnion('u-ex', 'f1', 'ex', { end: { reason: 'divorce' } }),
+      anUnion('u-ep', 'g1', 'epouse', { kind: 'pacs' }),
+    ],
+    parentChildren: [
+      aChildOf('a', 'f1', { unionId: 'u-ab' }),
+      aChildOf('b', 'f1', { unionId: 'u-ab' }),
+      aChildOf('a', 'g1', { unionId: 'u-ab' }),
+      aChildOf('b', 'g1', { unionId: 'u-ab' }),
+      aChildOf('f1', 'f2'),
+      aChildOf('f2', 'f3'),
+      aChildOf('f3', 'f4'),
+      aChildOf('g1', 'g2'),
+      aChildOf('g2', 'g3'),
+      aChildOf('grand-mere-epouse', 'mere-epouse'),
+      aChildOf('grand-mere-epouse', 'tante-epouse'),
+      aChildOf('mere-epouse', 'epouse'),
+    ],
+  };
+  const idx = buildFamilyIndex(graph);
+
+  it.each([
+    ['g1', 'f3', 'ta petite-nièce'],
+    ['g1', 'f4', 'ton arrière-petite-nièce'],
+    ['f4', 'g1', 'ton arrière-grand-oncle'],
+    ['f3', 'g3', 'ta cousine issue de germain'],
+    ['f3', 'g2', 'le cousin germain ou la cousine germaine de ta mère'],
+    ['f2', 'g2', 'ton cousin germain ou ta cousine germaine'],
+    ['g3', 'f1', 'ta grand-tante'],
+    ['f1', 'ex', 'ton ex-mari'],
+    ['ex', 'f1', 'ton ex-femme'],
+    ['g1', 'epouse', 'ta compagne'],
+    ['g1', 'mere-epouse', 'ta belle-mère'],
+    ['g1', 'tante-epouse', 'la tante de ta compagne'],
+    ['g1', 'grand-mere-epouse', 'la grand-mère de ta compagne'],
+    ['f2', 'ex', 'l’ex-mari de ta mère'],
+    ['g2', 'epouse', 'ta belle-mère'],
+    ['f2', 'epouse', 'ta tante par alliance'],
+    ['g3', 'g2', 'ton parent'],
+  ])('%s -> %s : « %s »', (from, to, expected) => {
+    expect(label(from, to, idx)).toBe(expected);
+  });
+});

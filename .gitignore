@@ -41,3 +41,7 @@ mocks/*
 
 # Netlify local
 .netlify
+
+# Stryker
+.stryker-tmp/
+reports/
