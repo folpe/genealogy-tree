@@ -5,7 +5,7 @@ Point d'entrée pour savoir où en est la refonte et ce qu'il reste à faire. Le
 | Document | Rôle |
 |---|---|
 | [Spec de la refonte](specs/2026-10-09-refonte-ances-tree.md) | Ce qu'on construit et pourquoi |
-| [Journal de décisions](DECISIONS.md) | Choix structurants, ajout uniquement |
+| [Journal de décisions](decisions-log/) | Un fichier immuable par décision ; [DECISIONS.md](DECISIONS.md) figé pour les ADR 01 à 14 |
 | [Design](design/DESIGN.md) | Tokens, composants, écrans, animations |
 | [Maquettes](design/README.md) | Canvas en ligne et copies `.dc.html` |
 
@@ -27,7 +27,7 @@ Point d'entrée pour savoir où en est la refonte et ce qu'il reste à faire. Le
 ## Règles de suivi
 
 - Une phase commence par la relecture de son plan ; on coche les cases au fil des PR, dans la même PR que le code.
-- Toute décision structurante prise en route rejoint `DECISIONS.md` ; tout changement visuel passe d'abord par le canvas puis par `DESIGN.md`.
+- Toute décision structurante prise en route rejoint `docs/decisions-log/` ; tout changement visuel passe d'abord par le canvas puis par `DESIGN.md`.
 - Opérations irréversibles (migration de schéma en production, écriture de données réelles, suppression de Notion ou de Netlify, DNS) : validation explicite de Folpe avant exécution.
 
 ## Actions qui reviennent à Folpe

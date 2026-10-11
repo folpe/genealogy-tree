@@ -1,3 +1,14 @@
+# Decisions log
+
+Each current decision is an immutable file under `docs/decisions-log/`. Create one with
+`void-machine decisions new`, and render the current projection with
+`void-machine decisions render`.
+
+> **Frozen legacy snapshot.** The entries below are preserved as written. They were migrated
+> into docs/decisions-log/ and are no longer the source; edit the records, not this file.
+
+---
+
 # Décisions d'architecture
 
 Journal ADR-lite des choix non évidents. Lire avant de remettre une décision en cause, ajouter une entrée quand une alternative crédible existait. Fichier en ajout seulement.
@@ -127,3 +138,4 @@ Journal ADR-lite des choix non évidents. Lire avant de remettre une décision e
 - **Pourquoi :** avec la définition initiale (« aucun membre ne l'a dans son cercle proche »), Odette, grand-mère de Hugo, aurait été modifiable par Isabelle, et Claire, ancienne compagne de Luc, par Luc lui-même : contraire à « protéger sa lignée » et à la règle des anciens conjoints. Les cas de la spec (Claude ouvert, Marie et Jacques gardés par Isabelle) sont inchangés.
 - **Alternatives écartées :** définition par le cercle proche (trop permissive).
 - **À réexaminer si :** trop de fiches restent bloquées en suggestion faute de gardien actif.
+
