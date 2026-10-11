@@ -1,0 +1,36 @@
+{
+  "packs": {
+    "@voidcorp/harness-nextjs": "^4.0.0",
+    "@voidcorp/harness-react": "^4.0.0",
+    "@voidcorp/harness-server": "^4.0.0",
+    "@voidcorp/harness-pwa": "^4.0.0"
+  },
+  "stack": {
+    "packageManager": "bun",
+    "testRunner": "vitest",
+    "e2eRunner": "none",
+    "mutationRunner": "stryker"
+  },
+  "paths": {
+    "business": "src/**",
+    "tests": "src/**/*.test.{ts,tsx}",
+    "spikes": "scripts/spike-*",
+    "serverActions": "src/app/(api|actions)/**",
+    "contracts": "src/server/**/*.types.ts",
+    "e2e": "tests/e2e/**"
+  },
+  "commands": {
+    "typecheck": ["bun", "run", "type-check"],
+    "testUnit": ["bun", "run", "test"],
+    "mutation": ["bun", "run", "test:mutation"]
+  },
+  "modes": {
+    "tdd": "auto",
+    "codeReview": "auto"
+  },
+  "core": "^4.0.0",
+  "context": {
+    "windowTokens": 1000000,
+    "checkpointThresholdPercent": 50
+  }
+}
