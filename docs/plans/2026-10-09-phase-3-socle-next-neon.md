@@ -75,14 +75,16 @@ scripts/
 
 ### Lot 2 : environnement et Vercel
 
-- [ ] Projet Vercel relié au repo GitHub, preview par PR, production sur `main`.
-- [ ] `src/env.ts` : `DATABASE_URL`, `DATABASE_URL_UNPOOLED` (migrations), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `PASSKEY_RP_ID=folpe.me`, `RESEND_API_KEY`, `EMAIL_FROM=famille@folpe.me`, `BLOB_READ_WRITE_TOKEN`, `NEXT_PUBLIC_APP_URL`, `NOTION_TOKEN` et `NOTION_DATABASE_ID` (scripts de migration uniquement, jamais exposés à l'app).
+- [x] Projet Vercel `ances-tree` (équipe `voidcorp`) relié au repo GitHub, preview par PR, production sur `main`, framework Next.js, Node 24.
+- [x] Variables posées par environnement sans transiter en clair : `DATABASE_URL` (rôle applicatif de la branche Neon correspondante), `BETTER_AUTH_SECRET` (distinct par environnement), `NEXT_PUBLIC_APP_URL` (production et développement ; en preview, déduite de `VERCEL_URL` au lot 4). Le rôle propriétaire n'est jamais posé dans Vercel.
+- [ ] `src/env.ts` (avec son premier consommateur, au lot 4) : `DATABASE_URL`, `DATABASE_URL_UNPOOLED` (migrations, hors app), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `PASSKEY_RP_ID=folpe.me`, `RESEND_API_KEY`, `EMAIL_FROM=famille@folpe.me`, `BLOB_READ_WRITE_TOKEN`, `NEXT_PUBLIC_APP_URL`, `NOTION_TOKEN` et `NOTION_DATABASE_ID` (scripts de migration uniquement, jamais exposés à l'app).
 - [ ] `.env.example` à jour, sans valeur réelle ; gitleaks vérifie.
 - **Acceptation :** un env manquant fait échouer le démarrage avec un message clair ; `vercel env pull` fournit un `.env.local` fonctionnel.
 
 ### Lot 3 : Neon et schéma Drizzle
 
-- [ ] Provisionnement (section 15.1, étape 1) : projet Neon en `aws-eu-central-1`, branches `main`, `preview`, `dev` ; intégration Vercel-Neon par environnement ; rôle applicatif sans DDL, rôle de migration séparé.
+- [x] Provisionnement (section 15.1, étape 1) : projet Neon `ances-tree` (`frosty-feather-00901702`, organisation VoidCorp, `aws-eu-central-1`, Postgres 18), branches `main`, `preview`, `dev`. Variables posées à la main par environnement, comme void-cortex, plutôt que par l'intégration Vercel-Neon. Rôle applicatif `ances_tree_app` sans DDL (`scripts/db-app-role.ts`, vérifié : lecture et écriture autorisées, `create` et `alter` refusés), rôle propriétaire `ances_tree_owner` réservé aux migrations.
+- [x] Migration `0000_init` appliquée sur `dev` et `preview`, famille fictive Marchand semée sur les deux. **`main` : en attente de la validation de Folpe.**
 - [x] Schéma famille `src/server/db/schema/family.schema.ts`, migration `0000_init` : `persons` (`legacy_notion_id` unique, `visibility`, `is_living_override`, `version` pour le verrou optimiste), `unions` (dates de début et de fin, motif), `parent_child`, `events` (naissance et décès compris, un seul de chaque par personne), `places` (libellé normalisé unique, clé du cache de géocodage), `residences`, `sources`, `sourced_facts` (champ sourcé et sa source, remplace un `source_id` par événement), `media` (SHA-256 unique, MIME, dimensions, `blur_data_url`, `origin_url`), `media_persons`. Identifiants en `text` (UUID par défaut). Dates à précision variable sur trois colonnes `<x>_precision`, `<x>_value`, `<x>_value_end`.
 - [ ] **Reporté au lot 4** : tables better-auth (générées par son CLI plutôt que recopiées), `memberships`, `invitations`, `access_requests`. **Reporté à la phase 6** : `suggestions` et `activity` (le lot 5 n'a besoin que d'un journal des consultations admin, ajouté avec lui).
 - [x] Contraintes en base qui doublent les invariants : clés étrangères (cascade sur les liens d'une personne supprimée), enums Postgres, `CHECK` filiation et union distinctes, date complète ou absente, `value_end` réservé à `entre` et postérieur au début, fin d'union seulement avec un motif ; index uniques (`legacy_notion_id`, empreinte média, naissance et décès uniques) ; index sur `parent_child(child_id)` (la clé primaire couvre `parent_id`), `unions(partner_a_id)`, `unions(partner_b_id)`.
