@@ -20,6 +20,21 @@ bun run build        # build de production Next
 bun run start        # sert le build
 ```
 
+## Base de données
+
+Postgres (Neon en ligne). En local, un Postgres jetable suffit :
+
+```bash
+docker run -d --rm --name ances-tree-pg -e POSTGRES_PASSWORD=test -e POSTGRES_DB=ances_tree \
+  -p 54329:5432 --tmpfs /var/lib/postgresql/data postgres:17-alpine
+export DATABASE_URL=postgres://postgres:test@localhost:54329/ances_tree
+
+bun run db:generate        # migration SQL depuis le schéma Drizzle (à relire dans la PR)
+bun run db:migrate         # applique les migrations
+bun run db:seed            # famille fictive Marchand ; base locale ou SEED_ALLOWED_HOSTS seulement
+bun run test:integration   # tests contre la base (migrations appliquées au démarrage)
+```
+
 ## Qualité
 
 ```bash

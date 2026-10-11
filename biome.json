@@ -22,7 +22,8 @@
       "!.void/hooks",
       "!legacy",
       "!**/.next",
-      "!next-env.d.ts"
+      "!next-env.d.ts",
+      "!src/server/db/migrations"
     ]
   },
   "formatter": {
@@ -82,7 +83,7 @@
   },
   "overrides": [
     {
-      "includes": ["netlify/functions/**"],
+      "includes": ["netlify/functions/**", "scripts/**"],
       "linter": {
         "rules": {
           "suspicious": {
