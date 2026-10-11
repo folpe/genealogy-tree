@@ -158,8 +158,8 @@ Chaque compte est lié à une personne de l'arbre ("C'est moi"). Ce que l'on peu
   1. le cercle proche de M (le "plus ou moins un niveau") ;
   2. **toute la lignée ascendante** de M : parents, grands-parents, arrière-grands-parents, sans limite, et leurs conjoints ;
   3. tous les descendants de M et leurs conjoints ;
-  4. les **fiches ouvertes** : personnes qu'aucun membre inscrit n'a dans son cercle proche (branches sans personne connectée).
-- **Gardiens** d'une personne P : P elle-même si elle a un compte ; sinon les membres inscrits les plus proches de P dans le graphe (3 au plus), en pratique ses enfants, parents, conjoint, frères et sœurs inscrits.
+  4. les **fiches ouvertes** : personnes qu'aucun membre inscrit n'a dans son périmètre (points 1 à 3), ni comme ancien conjoint d'une personne de ce périmètre (branches sans personne connectée). Précisé en phase 2 (ADR 14) : une fiche de la lignée d'un membre ou l'ex d'un proche n'est jamais ouverte à tous.
+- **Gardiens** d'une personne P : P elle-même si elle a un compte ; sinon les membres inscrits à la plus petite distance de P dans le graphe (filiations et unions non rompues), 3 au plus, départagés par le lien (conjoint, enfant, parent) puis l'ancienneté du compte.
 
 ### 6.3 Modifier
 

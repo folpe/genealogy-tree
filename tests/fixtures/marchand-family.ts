@@ -1,3 +1,4 @@
+import type { Member } from '../../src/server/access/access.types';
 import type { FamilyGraph } from '../../src/server/family/family.types';
 import { aChildOf, anUnion, aPerson, exact, yearOnly } from './builders';
 
@@ -218,3 +219,12 @@ export const marchandFamily: FamilyGraph = {
     aChildOf('lea', 'jade'),
   ],
 };
+
+/** Comptes inscrits des maquettes ; `joinedAt` fixe l'ancienneté (départage des gardiens). */
+export const marchandMembers = [
+  { id: 'm-folpe', personId: null, isAdmin: true, joinedAt: 1 },
+  { id: 'm-luc', personId: 'luc', isAdmin: false, joinedAt: 2 },
+  { id: 'm-hugo', personId: 'hugo', isAdmin: false, joinedAt: 3 },
+  { id: 'm-anne', personId: 'anne', isAdmin: false, joinedAt: 4 },
+  { id: 'm-isabelle', personId: 'isabelle', isAdmin: false, joinedAt: 5 },
+] as const satisfies readonly Member[];

@@ -3,7 +3,7 @@
 - **Date :** 2026-10-09
 - **Spec :** [docs/specs/2026-10-09-refonte-ances-tree.md](../specs/2026-10-09-refonte-ances-tree.md), sections 5, 6, 8 et 16
 - **Décisions :** [docs/DECISIONS.md](../DECISIONS.md), ADR 06 (graphe avec nœuds d'union), 08 (droits par proximité), 11 (direction visuelle, pour le vocabulaire affiché)
-- **Statut :** en cours (lots 1 à 5 faits)
+- **Statut :** en cours (lots 1 à 6 faits)
 
 ## 1. Objectif et sortie attendue
 
@@ -136,7 +136,7 @@ Chaque lot suit le cycle : tests rouges d'abord, implémentation minimale, refac
 
 ### Lot 6 : policy d'accès
 
-- [ ] Tests d'abord (`access.policy.test.ts`), avec les cas de la section 6.6 comme tests nommés en français :
+- [x] Tests d'abord (`access.policy.test.ts`), avec les cas de la section 6.6 comme tests nommés en français :
   - **cercle proche** : soi, conjoints en cours, parents, enfants, frères et sœurs, demi compris ; un ancien conjoint en sort ;
   - **périmètre** : cercle proche + toute l'ascendance avec conjoints + descendants avec conjoints + fiches ouvertes ;
   - **fiches ouvertes** : une personne qu'aucun membre inscrit n'a dans son cercle proche (Claude) ;
@@ -148,14 +148,14 @@ Chaque lot suit le cycle : tests rouges d'abord, implémentation minimale, refac
   - **faits sourcés** : modifier un fait sourcé sans nouvelle source -> suggestion ; avec une nouvelle source -> direct si dans le périmètre ;
   - **admins** : voient tout, peuvent tout trancher, mais leurs lectures de fiches restreintes sont marquées « à journaliser » dans le résultat ;
   - **escalade** : `escalationDue(suggestion, now)` vrai après 14 jours sans réponse (constante nommée).
-- [ ] Tests de visibilité (`access.redact.test.ts`), matrice de la section 6.4 :
+- [x] Tests de visibilité (`access.redact.test.ts`), matrice de la section 6.4 :
   - décédés : tout visible ;
   - vivants hors périmètre : année et ville de naissance, photo de profil uniquement ; date exacte, résidence, contact et autres photos retirés ;
   - mineurs hors cercle proche : prénom et initiales seulement ;
   - `visibility = cercle` : restreint au cercle proche, admins compris mais journalisés ;
   - les champs retirés sont **absents** de l'objet retourné (pas `null`), pour qu'ils ne puissent pas fuiter vers le client.
-- [ ] `access.policy.ts` : `closeCircle`, `perimeter`, `isOpenRecord`, `guardiansOf`, `watchersOf`, `canEdit(viewer, personId, change)` qui retourne `{ mode: 'direct' | 'suggest', reason, guardians }`, `visibilityLevel(viewer, personId)`.
-- [ ] `access.redact.ts` : `redactPerson(person, level)`, typé pour que le type de sortie reflète les champs retirés.
+- [x] `access.policy.ts` : `closeCircle`, `perimeter`, `isOpenRecord`, `guardiansOf`, `watchersOf`, `canEdit(viewer, personId, change)` qui retourne `{ mode: 'direct' | 'suggest', reason, guardians }`, `visibilityLevel(viewer, personId)`.
+- [x] `access.redact.ts` : `redactPerson(person, level)`, typé pour que le type de sortie reflète les champs retirés.
 - **Acceptation :** 100 % des branches de `access.policy.ts` couvertes ; Stryker sans mutant survivant sur ce fichier (ou survivants justifiés dans la PR).
 
 ### Lot 7 : recherche
