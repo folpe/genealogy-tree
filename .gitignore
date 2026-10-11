@@ -49,3 +49,5 @@ reports/
 # Next
 .next/
 next-env.d.ts
+.vercel
+.env*
