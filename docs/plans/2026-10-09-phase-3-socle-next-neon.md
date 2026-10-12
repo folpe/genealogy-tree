@@ -94,6 +94,7 @@ scripts/
 - [x] Seed `bun run db:seed` depuis la fixture Marchand. Liste blanche plutôt que liste noire : base locale ou hôte listé dans `SEED_ALLOWED_HOSTS` (branches `dev` et `preview`), tout le reste est refusé.
 - [x] CI : job `integration` avec un Postgres 17 de service, contrôle qu'aucune migration n'a été oubliée (`drizzle-kit generate` ne doit rien produire), puis tests d'intégration ; requis par `quality`.
 - **Garde-fou destructif :** la première migration sur la branche Neon `main` (production) n'est appliquée qu'après validation explicite de Folpe, migration SQL relue dans la PR. Aucune migration destructive (`DROP`, changement de type) sans plan de retour arrière écrit.
+- [x] Migrations de production automatiques (décidé par Folpe le 2026-10-12) : le workflow `Migrations` applique `drizzle-kit migrate` sur la branche Neon `main` à chaque arrivée de migration sur `main`, depuis l'environnement GitHub `production` (secret du rôle propriétaire, limité à `main`). Le merge de la PR vaut validation : la migration SQL se relit dans la PR, et elle reste additive puisque Vercel déploie en parallèle.
 - **Acceptation :** `bunx drizzle-kit migrate` passe sur `dev` et `preview` ; CI applique les migrations sur un Postgres de service et lance les tests d'intégration.
 
 ### Lot 4 : auth, comptes et invitations
