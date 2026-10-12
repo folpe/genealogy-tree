@@ -28,6 +28,9 @@ export default defineConfig({
         '**/*.repository.ts',
         '**/*.service.ts',
         '**/*.instance.ts',
+        // Adaptateur Vercel Blob (réseau) et chargement des photos de la reprise.
+        'src/server/media/media.blob.ts',
+        'src/server/migration/notion.media.ts',
         'src/server/auth/auth.ts',
         'src/server/db/client.ts',
         'src/server/db/schema/**',

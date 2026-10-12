@@ -3,6 +3,7 @@ import type { RedactedPerson } from '@/server/access/access.redact';
 import type { TreeForViewer } from '@/server/family/family.service';
 import type { FuzzyDate, Union } from '@/server/family/family.types';
 import { formatFuzzyDate } from '@/server/family/fuzzy-date.helper';
+import type { PersonPhoto } from '@/server/media/media.url';
 
 // Rendu provisoire de l'arbre (phase 3, lot 5) : une liste par génération et une
 // fiche. Ne reçoit que l'arbre déjà filtré par la policy ; le rendu graphique de
@@ -30,6 +31,59 @@ const NOTICES: Partial<Record<RedactedPerson['level'], string>> = {
 function personLabel(person: RedactedPerson): string {
   if (person.level === 'minor') return `${person.firstName} ${person.initials.slice(1)}.`;
   return `${person.firstName} ${person.lastName}`;
+}
+
+function initials(person: RedactedPerson): string {
+  if (person.level === 'minor') return person.initials;
+  return `${person.firstName.charAt(0)}${person.lastName.charAt(0)}`.toUpperCase();
+}
+
+const BUBBLES = {
+  chip: { box: 'size-[30px] border-2 text-[11px]', sizes: '30px' },
+  sheet: { box: 'size-[120px] border-[5px] text-[42px]', sizes: '120px' },
+} as const;
+
+/**
+ * Bulle de la maquette (DESIGN.md) : la photo si le service en a signé une, sinon
+ * les initiales. L'aperçu flou occupe la bulle pendant le chargement. `name` vide :
+ * la photo est décorative, le nom suit déjà dans le même lien.
+ */
+function PersonBubble({
+  person,
+  photo,
+  size,
+  name,
+}: {
+  person: RedactedPerson;
+  photo: PersonPhoto | undefined;
+  size: keyof typeof BUBBLES;
+  name: string;
+}) {
+  const { box, sizes } = BUBBLES[size];
+  const past = (person.level === 'full' || person.level === 'family') && person.death;
+  return (
+    <span
+      className={`relative inline-grid shrink-0 place-items-center overflow-hidden rounded-full border-card bg-cover bg-center font-display shadow-bubble ${box} ${past ? 'bg-bubble-past' : 'bg-bubble'}`}
+      style={photo?.blurDataUrl ? { backgroundImage: `url("${photo.blurDataUrl}")` } : undefined}
+    >
+      {photo ? (
+        // biome-ignore lint/performance/noImgElement: dérivées déjà produites et signées par le serveur ; l'optimiseur de Next les retéléchargerait.
+        <img
+          src={photo.src}
+          srcSet={photo.srcSet}
+          sizes={sizes}
+          width={photo.width}
+          height={photo.height}
+          alt={name}
+          loading="lazy"
+          decoding="async"
+          className="size-full object-cover"
+        />
+      ) : (
+        <span aria-hidden="true">{initials(person)}</span>
+      )}
+    </span>
+  );
 }
 
 const yearOf = (date: FuzzyDate) => (date.precision === 'entre' ? date.from : date.year);
@@ -84,8 +138,14 @@ export function GenerationList({ tree }: { tree: TreeForViewer }) {
               <li key={person.id}>
                 <Link
                   href={`/people/${person.id}`}
-                  className="flex min-h-11 items-center gap-2 rounded-full border border-line px-4 text-[15px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                  className="flex min-h-11 items-center gap-2 rounded-full border border-line py-1 pr-4 pl-1.5 text-[15px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 >
+                  <PersonBubble
+                    person={person}
+                    photo={tree.photos[person.id]}
+                    size="chip"
+                    name=""
+                  />
                   <span className="font-medium">{personLabel(person)}</span>
                   {lifeYears(person) ? (
                     <span className="text-sm text-ink-2"> {lifeYears(person)}</span>
@@ -152,12 +212,20 @@ export function PersonSheet({ tree, personId }: { tree: TreeForViewer; personId:
 
   return (
     <article className="flex flex-col gap-6 rounded-[var(--radius-card)] bg-card p-6 shadow-card md:p-8">
-      <header>
-        <h1 className="font-display text-[32px] leading-tight">{personLabel(person)}</h1>
-        {person.level !== 'minor' && person.birthName ? (
-          <p className="text-[15px] text-ink-2">Nom de naissance : {person.birthName}</p>
-        ) : undefined}
-        {notice ? <p className="mt-3 text-sm text-ink-2">{notice}</p> : undefined}
+      <header className="flex flex-col items-start gap-4">
+        <PersonBubble
+          person={person}
+          photo={tree.photos[personId]}
+          size="sheet"
+          name={personLabel(person)}
+        />
+        <div>
+          <h1 className="font-display text-[32px] leading-tight">{personLabel(person)}</h1>
+          {person.level !== 'minor' && person.birthName ? (
+            <p className="text-[15px] text-ink-2">Nom de naissance : {person.birthName}</p>
+          ) : undefined}
+          {notice ? <p className="mt-3 text-sm text-ink-2">{notice}</p> : undefined}
+        </div>
       </header>
       {facts.some(([, value]) => value) ? (
         <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[15px]">

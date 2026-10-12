@@ -8,7 +8,7 @@ import {
   NOTION_IDS as N,
 } from '../../../tests/fixtures/notion-pages';
 import { testDb } from '../../../tests/integration/test-db';
-import { events, parentChild, persons, places, residences, unions } from '../db/schema';
+import { events, media, parentChild, persons, places, residences, unions } from '../db/schema';
 import { insertFamilyGraph, loadFamilyGraph } from '../family/family.repository';
 import type { FamilyGraph } from '../family/family.types';
 import { loadNotionGraph } from './notion.repository';
@@ -100,6 +100,25 @@ describe.skipIf(!db)('notion.repository (intégration)', () => {
     );
     // Les dates de Sophie, retirées dans Notion, disparaissent aussi.
     expect(graph.persons.find((p) => p.id === N.sophie)?.birth).toBeUndefined();
+  });
+
+  it('rejouer la reprise garde la photo de profil posée depuis', async () => {
+    await loadNotionGraph(client, graphOf());
+    const [photo] = await client
+      .insert(media)
+      .values({
+        kind: 'photo',
+        pathname: 'persons/luc/x.jpg',
+        sha256: 'x',
+        mime: 'image/jpeg',
+        bytes: 1,
+      })
+      .returning({ id: media.id });
+    await client.update(persons).set({ photoMediaId: photo?.id }).where(eq(persons.id, N.luc));
+
+    await loadNotionGraph(client, graphOf());
+    const [luc] = await client.select().from(persons).where(eq(persons.id, N.luc));
+    expect(luc?.photoMediaId).toBe(photo?.id);
   });
 
   it('signale sans la supprimer une fiche disparue de Notion', async () => {

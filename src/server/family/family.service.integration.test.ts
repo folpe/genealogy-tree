@@ -1,7 +1,9 @@
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { marchandFamily } from '../../../tests/fixtures/marchand-family';
 import { testDb } from '../../../tests/integration/test-db';
-import { adminRecordViews, memberships, users } from '../db/schema';
+import { adminRecordViews, media, memberships, persons, users } from '../db/schema';
+import { mediaUrlKey, verifyMediaUrl } from '../media/media.url';
 import { insertFamilyGraph } from './family.repository';
 import { type FamilyDeps, getTreeForViewer } from './family.service';
 
@@ -13,7 +15,8 @@ const NOW = new Date('2026-10-12T09:00:00Z');
 describe.skipIf(!db)('family.service (intégration)', () => {
   if (!db) return;
   const { client, reset, close } = db;
-  const deps = (now = NOW): FamilyDeps => ({ db: client, now: () => now });
+  const mediaKey = mediaUrlKey('un-secret-de-test-assez-long-pour-better-auth');
+  const deps = (now = NOW): FamilyDeps => ({ db: client, now: () => now, mediaKey });
 
   async function addMember(id: string, personId: string | undefined, isAdmin = false) {
     await client.insert(users).values({ id, email: `${id}@exemple.fr`, name: '' });
@@ -87,6 +90,49 @@ describe.skipIf(!db)('family.service (intégration)', () => {
   it('un membre ne laisse aucune trace dans le journal admin', async () => {
     await getTreeForViewer(deps(), 'u-isabelle');
     expect(await client.select().from(adminRecordViews)).toHaveLength(0);
+  });
+
+  async function givePhoto(personId: string) {
+    const [row] = await client
+      .insert(media)
+      .values({
+        kind: 'photo',
+        pathname: `persons/${personId}/${personId}.jpg`,
+        sha256: `sha-${personId}`,
+        mime: 'image/jpeg',
+        bytes: 1_000,
+        width: 900,
+        height: 600,
+        blurDataUrl: 'data:image/webp;base64,AA',
+      })
+      .returning({ id: media.id });
+    await client.update(persons).set({ photoMediaId: row?.id }).where(eq(persons.id, personId));
+    return row?.id ?? '';
+  }
+
+  it('photo de profil signée pour une fiche visible, jamais pour un mineur hors cercle', async () => {
+    const lucPhoto = await givePhoto('luc');
+    await givePhoto('anne');
+    await givePhoto('jade');
+
+    const forHugo = await getTreeForViewer(deps(), 'u-hugo');
+    expect(forHugo.photos['luc']).toMatchObject({ width: 900, height: 600 });
+    expect(forHugo.photos['jade']).toBeUndefined();
+    const forIsabelle = await getTreeForViewer(deps(), 'u-isabelle');
+    // Anne est au niveau « family » pour Isabelle : la photo de profil reste visible.
+    expect(forIsabelle.photos['anne']).toBeDefined();
+    expect(forIsabelle.photos['jade']).toBeUndefined();
+
+    const src = new URL(forHugo.photos['luc']?.src ?? '', 'https://famille.test');
+    const verdict = verifyMediaUrl({
+      mediaId: lucPhoto,
+      width: src.pathname.split('/')[3] ?? '',
+      expires: src.searchParams.get('e') ?? undefined,
+      signature: src.searchParams.get('s') ?? undefined,
+      now: NOW,
+      key: mediaKey,
+    });
+    expect(verdict.ok).toBe(true);
   });
 
   it('refuse un compte sans adhésion', async () => {

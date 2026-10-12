@@ -91,7 +91,9 @@ export async function loadNotionGraph(db: Db, graph: FamilyGraph): Promise<Notio
       .values(rows.persons.map((p) => ({ ...p, legacyNotionId: p.id })))
       .onConflictDoUpdate({
         target: persons.id,
-        set: excludedSet(persons, ['id', 'createdAt', 'updatedAt', 'version']),
+        // La photo de profil n'est pas dans le graphe : posée par le chargement des
+        // médias, elle survit à une reprise rejouée.
+        set: excludedSet(persons, ['id', 'createdAt', 'updatedAt', 'version', 'photoMediaId']),
       });
     if (rows.unions.length) {
       await tx
