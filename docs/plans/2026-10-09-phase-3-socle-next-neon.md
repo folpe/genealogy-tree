@@ -140,7 +140,7 @@ Réalisé (2026-10-12) : `scripts/migrate-notion.ts` (`extract`, `report`, `load
 - [ ] **Chargement** : transaction unique par cible ; médias passés par le pipeline du lot 6 ; upsert par `legacy_notion_id` et empreinte, donc rejouable sans doublon.
 - [ ] **Rapport** : Markdown et JSON (comptes par type, anomalies avec lien Notion, photos en échec, lieux non géocodés), relu avec Folpe.
 - [ ] **Contrôles** : comptages Notion vs Neon par type ; échantillon de 20 fiches comparées visuellement ; toutes les photos accessibles par URL signée.
-- [ ] Ordre d'exécution : `--dry-run` sur `dev`, puis réel sur `dev`, puis `preview` ; corrections dans Notion ou dans le mapping ; **validation explicite de Folpe** ; puis exécution sur `main`.
+- [ ] Ordre d'exécution : `--dry-run` sur `dev`, puis réel sur `dev`, puis `preview` ; corrections dans Notion ou dans le mapping ; **validation explicite de Folpe** ; puis exécution sur `main`. Essais faits sur la branche `notion-import` plutôt que `dev`/`preview` ; fiches, unions et filiations chargées sur `main` le 2026-10-12 après le feu vert de Folpe (103 / 27 / 130, rejouable sans écart). Les médias suivront avec le lot 6.
 - [x] Tests : transformation testée sur un export Notion anonymisé en fixture ; idempotence testée (deux exécutions = même état).
 - **Garde-fou destructif :** l'écriture sur la branche `main` de Neon n'a lieu qu'après validation écrite de Folpe du rapport `preview`. Notion n'est jamais modifié par le script.
 
