@@ -1,7 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { type KeyboardEvent, memo, useCallback, useMemo, useRef, useState } from 'react';
+import {
+  type KeyboardEvent,
+  memo,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   type Camera,
   cameraOn,
@@ -192,6 +200,7 @@ export function FamilyTree({
   const viewport = useRef<HTMLDivElement>(null); // allow-null: contrat des refs de React
   const layer = useRef<HTMLDivElement>(null); // allow-null: contrat des refs de React
   const elements = useRef(new Map<string, HTMLAnchorElement>());
+  const pendingFocus = useRef<string | undefined>(undefined);
   const content = useMemo<Size>(() => ({ width, height }), [width, height]);
   const [view, setView] = useState<Rect>();
   const onSettle = useCallback(
@@ -234,10 +243,20 @@ export function FamilyTree({
       event.preventDefault();
       if (!target) return;
       setActiveId(target);
-      elements.current.get(target)?.focus({ preventScroll: true });
+      const element = elements.current.get(target);
+      if (element) element.focus({ preventScroll: true });
+      // Bulle virtualisée, pas encore rendue : le focus suit après le rendu.
+      else pendingFocus.current = target;
     },
     [byId, rows],
   );
+
+  useLayoutEffect(() => {
+    const id = pendingFocus.current;
+    if (!id || id !== activeId) return;
+    pendingFocus.current = undefined;
+    elements.current.get(id)?.focus({ preventScroll: true });
+  }, [activeId]);
 
   if (!start) {
     return (

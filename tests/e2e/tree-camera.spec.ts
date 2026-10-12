@@ -117,3 +117,43 @@ test('sur grand écran, un clic sur la mini-carte y déplace la caméra', async 
   const after = await settled(page);
   expect(Math.hypot(after.x - before.x, after.y - before.y)).toBeGreaterThan(100);
 });
+
+test('après un glissé au doigt, le premier tap sur une bulle ouvre sa fiche', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'mobile', 'tap tactile');
+  const canvas = await openTree(page);
+  // Glissé tactile, une frame par mouvement : un doigt qui bouge n'émet pas de click.
+  await canvas.evaluate(async (el) => {
+    const box = el.getBoundingClientRect();
+    const touch = (x: number) => ({
+      pointerId: 7,
+      pointerType: 'touch',
+      isPrimary: true,
+      bubbles: true,
+      clientX: box.left + x,
+      clientY: box.top + box.height - 60,
+    });
+    const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    el.dispatchEvent(new PointerEvent('pointerdown', touch(200)));
+    for (let i = 1; i <= 10; i += 1) {
+      await frame();
+      el.dispatchEvent(new PointerEvent('pointermove', touch(200 - i * 3)));
+    }
+    el.dispatchEvent(new PointerEvent('pointerup', touch(170)));
+  });
+  await settled(page);
+  const me = page.getByRole('treeitem', { name: /c’est toi$/ });
+  await me.tap();
+  await expect(page).toHaveURL(/\/people\/[\w-]+$/);
+});
+
+test('glisser depuis une bulle ne lance pas le glisser-déposer du navigateur', async ({ page }) => {
+  await openTree(page);
+  const prevented = await page
+    .getByRole('treeitem', { name: /c’est toi$/ })
+    .evaluate(
+      (el) => !el.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true })),
+    );
+  expect(prevented).toBe(true);
+});

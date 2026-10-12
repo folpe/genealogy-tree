@@ -11,6 +11,8 @@ import type { CameraController } from './camera';
 /** Au-delà de ce déplacement, un appui devient un glissé et n'ouvre plus de fiche. */
 const DRAG_PX = 4;
 const VELOCITY_WINDOW_MS = 100;
+/** Élan maximal au lâcher : deux événements trop rapprochés ne doivent pas projeter l'arbre. */
+const VELOCITY_MAX = 3000;
 const WHEEL_ZOOM_SPEED = 0.01;
 const WHEEL_SETTLE_MS = 150;
 const LINE_PX = 16;
@@ -75,12 +77,19 @@ export function bindCameraGestures(viewport: HTMLElement, camera: CameraControll
     const last = recent.at(-1);
     if (!first || !last || last.t === first.t) return { x: 0, y: 0 };
     const seconds = (last.t - first.t) / 1000;
-    return { x: (last.p.x - first.p.x) / seconds, y: (last.p.y - first.p.y) / seconds };
+    const vx = (last.p.x - first.p.x) / seconds;
+    const vy = (last.p.y - first.p.y) / seconds;
+    const speed = Math.hypot(vx, vy);
+    const cap = speed > VELOCITY_MAX ? VELOCITY_MAX / speed : 1;
+    return { x: vx * cap, y: vy * cap };
   };
 
   on('pointerdown', (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     if (pointers.size >= 2) return;
+    // Un geste tactile qui a bougé n'émet pas de click : un nouvel appui repart à zéro,
+    // sinon le premier tap après un glissé serait avalé.
+    swallowClick = false;
     camera.stop();
     pointers.set(event.pointerId, local(event.clientX, event.clientY));
     if (pointers.size === 1) dragging = false;
@@ -175,10 +184,14 @@ export function bindCameraGestures(viewport: HTMLElement, camera: CameraControll
     camera.set(zoomAt(safari.camera, safari.point, safari.camera.k * event.scale, camera.limits()));
   });
   onGesture('gestureend', () => {
-    if (!safari) return;
+    // Un doigt encore posé garde la main : sa propre levée relâchera la caméra.
+    if (!safari || pointers.size > 0) return;
     safari = undefined;
     camera.release({ x: 0, y: 0 });
   });
+
+  // Glisser une photo ou un lien lancerait le glisser-déposer natif, qui annule le geste.
+  on('dragstart', (event) => event.preventDefault());
 
   on('dblclick', (event) => {
     if (event.target instanceof Element && event.target.closest('[role="treeitem"]')) return;

@@ -42,6 +42,7 @@ export function PersonBubble({
           alt={name}
           loading="lazy"
           decoding="async"
+          draggable={false}
           className="size-full object-cover"
         />
       ) : (

@@ -150,6 +150,8 @@ export function createCamera({
       size = next;
       limits = scaleLimits(content, size);
       apply();
+      // La zone visible change : la virtualisation doit la connaître.
+      settle();
     },
     subscribe(listener) {
       listeners.add(listener);
