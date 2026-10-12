@@ -3,7 +3,7 @@
 - **Date :** 2026-10-09
 - **Spec :** [refonte Ances-Tree](../specs/2026-10-09-refonte-ances-tree.md), sections 4, 8, 8.1, 9, 14
 - **Visuels :** [DESIGN.md](../design/DESIGN.md), maquettes `docs/design/maquettes/Arbre.dc.html`, `ArbreSombre.dc.html`, `Mobile.dc.html`
-- **Statut :** en cours (lot 1 fait le 2026-10-12)
+- **Statut :** en cours (lots 1 et 2 faits le 2026-10-12)
 
 ## Objectif et sortie attendue
 
@@ -41,12 +41,14 @@ Les quatre premiers points étaient déjà livrés par la phase 2 (`src/server/f
 
 ### Lot 2 : layout ELK en Web Worker
 
-- [ ] `src/workers/layout.worker.ts` : `elkjs/lib/elk-api` + worker bundle, algorithme `layered`, direction `DOWN`, contraintes de couches par génération (`elk.layered.layering.strategy` + `layerConstraint` / priorités), partenaires côte à côte (ports et `elk.layered.crossingMinimization`), espacement issu des tokens.
-- [ ] Contrat typé `LayoutRequest` / `LayoutResult` (Zod côté frontière worker), positions par id stables pour l'interpolation.
-- [ ] Hook `useTreeLayout(graph, options)` : envoi au worker, annulation des requêtes obsolètes, cache par empreinte du graphe (même graphe = pas de recalcul), état `pending` sans bloquer le rendu précédent.
-- [ ] Post-traitement des routes : courbes de Bézier organiques (d3-shape) depuis le milieu du trait d'union vers chaque enfant, branche directe depuis le parent pour une union passée.
-- [ ] Fallback serveur ou premier rendu : positions du dernier layout en cache (IndexedDB par empreinte) pour un affichage instantané au retour.
-- [ ] Bench : script Vitest bench sur 200, 500 et 2 000 personnes ; objectif < 150 ms pour 500 personnes hors thread principal.
+Prototype sur la famille réelle (branche `notion-import`, 103 fiches) le 2026-10-12. ELK seul, avec un nœud par union : 11 couples aux partenaires éloignés ou sur deux couches, et une couche intermédiaire par union. Retenu : **un bloc par couple**. Les partenaires sont côte à côte dans un même nœud ELK, avec un emplacement réservé pour un parent inconnu, et les enfants partent d'un port au milieu du trait d'union. Résultat : couples soudés par construction, une ligne par génération, 94 ms.
+
+- [x] `src/lib/tree/tree.layout.ts` (`computeTreeLayout`) : blocs de couples, ports fixes (`FIXED_POS`), algorithme `layered` vers le bas, `NETWORK_SIMPLEX` pour les couches et le placement, espacements en paramètres (`LayoutMetrics`, bulle de 76 px), « a élevé » exclu du calcul des générations. Sortie : centre de chaque bulle, milieu de chaque union, emplacement de chaque parent inconnu.
+- [x] Réponse d'ELK validée par Zod ; positions par identifiant, déterministes (même graphe, même placement).
+- [ ] Web Worker et hook `useTreeLayout` (annulation des requêtes obsolètes, cache par empreinte, état `pending`) : livrés avec le lot 3, qui les consomme et les teste dans un vrai navigateur. Le worker se réduit à `import 'elkjs/lib/elk-worker.min.js'` (le script s'enregistre seul dans un worker) ; le thread principal utilise `elkjs/lib/elk-api` avec `workerFactory`.
+- [x] Routes (`src/lib/tree/tree.routes.ts`, `routeLinks`) : trait d'union droit d'un bord de bulle à l'autre, Bézier depuis le milieu du trait vers le haut de la bulle de l'enfant, branche directe depuis le bas de la bulle du parent (DESIGN.md, section 7), « a élevé » à part pour le pointillé. Pas besoin de d3-shape.
+- [ ] Premier rendu depuis le dernier placement en cache (IndexedDB par empreinte) : avec le lot 3.
+- [x] Bench (`bun run bench`, ELK sans worker sur une machine de dev) : 200 personnes 30 ms, 500 personnes 87 ms (objectif 150 ms), 2 000 personnes environ 1 s, acceptable dans le worker.
 
 ### Lot 3 : rendu SVG
 
