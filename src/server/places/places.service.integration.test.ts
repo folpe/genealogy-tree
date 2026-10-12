@@ -4,7 +4,7 @@ import { testDb } from '../../../tests/integration/test-db';
 import { places } from '../db/schema';
 import { normalizePlaceLabel } from '../family/family.mapper';
 import type { GeocodeCandidate } from './places.geocoder';
-import { geocodePlaces, type PlacesDeps } from './places.service';
+import { geocodePlaces, type PlacesDeps, pickPlace } from './places.service';
 
 const db = testDb();
 
@@ -213,5 +213,51 @@ describe.skipIf(!db)('places.service (intégration)', () => {
 
     expect(report.geocoded).toBe(1);
     expect(await row('Rodez')).toMatchObject({ geocoder: null, lat: null });
+  });
+
+  describe('pickPlace', () => {
+    const saintDenis = [
+      aCandidate({ ref: '97411', name: 'Saint-Denis', score: 0.958, lat: -20.9 }),
+      aCandidate({ ref: '93066', name: 'Saint-Denis', score: 0.958, lat: 48.9 }),
+    ];
+
+    it('place un lieu en revue sur le candidat choisi, comme un choix manuel', async () => {
+      await seed('Saint-Denis');
+      const { deps } = fakeGeocoders({ ban: { 'Saint-Denis': saintDenis } });
+
+      const picked = await pickPlace(
+        { db: client, ...deps },
+        { label: 'Saint-Denis', ref: '93066' },
+      );
+
+      expect(picked).toMatchObject({ ref: '93066' });
+      expect(await row('Saint-Denis')).toMatchObject({
+        city: 'Saint-Denis',
+        lat: 48.9,
+        geocoder: 'manuel',
+        geocodeScore: null, // allow-null: un choix manuel n'a pas de score
+      });
+    });
+
+    it('refuse un candidat absent des réponses du géocodeur', async () => {
+      await seed('Saint-Denis');
+      const { deps } = fakeGeocoders({ ban: { 'Saint-Denis': saintDenis } });
+      await expect(
+        pickPlace({ db: client, ...deps }, { label: 'Saint-Denis', ref: '11339' }),
+      ).rejects.toThrow('11339');
+    });
+
+    it('refuse un libellé inconnu ou un lieu déjà géocodé', async () => {
+      await seed('Saint-Denis');
+      await client.update(places).set({ geocoder: 'ban', lat: 1, lng: 2 });
+      const { deps } = fakeGeocoders({ ban: { 'Saint-Denis': saintDenis } });
+      await expect(
+        pickPlace({ db: client, ...deps }, { label: 'Atlantide', ref: '1' }),
+      ).rejects.toThrow('Atlantide');
+      await expect(
+        pickPlace({ db: client, ...deps }, { label: 'Saint-Denis', ref: '93066' }),
+      ).rejects.toThrow('déjà géocodé');
+      expect(await row('Saint-Denis')).toMatchObject({ geocoder: 'ban', lat: 1 });
+    });
   });
 });

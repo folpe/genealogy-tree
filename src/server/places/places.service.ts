@@ -2,6 +2,7 @@
 import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 import { places } from '../db/schema';
 import type { Db } from '../db/types';
+import { normalizePlaceLabel } from '../family/family.mapper';
 import type { banGeocoder, GeocodeCandidate, nominatimGeocoder } from './places.geocoder';
 import { type PlaceQuery, parsePlaceLabel } from './places.label';
 import { type GeocodeVerdict, judgeCandidates } from './places.verdict';
@@ -155,4 +156,41 @@ export async function geocodePlaces(
     report.geocoded += written.length;
   }
   return report;
+}
+
+/** Tous les candidats qu'un libellé peut recevoir, pour un choix fait par un humain. */
+async function candidatesFor(query: PlaceQuery, deps: PlacesDeps): Promise<GeocodeCandidate[]> {
+  if (query.kind === 'unknown') return [];
+  if (query.kind === 'country') return deps.nominatim.country(query.countryCode);
+  const { name, countryCode, department } = query;
+  if (countryCode && countryCode !== 'FR') return deps.nominatim.locality({ name, countryCode });
+  const ban = await deps.ban.search(department ? { name, department } : { name });
+  if (countryCode) return ban;
+  return [...ban, ...(await deps.nominatim.locality({ name, countryCode: undefined }))];
+}
+
+/**
+ * Revue manuelle : place un lieu resté en revue sur le candidat choisi par sa
+ * référence (code INSEE, ou type et numéro OSM). Source « manuel » : le
+ * géocodage automatique ne le réinterrogera plus.
+ */
+export async function pickPlace(
+  deps: PlacesDeps,
+  input: { label: string; ref: string },
+): Promise<GeocodeCandidate> {
+  const [place] = await deps.db
+    .select({ id: places.id, label: places.label, geocoder: places.geocoder })
+    .from(places)
+    .where(eq(places.normalizedLabel, normalizePlaceLabel(input.label)));
+  if (!place) throw new Error(`Lieu inconnu : ${input.label}`);
+  if (place.geocoder) throw new Error(`${place.label} est déjà géocodé (${place.geocoder})`);
+  const query = parsePlaceLabel(place.label);
+  const picked = (await candidatesFor(query, deps)).find((c) => c.ref === input.ref);
+  if (!picked) throw new Error(`Candidat ${input.ref} absent des réponses pour ${place.label}`);
+  const { geocodeScore: _score, ...fields } = placeFields(query, picked);
+  await deps.db
+    .update(places)
+    .set({ ...fields, geocoder: 'manuel' })
+    .where(and(eq(places.id, place.id), isNull(places.geocoder)));
+  return picked;
 }

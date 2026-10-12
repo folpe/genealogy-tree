@@ -17,7 +17,7 @@ import { loadNotionGraph } from '../src/server/migration/notion.repository';
 import { notionPageSchema, photoFiles } from '../src/server/migration/notion.schema';
 import { type PhotoOutcome, transformNotionExport } from '../src/server/migration/notion.transform';
 import { banGeocoder, nominatimGeocoder } from '../src/server/places/places.geocoder';
-import { geocodePlaces } from '../src/server/places/places.service';
+import { geocodePlaces, pickPlace } from '../src/server/places/places.service';
 
 // Reprise Notion -> Neon (spec section 15.1, plan phase 3 lot 8). Notion n'est
 // jamais modifié : le script ne fait que lire la base.
@@ -28,6 +28,7 @@ import { geocodePlaces } from '../src/server/places/places.service';
 //   bun scripts/migrate-notion.ts load <dossier> --target main --confirm-production
 //   bun scripts/migrate-notion.ts photos <dossier> --target main --confirm-production
 //   bun scripts/migrate-notion.ts geocode --target main [--dry-run] [--confirm-production]
+//   bun scripts/migrate-notion.ts geocode-pick --target main --label <libellé> --ref <réf>
 //
 // Secrets lus dans le trousseau macOS (compte `ances-tree`) : jeton Notion, base,
 // clé de chiffrement de l'export, jeton du store Blob. L'export et le rapport
@@ -239,6 +240,32 @@ async function loadPhotos(dir: string, target: string, options: { confirmed: boo
   }
 }
 
+function geocoders() {
+  const nominatim = nominatimGeocoder({
+    fetch,
+    userAgent: 'ances-tree (+https://famille.folpe.me)',
+    now: () => Date.now(),
+    sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  });
+  return { ban: banGeocoder({ fetch }), nominatim };
+}
+
+/** Revue manuelle : place un lieu en revue sur le candidat choisi (réf. du rapport). */
+async function geocodePick(
+  target: string,
+  input: { label: string; ref: string },
+  options: { confirmed: boolean },
+) {
+  guardProduction(target, { dryRun: false, confirmed: options.confirmed });
+  const { db, close } = connect(target);
+  try {
+    const picked = await pickPlace({ db, ...geocoders() }, input);
+    console.log(`${input.label} placé sur ${target} : ${picked.name}, ${picked.context}`);
+  } finally {
+    await close();
+  }
+}
+
 /**
  * Géocodage des lieux encore sans coordonnées (BAN, puis Nominatim à l'étranger).
  * Les lieux douteux ne reçoivent rien et sont listés avec leurs candidats.
@@ -247,16 +274,7 @@ async function geocode(target: string, options: { dryRun: boolean; confirmed: bo
   guardProduction(target, options);
   const { db, close } = connect(target);
   try {
-    const nominatim = nominatimGeocoder({
-      fetch,
-      userAgent: 'ances-tree (+https://famille.folpe.me)',
-      now: () => Date.now(),
-      sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
-    });
-    const result = await geocodePlaces(
-      { db, ban: banGeocoder({ fetch }), nominatim },
-      { dryRun: options.dryRun },
-    );
+    const result = await geocodePlaces({ db, ...geocoders() }, { dryRun: options.dryRun });
     const mode = options.dryRun ? "Dry-run, rien n'est écrit" : 'Géocodé';
     console.log(`${mode} sur ${target} :`, {
       geocoded: result.geocoded,
@@ -283,6 +301,8 @@ const { positionals, values } = parseArgs({
     target: { type: 'string' },
     'dry-run': { type: 'boolean', default: false },
     'confirm-production': { type: 'boolean', default: false },
+    label: { type: 'string' },
+    ref: { type: 'string' },
   },
 });
 const [command, dir] = positionals;
@@ -303,10 +323,17 @@ if (command === 'extract') {
     dryRun: values['dry-run'],
     confirmed: values['confirm-production'],
   });
+} else if (command === 'geocode-pick' && values.target && values.label && values.ref) {
+  await geocodePick(
+    values.target,
+    { label: values.label, ref: values.ref },
+    { confirmed: values['confirm-production'] },
+  );
 } else {
   console.error(
     'Usage : extract | report <dossier> | load <dossier> --target <branche> [--dry-run] | ' +
-      'photos <dossier> --target <branche> | geocode --target <branche> [--dry-run]',
+      'photos <dossier> --target <branche> | geocode --target <branche> [--dry-run] | ' +
+      'geocode-pick --target <branche> --label <libellé> --ref <réf>',
   );
   process.exit(1);
 }
