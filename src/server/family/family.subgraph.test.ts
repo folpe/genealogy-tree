@@ -144,6 +144,23 @@ describe('selectSubgraph, parent inconnu', () => {
   });
 });
 
+describe('selectSubgraph, sablier et parent inconnu', () => {
+  it('laisse l’union d’un ancêtre avec un inconnu quand son enfant est écarté', () => {
+    const graph: FamilyGraph = {
+      persons: ['pere', 'mere', 'centre', 'demi'].map((id) => aPerson(id)),
+      unions: [anUnion('u-parents', 'pere', 'mere'), anUnion('u-pere-inconnu', 'pere', null)],
+      parentChildren: [
+        aChildOf('pere', 'centre', { unionId: 'u-parents' }),
+        aChildOf('mere', 'centre', { unionId: 'u-parents' }),
+        aChildOf('pere', 'demi', { unionId: 'u-pere-inconnu' }),
+      ],
+    };
+    const sub = selectSubgraph(graph, { view: 'hourglass', rootId: 'centre' });
+    expect(ids(sub)).toEqual(['centre', 'mere', 'pere']);
+    expect(unionIds(sub)).toEqual(['u-parents']);
+  });
+});
+
 describe('selectSubgraph, racine inconnue', () => {
   it('rend un graphe vide plutôt que d’inventer une racine', () => {
     expect(selectSubgraph(marchandFamily, { view: 'descendants', rootId: 'personne' })).toEqual({

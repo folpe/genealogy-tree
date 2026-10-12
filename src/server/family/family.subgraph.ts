@@ -33,14 +33,21 @@ export function selectSubgraph(
       if (typeof partnerId === 'string') kept.add(partnerId);
     }
   }
-  // Un partenaire inconnu ne retient pas une union : seul le partenaire connu compte.
-  const keptOrUnknown = (pid: string | undefined) => typeof pid !== 'string' || kept.has(pid);
+  const parentChildren = graph.parentChildren.filter(
+    (l) => kept.has(l.parentId) && kept.has(l.childId),
+  );
+  // Une union se garde avec ses partenaires connus ; avec un partenaire inconnu, elle
+  // ne se garde que pour un enfant gardé, sinon elle se dessinerait vide.
+  const withChild = new Set(parentChildren.map((l) => l.unionId));
+  const keepUnion = (union: FamilyGraph['unions'][number]) => {
+    const [known, other] = union.partnerIds;
+    if (!kept.has(known)) return false;
+    return typeof other === 'string' ? kept.has(other) : withChild.has(union.id);
+  };
 
   return {
     persons: graph.persons.filter((p) => kept.has(p.id)),
-    unions: graph.unions.filter((u) =>
-      u.partnerIds.every((pid) => keptOrUnknown(pid ?? undefined)),
-    ),
-    parentChildren: graph.parentChildren.filter((l) => kept.has(l.parentId) && kept.has(l.childId)),
+    unions: graph.unions.filter(keepUnion),
+    parentChildren,
   };
 }
