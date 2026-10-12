@@ -1,6 +1,7 @@
 // tdd-cover: e2e src/server/auth/auth.integration.test.ts
 import { createHash, randomBytes } from 'node:crypto';
 import { and, eq, gt, isNull } from 'drizzle-orm';
+import type { Member } from '../access/access.types';
 import { invitations, memberships, persons } from '../db/schema';
 import type { Db } from '../db/types';
 import type { Admission } from './admission';
@@ -100,4 +101,16 @@ export async function admitUser(
       invitedBy: invitation.invitedBy,
     });
   });
+}
+
+/** Comptes vus par la policy de proximité, avec le compte d'auth qui les porte. */
+export async function loadAccessMembers(db: Db): Promise<(Member & { userId: string })[]> {
+  const rows = await db.select().from(memberships);
+  return rows.map((m) => ({
+    id: m.id,
+    userId: m.userId,
+    personId: m.personId,
+    isAdmin: m.isAdmin,
+    joinedAt: m.createdAt.getTime(),
+  }));
 }

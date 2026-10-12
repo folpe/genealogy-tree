@@ -7,6 +7,7 @@ import {
   fuzzyDateRange,
   isCertainlyBefore,
   parseFuzzyDate,
+  todayIn,
   VERS_MARGIN_YEARS,
 } from './fuzzy-date.helper';
 
@@ -274,5 +275,17 @@ describe('durcissement (mutation testing)', () => {
     expect(
       ageAt({ precision: 'apres', year: 1900 }, { precision: 'apres', year: 1950 }),
     ).toBeNull();
+  });
+});
+
+describe('todayIn', () => {
+  it('donne la date du jour au fuseau de la famille, pas en UTC', () => {
+    // 23 h 30 UTC le 11 octobre : déjà le 12 à Paris (UTC+2 en été).
+    expect(todayIn(new Date('2026-10-11T23:30:00Z'), 'Europe/Paris')).toEqual({
+      precision: 'exacte',
+      year: 2026,
+      month: 10,
+      day: 12,
+    });
   });
 });

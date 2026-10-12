@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { authClient } from '@/lib/auth-client';
 
-// Accueil provisoire de l'espace connecté : l'arbre arrive au lot 5. Reprend
+// Bloc « Mon compte » de l'espace connecté, sous l'arbre. Reprend
 // l'étape « passkey » de la maquette Connexion.
 
 const button =

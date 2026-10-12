@@ -223,3 +223,16 @@ export function isCertainlyBefore(a: FuzzyDate, b: FuzzyDate): boolean {
   const startOfB = fuzzyDateRange(b).min;
   return endOfA !== null && startOfB !== null && compareYmd(endOfA, startOfB) < 0;
 }
+
+/** Date du jour, au jour près, dans un fuseau donné (l'âge d'un vivant en dépend). */
+export function todayIn(now: Date, timeZone: string): FuzzyDate {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  }).formatToParts(now);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value);
+  return { precision: 'exacte', year: part('year'), month: part('month'), day: part('day') };
+}

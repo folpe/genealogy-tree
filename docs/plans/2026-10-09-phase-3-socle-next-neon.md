@@ -94,6 +94,7 @@ scripts/
 - [x] Seed `bun run db:seed` depuis la fixture Marchand. Liste blanche plutôt que liste noire : base locale ou hôte listé dans `SEED_ALLOWED_HOSTS` (branches `dev` et `preview`), tout le reste est refusé.
 - [x] CI : job `integration` avec un Postgres 17 de service, contrôle qu'aucune migration n'a été oubliée (`drizzle-kit generate` ne doit rien produire), puis tests d'intégration ; requis par `quality`.
 - **Garde-fou destructif :** la première migration sur la branche Neon `main` (production) n'est appliquée qu'après validation explicite de Folpe, migration SQL relue dans la PR. Aucune migration destructive (`DROP`, changement de type) sans plan de retour arrière écrit.
+- [x] Migrations de production automatiques (décidé par Folpe le 2026-10-12) : le workflow `Migrations` applique `drizzle-kit migrate` sur la branche Neon `main` à chaque arrivée de migration sur `main`, depuis l'environnement GitHub `production` (secret du rôle propriétaire, limité à `main`). Le merge de la PR vaut validation : la migration SQL se relit dans la PR, et elle reste additive puisque Vercel déploie en parallèle.
 - **Acceptation :** `bunx drizzle-kit migrate` passe sur `dev` et `preview` ; CI applique les migrations sur un Postgres de service et lance les tests d'intégration.
 
 ### Lot 4 : auth, comptes et invitations
@@ -109,10 +110,10 @@ scripts/
 
 ### Lot 5 : lecture des données à travers la policy
 
-- [ ] `family.service.ts` : `getTreeForViewer(viewer)` qui charge le graphe, calcule le niveau de visibilité de chaque fiche avec `access.policy`, applique `access.redact` **avant** de sérialiser vers le client.
-- [ ] Pages `(app)/tree` (rendu provisoire : liste par génération et fiche) et `(app)/people/[id]`.
-- [ ] Journalisation des consultations admin de fiches restreintes (`activity`).
-- [ ] Tests d'intégration : un membre hors périmètre ne reçoit jamais la date exacte ni la résidence d'un vivant dans la réponse sérialisée (assertion sur le payload RSC, pas sur l'UI).
+- [x] `family.service.ts` : `getTreeForViewer(viewer)` qui charge le graphe, calcule le niveau de visibilité de chaque fiche avec `access.policy`, applique `access.redact` **avant** de sérialiser vers le client. La projection pure est `access.view` (`viewTreeAs`) ; les dates d'une union suivent le niveau le plus restrictif de ses partenaires (année en `family`, retirées au-delà).
+- [x] Pages `(app)/tree` (rendu provisoire : liste par génération et fiche) et `(app)/people/[id]`. Générations calculées par `generationLevels` (conjoints au même niveau, « a élevé » ignoré).
+- [x] Journalisation des consultations admin de fiches restreintes : table `admin_record_views` (migration `0002`), une ligne par admin, fiche et jour (fuseau Europe/Paris).
+- [x] Tests d'intégration : un membre hors périmètre ne reçoit jamais la date exacte ni la résidence d'un vivant dans la réponse sérialisée. L'intégration porte sur la sortie sérialisée du service ; le payload RSC des pages a été contrôlé sur un build local (Hugo : rien sur Anne, Tom ni Jade au-delà de leur niveau). L'assertion automatique sur le payload RSC ira dans l'e2e Playwright.
 - **Acceptation :** les cas de la section 6.4 sont vérifiés sur des données en base.
 
 ### Lot 6 : médias

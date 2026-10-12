@@ -131,3 +131,39 @@ export function ancestorsOf(index: FamilyIndex, personId: string): Map<string, n
 export function descendantsOf(index: FamilyIndex, personId: string): Map<string, number> {
   return walk(personId, (id) => childrenOf(index, id));
 }
+
+/**
+ * Génération de chaque fiche pour un rendu par lignes : parents un cran au-dessus,
+ * enfants un cran en dessous, conjoints au même niveau (« a élevé » ignoré). Chaque
+ * branche reliée est parcourue en largeur puis ramenée à 0 pour sa génération la
+ * plus ancienne ; en cas de conflit (union entre générations), le premier niveau
+ * atteint est gardé.
+ */
+export function generationLevels(index: FamilyIndex): Map<string, number> {
+  const levels = new Map<string, number>();
+  for (const start of index.persons.keys()) {
+    if (levels.has(start)) continue;
+    const branch = new Map([[start, 0]]);
+    const queue = [start];
+    for (let i = 0; i < queue.length; i += 1) {
+      const id = queue[i] as string;
+      const level = branch.get(id) as number;
+      const neighbours: [string, number][] = [
+        ...parentsOf(index, id).map((p): [string, number] => [p.id, level - 1]),
+        ...childrenOf(index, id).map((c): [string, number] => [c.id, level + 1]),
+        ...partnersOf(index, id).flatMap((p): [string, number][] =>
+          p.partnerId === null ? [] : [[p.partnerId, level]],
+        ),
+      ];
+      for (const [next, nextLevel] of neighbours) {
+        if (!branch.has(next)) {
+          branch.set(next, nextLevel);
+          queue.push(next);
+        }
+      }
+    }
+    const oldest = Math.min(...branch.values());
+    for (const [id, level] of branch) levels.set(id, level - oldest);
+  }
+  return levels;
+}
