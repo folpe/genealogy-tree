@@ -32,7 +32,7 @@
     "@better-auth/passkey": "~1.6.33",
     "@notionhq/client": "^2.3.0",
     "@t3-oss/env-nextjs": "^0.13.11",
-    "better-auth": "~1.6.33",
+    "better-auth": "~1.7.0",
     "drizzle-orm": "^0.45.3",
     "next": "16.3.8",
     "postgres": "^3.4.9",
