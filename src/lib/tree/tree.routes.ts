@@ -4,7 +4,7 @@ import { DEFAULT_METRICS, type LayoutMetrics, type Point, type TreeLayout } from
 
 // Tracé des liens (DESIGN.md, section 7) : une union est un simple trait horizontal
 // entre deux bulles ; un enfant part du milieu de ce trait ; un enfant d'une union
-// passée part du bas de la bulle de son parent. Les courbes sont des Bézier dont
+// passée part de son parent, sous l'étiquette de sa bulle. Les courbes sont des Bézier dont
 // les poignées sont verticales, à mi-hauteur entre les deux bouts.
 
 export type TreeLink = {
@@ -15,10 +15,12 @@ export type TreeLink = {
   filiation?: ParentChildKind;
 };
 
-const curve = (from: Point, to: Point) => {
+/** Bézier aux poignées verticales, de `from` (point courant du tracé) à `to`. */
+const bezier = (from: Point, to: Point) => {
   const middle = (from.y + to.y) / 2;
-  return `M${from.x},${from.y} C${from.x},${middle} ${to.x},${middle} ${to.x},${to.y}`;
+  return `C${from.x},${middle} ${to.x},${middle} ${to.x},${to.y}`;
 };
+const curve = (from: Point, to: Point) => `M${from.x},${from.y} ${bezier(from, to)}`;
 
 export function routeLinks(
   drawn: DisplayedGraph,
@@ -26,6 +28,9 @@ export function routeLinks(
   metrics: LayoutMetrics = DEFAULT_METRICS,
 ): TreeLink[] {
   const r = metrics.bubble / 2;
+  // Une branche qui part d'une personne commence sous son prénom et ses années :
+  // partie du bas de la bulle, elle barrerait l'étiquette.
+  const below = metrics.nodeHeight - r;
   const links: TreeLink[] = [];
 
   const detached = new Set(layout.detachedUnions);
@@ -43,14 +48,19 @@ export function routeLinks(
     links.push({ id: `union:${union.id}`, kind: 'union', d });
   }
 
+  // Un couple remarié dont les deux unions sont détachées donnerait deux fois la
+  // même branche : une seule suffit, et l'identifiant sert de clé au rendu.
+  const branches = new Set<string>();
   const branch = (from: string, to: string, filiation?: ParentChildKind) => {
     const parent = layout.persons[from];
     const child = layout.persons[to];
-    if (!parent || !child) return;
+    const id = `parent:${from}>${to}`;
+    if (!parent || !child || branches.has(id)) return;
+    branches.add(id);
     links.push({
-      id: `parent:${from}>${to}`,
+      id,
       kind: 'parent',
-      d: curve({ x: parent.x, y: parent.y + r }, { x: child.x, y: child.y - r }),
+      d: curve({ x: parent.x, y: parent.y + below }, { x: child.x, y: child.y - r }),
       ...(filiation ? { filiation } : {}),
     });
   };
@@ -70,11 +80,16 @@ export function routeLinks(
     const child = layout.persons[edge.to];
     const parent = edge.kind === 'child' ? layout.unions[edge.from] : layout.persons[edge.from];
     if (!child || !parent) continue;
-    const from = edge.kind === 'child' ? parent : { x: parent.x, y: parent.y + r };
+    // Depuis une union, le trait descend d'abord droit entre les étiquettes du couple.
+    const from = { x: parent.x, y: parent.y + below };
+    const to = { x: child.x, y: child.y - r };
     links.push({
       id: `${edge.kind}:${edge.from}>${edge.to}`,
       kind: edge.kind,
-      d: curve(from, { x: child.x, y: child.y - r }),
+      d:
+        edge.kind === 'child'
+          ? `M${parent.x},${parent.y} L${from.x},${from.y} ${bezier(from, to)}`
+          : curve(from, to),
       ...(edge.filiation ? { filiation: edge.filiation } : {}),
     });
   }
