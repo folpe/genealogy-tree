@@ -1,0 +1,19 @@
+[
+  {
+    "place_id": 286243636,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "relation",
+    "osm_id": 295480,
+    "lat": "39.6621648",
+    "lon": "-8.1353519",
+    "category": "boundary",
+    "type": "administrative",
+    "place_rank": 4,
+    "importance": 0.8666415768245299,
+    "addresstype": "country",
+    "name": "Portugal",
+    "display_name": "Portugal",
+    "address": { "country": "Portugal", "country_code": "pt" },
+    "boundingbox": ["29.8282470", "42.1543112", "-31.5575303", "-6.1891593"]
+  }
+]

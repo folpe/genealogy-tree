@@ -1,0 +1,32 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.566732, 44.359272]
+      },
+      "properties": {
+        "label": "Rodez",
+        "score": 0.9499390909090907,
+        "id": "12202",
+        "banId": "5d9e62ef-b77c-4d8f-9d6a-120b672acc69",
+        "type": "municipality",
+        "name": "Rodez",
+        "postcode": "12000",
+        "citycode": "12202",
+        "x": 665468.41,
+        "y": 6362343.54,
+        "population": 23981,
+        "city": "Rodez",
+        "context": "12, Aveyron, Occitanie",
+        "importance": 0.44933,
+        "depcode": "12",
+        "municipality": "Rodez",
+        "_type": "address"
+      }
+    }
+  ],
+  "query": "Rodez"
+}
