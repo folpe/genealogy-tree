@@ -1,0 +1,134 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [55.444588, -20.909778]
+      },
+      "properties": {
+        "label": "Saint-Denis",
+        "score": 0.9584390909090909,
+        "id": "97411",
+        "type": "municipality",
+        "name": "Saint-Denis",
+        "postcode": "97400",
+        "citycode": "97411",
+        "x": 338236.03,
+        "y": 7687053.65,
+        "population": 155634,
+        "city": "Saint-Denis",
+        "context": "974, La Réunion",
+        "importance": 0.54283,
+        "depcode": "97",
+        "municipality": "Saint-Denis",
+        "_type": "address"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.361503, 48.937483]
+      },
+      "properties": {
+        "label": "Saint-Denis",
+        "score": 0.9582436363636363,
+        "id": "93066",
+        "banId": "4d98c790-f540-41ee-abe9-cfcb4fd36d15",
+        "type": "municipality",
+        "name": "Saint-Denis",
+        "postcode": "93200",
+        "citycode": "93066",
+        "x": 653224.32,
+        "y": 6871023.52,
+        "population": 149077,
+        "city": "Saint-Denis",
+        "context": "93, Seine-Saint-Denis, Île-de-France",
+        "importance": 0.54068,
+        "depcode": "93",
+        "municipality": "Saint-Denis",
+        "_type": "address"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.220158, 43.35103]
+      },
+      "properties": {
+        "label": "Saint-Denis",
+        "score": 0.9325754545454544,
+        "id": "11339",
+        "banId": "1f4588f6-712b-460c-849e-eda218c93623",
+        "type": "municipality",
+        "name": "Saint-Denis",
+        "postcode": "11310",
+        "citycode": "11339",
+        "x": 636740.57,
+        "y": 6250522.14,
+        "population": 523,
+        "city": "Saint-Denis",
+        "context": "11, Aude, Occitanie",
+        "importance": 0.25833,
+        "depcode": "11",
+        "municipality": "Saint-Denis",
+        "_type": "address"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4.248379, 44.235386]
+      },
+      "properties": {
+        "label": "Saint-Denis",
+        "score": 0.9300081818181818,
+        "id": "30247",
+        "type": "municipality",
+        "name": "Saint-Denis",
+        "postcode": "30500",
+        "citycode": "30247",
+        "x": 799710.11,
+        "y": 6349273.93,
+        "population": 296,
+        "city": "Saint-Denis",
+        "context": "30, Gard, Occitanie",
+        "importance": 0.23009,
+        "depcode": "30",
+        "municipality": "Saint-Denis",
+        "_type": "address"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.629439, 48.567971]
+      },
+      "properties": {
+        "label": "Vert-Saint-Denis",
+        "score": 0.6425996969696969,
+        "id": "77495",
+        "banId": "89c9da34-9861-40c0-9414-d328eaffc5d9",
+        "type": "municipality",
+        "name": "Vert-Saint-Denis",
+        "postcode": "77240",
+        "citycode": "77495",
+        "x": 672660.06,
+        "y": 6829814.36,
+        "population": 9291,
+        "city": "Vert-Saint-Denis",
+        "context": "77, Seine-et-Marne, Île-de-France",
+        "importance": 0.40193,
+        "depcode": "77",
+        "municipality": "Vert-Saint-Denis",
+        "_type": "address"
+      }
+    }
+  ],
+  "query": "Saint-Denis"
+}

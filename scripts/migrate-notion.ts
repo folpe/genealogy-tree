@@ -16,6 +16,8 @@ import { renderNotionReport } from '../src/server/migration/notion.report';
 import { loadNotionGraph } from '../src/server/migration/notion.repository';
 import { notionPageSchema, photoFiles } from '../src/server/migration/notion.schema';
 import { type PhotoOutcome, transformNotionExport } from '../src/server/migration/notion.transform';
+import { banGeocoder, nominatimGeocoder } from '../src/server/places/places.geocoder';
+import { geocodePlaces } from '../src/server/places/places.service';
 
 // Reprise Notion -> Neon (spec section 15.1, plan phase 3 lot 8). Notion n'est
 // jamais modifié : le script ne fait que lire la base.
@@ -25,6 +27,7 @@ import { type PhotoOutcome, transformNotionExport } from '../src/server/migratio
 //   bun scripts/migrate-notion.ts load <dossier> --target notion-import [--dry-run]
 //   bun scripts/migrate-notion.ts load <dossier> --target main --confirm-production
 //   bun scripts/migrate-notion.ts photos <dossier> --target main --confirm-production
+//   bun scripts/migrate-notion.ts geocode --target main [--dry-run] [--confirm-production]
 //
 // Secrets lus dans le trousseau macOS (compte `ances-tree`) : jeton Notion, base,
 // clé de chiffrement de l'export, jeton du store Blob. L'export et le rapport
@@ -236,6 +239,44 @@ async function loadPhotos(dir: string, target: string, options: { confirmed: boo
   }
 }
 
+/**
+ * Géocodage des lieux encore sans coordonnées (BAN, puis Nominatim à l'étranger).
+ * Les lieux douteux ne reçoivent rien et sont listés avec leurs candidats.
+ */
+async function geocode(target: string, options: { dryRun: boolean; confirmed: boolean }) {
+  guardProduction(target, options);
+  const { db, close } = connect(target);
+  try {
+    const nominatim = nominatimGeocoder({
+      fetch,
+      userAgent: 'ances-tree (+https://famille.folpe.me)',
+      now: () => Date.now(),
+      sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    });
+    const result = await geocodePlaces(
+      { db, ban: banGeocoder({ fetch }), nominatim },
+      { dryRun: options.dryRun },
+    );
+    const mode = options.dryRun ? "Dry-run, rien n'est écrit" : 'Géocodé';
+    console.log(`${mode} sur ${target} :`, {
+      geocoded: result.geocoded,
+      alreadyDone: result.alreadyDone,
+      toReview: result.reviews.length,
+    });
+    for (const review of result.reviews) {
+      console.log(
+        `  ${review.reason} : ${review.label}${review.error ? ` (${review.error})` : ''}`,
+      );
+      for (const c of review.candidates) {
+        const score = c.score === undefined ? '' : ` score ${c.score.toFixed(2)}`;
+        console.log(`    - ${c.name}, ${c.context} [${c.geocoder} ${c.ref}]${score}`);
+      }
+    }
+  } finally {
+    await close();
+  }
+}
+
 const { positionals, values } = parseArgs({
   allowPositionals: true,
   options: {
@@ -257,10 +298,15 @@ if (command === 'extract') {
   });
 } else if (command === 'photos' && dir && values.target) {
   await loadPhotos(dir, values.target, { confirmed: values['confirm-production'] });
+} else if (command === 'geocode' && values.target) {
+  await geocode(values.target, {
+    dryRun: values['dry-run'],
+    confirmed: values['confirm-production'],
+  });
 } else {
   console.error(
     'Usage : extract | report <dossier> | load <dossier> --target <branche> [--dry-run] | ' +
-      'photos <dossier> --target <branche>',
+      'photos <dossier> --target <branche> | geocode --target <branche> [--dry-run]',
   );
   process.exit(1);
 }

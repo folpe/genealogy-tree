@@ -119,14 +119,15 @@ scripts/
 ### Lot 6 : médias
 
 - [x] Store Vercel Blob privé ; `media.service.ts` : upload, normalisation avec `sharp` (rotation EXIF appliquée, métadonnées EXIF et GPS retirées, dérivées WebP 256 / 768 / 1600 px, `blur_data_url`), déduplication par SHA-256, chemin `persons/<person_id>/<sha256>.<ext>`.
-- [x] Accès aux médias privés par URL signée de courte durée, générée après vérification de la policy. HMAC sur une clé dérivée de `BETTER_AUTH_SECRET`, expiration arrondie à l'heure (1 à 2 h) pour garder le cache du navigateur ; route `/media/[id]/[width]`. La photo de profil suit la policy (`showsProfilePhoto` : niveaux `full` et `family`). Le store lui-même reste à provisionner (accès Vercel).
+- [x] Accès aux médias privés par URL signée de courte durée, générée après vérification de la policy. HMAC sur une clé dérivée de `BETTER_AUTH_SECRET`, expiration arrondie à l'heure (1 à 2 h) pour garder le cache du navigateur ; route `/media/[id]/[width]`. La photo de profil suit la policy (`showsProfilePhoto` : niveaux `full` et `family`). Store privé `ances-tree-media` (fra1) provisionné le 2026-10-12 et relié aux trois environnements.
 - [x] Tests : une image avec GPS ressort sans GPS ; un doublon n'est pas réuploadé.
 
 ### Lot 7 : géocodage des lieux
 
-- [ ] `places.repository.ts` : Base Adresse Nationale pour la France, Nominatim pour l'étranger (User-Agent identifiant, 1 requête par seconde, cache en base), source du géocodage enregistrée.
-- [ ] Normalisation des libellés (« Rodez (12) », « Rodez, Aveyron ») avant géocodage, détection des homonymes à faible score pour revue manuelle.
-- [ ] Tests unitaires sur la normalisation, tests du repository avec réponses enregistrées.
+- [x] `src/server/places/` : BAN pour la France, servie depuis le 2026-01-31 par la Géoplateforme de l'IGN (`data.geopf.fr/geocodage`, l'ancienne `api-adresse.data.gouv.fr` est retirée) ; Nominatim pour l'étranger (User-Agent identifiant, une requête par seconde au plus) ; la table `places` sert de cache (un lieu géocodé, à la main ou non, n'est plus interrogé ni réécrit) ; source et score enregistrés. Pas de repository séparé : `places.service.ts` écrit directement, comme `media.service.ts`.
+- [x] Lecture des libellés (`places.label.ts`) : département entre parenthèses, pays en français (codes ISO via `Intl.DisplayNames`), autre précisant gardé comme indice, « St » et « Ste », arrondissements de Paris, Lyon et Marseille, libellés vides de sens (« non renseigné »). Revue manuelle (`places.verdict.ts`) : homonymes de score voisin, score BAN sous 0,7 ou précisant introuvable ne reçoivent pas de coordonnées et sont listés avec leurs candidats. Commande `bun scripts/migrate-notion.ts geocode --target <branche> [--dry-run]`, `--confirm-production` exigé pour `main`. Essai sur `notion-import` le 2026-10-12 : 29 lieux géocodés, 4 en revue (Montreuil et Valence homonymes, deux libellés vides).
+- [x] Tests unitaires sur la lecture des libellés et le choix des candidats, tests des géocodeurs sur des réponses enregistrées (`tests/fixtures/geocoding/`, lieux publics sans lien avec la famille), intégration du service sur Postgres.
+- Nominatim interdit l'autocomplétion : la saisie des lieux à l'étranger (phase d'édition) devra passer par un autre service.
 
 ### Lot 8 : migration Notion -> Neon (section 15.1)
 
@@ -137,10 +138,10 @@ Réalisé (2026-10-12) : `scripts/migrate-notion.ts` (`extract`, `report`, `load
 - [x] **Extraction** : export brut de toute la base Notion (pages et propriétés) en JSON daté, stocké hors du repo et chiffré au repos ; la suite de la migration lit ce fichier, pas l'API.
 - [x] **Photos, pendant l'extraction** : les URLs de fichiers Notion sont signées et expirent au bout d'une heure, les URLs externes peuvent disparaître. Chaque photo est téléchargée immédiatement, son empreinte SHA-256 calculée, le binaire conservé avec l'export ; les échecs sont listés.
 - [x] **Transformation** : mapping Notion -> schéma (personnes, unions, filiations, événements, lieux, résidences), validation Zod, invariants de phase 2 appliqués, `legacy_notion_id` conservé ; anomalies collectées (parent introuvable, cycle, date impossible, doublon probable, photo en échec) au lieu d'arrêter le script.
-- [ ] **Chargement** : transaction unique par cible ; médias passés par le pipeline du lot 6 ; upsert par `legacy_notion_id` et empreinte, donc rejouable sans doublon.
+- [x] **Chargement** : transaction unique par cible ; médias passés par le pipeline du lot 6 ; upsert par `legacy_notion_id` et empreinte, donc rejouable sans doublon.
 - [ ] **Rapport** : Markdown et JSON (comptes par type, anomalies avec lien Notion, photos en échec, lieux non géocodés), relu avec Folpe.
 - [ ] **Contrôles** : comptages Notion vs Neon par type ; échantillon de 20 fiches comparées visuellement ; toutes les photos accessibles par URL signée.
-- [ ] Ordre d'exécution : `--dry-run` sur `dev`, puis réel sur `dev`, puis `preview` ; corrections dans Notion ou dans le mapping ; **validation explicite de Folpe** ; puis exécution sur `main`. Essais faits sur la branche `notion-import` plutôt que `dev`/`preview` ; fiches, unions et filiations chargées sur `main` le 2026-10-12 après le feu vert de Folpe (103 / 27 / 130, rejouable sans écart). Les médias suivront avec le lot 6.
+- [ ] Ordre d'exécution : `--dry-run` sur `dev`, puis réel sur `dev`, puis `preview` ; corrections dans Notion ou dans le mapping ; **validation explicite de Folpe** ; puis exécution sur `main`. Essais faits sur la branche `notion-import` plutôt que `dev`/`preview` ; fiches, unions et filiations chargées sur `main` le 2026-10-12 après le feu vert de Folpe (103 / 27 / 130, rejouable sans écart) ; 21 photos chargées sur `main` le même jour par le pipeline du lot 6, sans échec.
 - [x] Tests : transformation testée sur un export Notion anonymisé en fixture ; idempotence testée (deux exécutions = même état).
 - **Garde-fou destructif :** l'écriture sur la branche `main` de Neon n'a lieu qu'après validation écrite de Folpe du rapport `preview`. Notion n'est jamais modifié par le script.
 
