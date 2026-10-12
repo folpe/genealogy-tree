@@ -3,7 +3,7 @@
 - **Date :** 2026-10-09
 - **Spec :** [refonte Ances-Tree](../specs/2026-10-09-refonte-ances-tree.md), sections 4, 8, 8.1, 9, 14
 - **Visuels :** [DESIGN.md](../design/DESIGN.md), maquettes `docs/design/maquettes/Arbre.dc.html`, `ArbreSombre.dc.html`, `Mobile.dc.html`
-- **Statut :** à faire
+- **Statut :** en cours (lot 1 fait le 2026-10-12)
 
 ## Objectif et sortie attendue
 
@@ -30,12 +30,14 @@ Le style visuel fin (tokens, thèmes, fiche, animations de mise en scène) est e
 
 ### Lot 1 : modèle de rendu (pur, testé)
 
-- [ ] `src/server/family/family.graph.ts` (ou `src/lib/tree/`) : transformation `FamilyGraph -> RenderGraph` (nœuds personne, nœuds d'union, arêtes partenaire -> union, union -> enfant, parent -> enfant direct pour union passée masquée).
-- [ ] Filtre "unions passées" : par défaut, une union terminée (divorce, séparation) n'est pas rendue ; ses enfants deviennent des arêtes directes depuis le parent visible. Veuvage : union conservée si l'option est active.
-- [ ] Filiation `a_eleve` : arête marquée `kind: 'raised'`, jamais utilisée pour le rang générationnel.
-- [ ] Parent inconnu : nœud d'union à un seul parent avec emplacement "parent à découvrir".
-- [ ] Sélection de sous-graphe par vue : descendants d'une racine, sablier (ancêtres + descendants d'une personne centrale), profondeur maximale paramétrable.
-- [ ] Tests Vitest exhaustifs : famille recomposée (Luc, Maxime, Sophie des maquettes), veuvage, adoption, parent inconnu, cycles rejetés, consanguinité (même ancêtre par deux chemins).
+Les quatre premiers points étaient déjà livrés par la phase 2 (`src/server/family/family.display.ts`, `selectDisplayedGraph` -> `DisplayedGraph`) : c'est ce modèle que le layout consommera, pas de second modèle `RenderGraph`.
+
+- [x] Transformation vers le modèle dessiné : nœuds personne et union, arêtes `partner`, `child`, `parent` (union passée masquée ou inconnue) et `raised`.
+- [x] Filtre « unions passées » : masquées par défaut, enfants rattachés au parent visible ; un veuvage sans remariage reste l'union de référence ; l'union passée reste visible du côté de l'enfant.
+- [x] Filiation `a_eleve` : arête `raised`, ignorée pour les générations.
+- [x] Parent inconnu : union à un seul parent (`unknownPartner`).
+- [x] Sélection de sous-graphe par vue (`src/server/family/family.subgraph.ts`, `selectSubgraph`) : descendants d'une racine, sablier (ancêtres au-dessus, descendance et conjoints en dessous, sans fratrie), profondeur paramétrable.
+- [x] Tests : famille recomposée, veuvage et remariage, adoption, parent inconnu, consanguinité (cousins germains : ni personne ni lien en double). Les cycles sont refusés à l'écriture par `family.invariants.ts` (phase 2).
 
 ### Lot 2 : layout ELK en Web Worker
 
