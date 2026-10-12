@@ -28,12 +28,18 @@
     "db:seed": "bun scripts/db-seed.ts"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "~1.6.33",
+    "@better-auth/passkey": "~1.6.33",
     "@notionhq/client": "^2.3.0",
+    "@t3-oss/env-nextjs": "^0.13.11",
+    "better-auth": "~1.6.33",
     "drizzle-orm": "^0.45.3",
     "next": "16.3.8",
     "postgres": "^3.4.9",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "resend": "^6.31.0",
+    "server-only": "^0.0.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -46,6 +52,7 @@
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

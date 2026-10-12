@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-// L'arbre provisoire arrive au lot 5 ; d'ici là, tout mène à la connexion.
+// Sans session, le proxy renvoie vers la connexion avant d'arriver ici.
 export default function Home() {
-  redirect('/login');
+  redirect('/tree');
 }
