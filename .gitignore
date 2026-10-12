@@ -52,3 +52,6 @@ next-env.d.ts
 .vercel
 .env*
 !.env.example
+
+# Serveur des tests e2e (logs avec les liens de connexion)
+.e2e/

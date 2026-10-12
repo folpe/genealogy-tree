@@ -106,10 +106,46 @@ jobs:
           test -z "$(git ls-files --others --exclude-standard src/server/db/migrations)"
       - run: bun run test:integration
 
+  # Parcours de bout en bout sur un build de production, base Postgres jetable.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: ances_tree_e2e
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgres://postgres:test@localhost:5432/ances_tree_e2e
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run test:e2e
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
   # Point de contrôle unique pour la protection de branche.
   quality:
     if: ${{ always() }}
-    needs: [code, integration, dependency-audit, secrets]
+    needs: [code, integration, e2e, dependency-audit, secrets]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -117,10 +153,12 @@ jobs:
         env:
           CODE_RESULT: ${{ needs.code.result }}
           INTEGRATION_RESULT: ${{ needs.integration.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
           AUDIT_RESULT: ${{ needs.dependency-audit.result }}
           SECRETS_RESULT: ${{ needs.secrets.result }}
         run: |
           test "$CODE_RESULT" = success
           test "$INTEGRATION_RESULT" = success
+          test "$E2E_RESULT" = success
           test "$AUDIT_RESULT" = success
           test "$SECRETS_RESULT" = success

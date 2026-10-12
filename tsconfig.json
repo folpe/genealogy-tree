@@ -42,7 +42,8 @@
     ".next/dev/types/**/*.ts",
     "scripts",
     "drizzle.config.ts",
-    "vitest.integration.config.ts"
+    "vitest.integration.config.ts",
+    "playwright.config.ts"
   ],
   "exclude": ["node_modules", "legacy", ".next"]
 }
