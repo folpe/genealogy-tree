@@ -42,6 +42,19 @@ describe('judgeCandidates', () => {
     expect(verdict).toMatchObject({ status: 'found', best: { ref: '93066' } });
   });
 
+  it('compare le précisant à un élément entier du contexte', () => {
+    const haute = candidate({ ref: '52', name: 'Rodez', context: '52, Haute-Marne, Grand Est' });
+    expect(judgeCandidates([haute], { hint: 'Marne' })).toMatchObject({
+      status: 'review',
+      reason: 'precisant_absent',
+    });
+    const marne = candidate({ ref: '51', name: 'Rodez', context: '51, Marne, Grand Est' });
+    expect(judgeCandidates([haute, marne], { hint: 'Marne' })).toMatchObject({
+      status: 'found',
+      best: { ref: '51' },
+    });
+  });
+
   it('signale un précisant qui ne correspond à aucun candidat', async () => {
     const verdict = judgeCandidates(await ban(banRodez), { hint: 'Bretagne' });
     expect(verdict).toMatchObject({ status: 'review', reason: 'precisant_absent' });

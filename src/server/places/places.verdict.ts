@@ -15,7 +15,7 @@ export type GeocodeVerdict =
   | { status: 'found'; best: GeocodeCandidate }
   | {
       status: 'review';
-      reason: 'homonymes' | 'score_faible' | 'precisant_absent';
+      reason: 'homonymes' | 'score_faible' | 'precisant_absent' | 'pays_incertain';
       candidates: GeocodeCandidate[];
     }
   | { status: 'not_found' };
@@ -35,8 +35,11 @@ export function judgeCandidates(
 ): GeocodeVerdict {
   if (candidates.length === 0) return { status: 'not_found' };
   const hint = query.hint ? normalizePlaceLabel(query.hint) : undefined;
+  // Élément entier du contexte : « Marne » ne doit pas retenir la Haute-Marne.
   const matching = hint
-    ? candidates.filter((c) => normalizePlaceLabel(c.context).includes(hint))
+    ? candidates.filter((c) =>
+        c.context.split(',').some((part) => normalizePlaceLabel(part) === hint),
+      )
     : candidates;
   const [best] = matching;
   if (!best) return { status: 'review', reason: 'precisant_absent', candidates };

@@ -126,15 +126,32 @@ describe.skipIf(!db)('places.service (intégration)', () => {
     expect(calls.sort()).toEqual(['ban:Rodez/12', 'nominatim:Porto/PT']);
   });
 
-  it('cherche à l’étranger une commune seule introuvable en France', async () => {
+  it('cherche à l’étranger une commune seule introuvable en France, sans l’inscrire', async () => {
     await seed('Porto');
     const { deps, calls } = fakeGeocoders({ nominatim: { Porto: [porto] } });
 
     const report = await geocodePlaces({ db: client, ...deps }, { dryRun: false });
 
+    // Le pays n'est pas écrit dans le libellé : une faute de frappe sur une commune
+    // française tomberait sur un homonyme étranger. La revue tranche.
     expect(calls).toEqual(['ban:Porto', 'nominatim:Porto/-']);
-    expect(report.geocoded).toBe(1);
-    expect(await row('Porto')).toMatchObject({ country: 'PT', geocoder: 'nominatim' });
+    expect(report.geocoded).toBe(0);
+    expect(report.reviews).toMatchObject([{ reason: 'pays_incertain', candidates: [porto] }]);
+    expect(await row('Porto')).toMatchObject({ geocoder: null, lat: null });
+  });
+
+  it('ne compte pas un lieu géocodé à la main pendant le passage', async () => {
+    await seed('Rodez');
+    const { deps } = fakeGeocoders({});
+    deps.ban.search = async () => {
+      await client.update(places).set({ geocoder: 'manuel', lat: 1, lng: 2 });
+      return [aCandidate({})];
+    };
+
+    const report = await geocodePlaces({ db: client, ...deps }, { dryRun: false });
+
+    expect(report.geocoded).toBe(0);
+    expect(await row('Rodez')).toMatchObject({ geocoder: 'manuel', lat: 1 });
   });
 
   it('n’inscrit rien de douteux et le rapporte avec ses candidats', async () => {

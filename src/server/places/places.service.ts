@@ -25,6 +25,7 @@ type PlaceReview = {
     | 'homonymes'
     | 'score_faible'
     | 'precisant_absent'
+    | 'pays_incertain'
     | 'erreur';
   candidates: GeocodeCandidate[];
   error?: string;
@@ -71,7 +72,9 @@ async function geocode(query: PlaceQuery, lookups: Lookups): Promise<GeocodeVerd
   const abroad = judgeCandidates(await lookups.locality({ name, countryCode: undefined }), {
     hint,
   });
-  return abroad.status === 'not_found' ? ban : abroad;
+  if (abroad.status !== 'found') return abroad.status === 'not_found' ? ban : abroad;
+  // Pays deviné, pas lu : une faute sur une commune française tomberait à l'étranger.
+  return { status: 'review', reason: 'pays_incertain', candidates: [abroad.best] };
 }
 
 function reviewOf(
@@ -139,13 +142,17 @@ export async function geocodePlaces(
       report.reviews.push(reviewOf(place, query, verdict));
       continue;
     }
-    report.geocoded += 1;
-    if (options.dryRun) continue;
-    await deps.db
+    if (options.dryRun) {
+      report.geocoded += 1;
+      continue;
+    }
+    const written = await deps.db
       .update(places)
       .set(placeFields(query, verdict.best))
       // Un lieu géocodé entre-temps, à la main par exemple, n'est pas écrasé.
-      .where(and(eq(places.id, place.id), isNull(places.geocoder)));
+      .where(and(eq(places.id, place.id), isNull(places.geocoder)))
+      .returning({ id: places.id });
+    report.geocoded += written.length;
   }
   return report;
 }
