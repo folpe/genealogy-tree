@@ -1,3 +1,4 @@
+import { settled } from './camera';
 import { E2E_ISABELLE_EMAIL } from './e2e.constants';
 import { expect, test } from './fixtures';
 import { signIn } from './outbox';
@@ -27,7 +28,13 @@ test('l’arbre s’ouvre sur ma bulle, et les flèches suivent les liens', asyn
 test('un clic sur une bulle ouvre sa fiche', async ({ page }) => {
   await signIn(page, E2E_ISABELLE_EMAIL);
   const henri = page.getByRole('treeitem', { name: /^Henri Marchand/ });
-  await henri.scrollIntoViewIfNeeded();
+  // Henri est loin de ma bulle : on dézoome jusqu'à le voir, comme on le ferait.
+  const zoomOut = page.getByRole('button', { name: 'Dézoomer', exact: true });
+  for (let i = 0; i < 6; i += 1) {
+    await zoomOut.click();
+    await settled(page);
+  }
+  await expect(henri).toBeInViewport();
   await henri.click();
   await expect(page).toHaveURL(/\/people\/henri$/);
   await expect(page.getByRole('heading', { name: 'Henri Marchand' })).toBeVisible();

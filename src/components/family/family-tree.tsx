@@ -1,19 +1,28 @@
 'use client';
 
 import Link from 'next/link';
-import { type KeyboardEvent, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type KeyboardEvent, memo, useCallback, useMemo, useRef, useState } from 'react';
+import {
+  type Camera,
+  cameraOn,
+  nodesInView,
+  type Rect,
+  type Size,
+  VIRTUALIZE_ABOVE,
+  visibleWorld,
+} from '@/lib/tree/tree.camera';
 import type { TreeLink } from '@/lib/tree/tree.routes';
+import type { CameraController } from '@/motion/camera';
 import type { TreeDrawing, TreeNode } from './family-tree.helper';
 import { PersonBubble } from './person-bubble';
+import { TreeMinimap } from './tree-minimap';
+import { useTreeCamera } from './use-tree-camera';
 
-// Canevas de l'arbre (plan phase 4, lot 3). Le placement arrive tout calculé du
-// serveur : ce composant ne fait que dessiner et gérer le clavier. Les liens sont un
-// SVG sous les bulles ; les bulles sont des liens HTML (photo en srcset, focus natif,
-// ouverture dans un nouvel onglet), comme dans la maquette Arbre. La caméra (lot 4)
-// transformera le calque intérieur ; d'ici là, le canevas défile.
+// Canevas de l'arbre (plan phase 4, lots 3 et 4). Le placement arrive tout calculé du
+// serveur ; les liens sont un SVG sous les bulles, les bulles des liens HTML (photo
+// en srcset, focus natif, nouvel onglet), comme dans la maquette Arbre. Un seul
+// calque porte le tout : la caméra (`src/motion/camera.ts`) le transforme hors React.
 
-/** Marge autour du placement, pour que les bulles du bord ne touchent pas le cadre. */
-const PADDING = 48;
 const BUBBLE_RADIUS = 38;
 const NODE_HALF_WIDTH = 60;
 
@@ -40,8 +49,7 @@ const TreeLinks = memo(function TreeLinks({
       aria-hidden="true"
       width={width}
       height={height}
-      className="pointer-events-none absolute overflow-visible"
-      style={{ left: PADDING, top: PADDING }}
+      className="pointer-events-none absolute top-0 left-0 overflow-visible"
     >
       {links.map((link) => (
         <path
@@ -79,10 +87,11 @@ const TreeItem = memo(function TreeItem({
       aria-level={node.row + 1}
       aria-label={node.label}
       tabIndex={active ? 0 : -1}
+      draggable={false}
       onFocus={() => onFocus(node.id)}
       onKeyDown={(event) => onKeyDown(node.id, event)}
       className="group absolute flex w-[120px] flex-col items-center outline-none"
-      style={{ left: node.x - NODE_HALF_WIDTH + PADDING, top: node.y - BUBBLE_RADIUS + PADDING }}
+      style={{ left: node.x - NODE_HALF_WIDTH, top: node.y - BUBBLE_RADIUS }}
     >
       <span className="rounded-full outline-offset-2 group-hover:motion-safe:scale-[1.03] group-focus-visible:outline-2 group-focus-visible:outline-ink motion-safe:transition-transform">
         <PersonBubble
@@ -103,6 +112,67 @@ const TreeItem = memo(function TreeItem({
   );
 });
 
+/** Marge d'écran sous laquelle une bulle prise au clavier fait bouger la caméra. */
+const REVEAL_MARGIN = 80;
+const ZOOM_STEP = 1.4;
+
+function CanvasControls({
+  camera,
+  home,
+}: {
+  camera: CameraController | undefined;
+  home: (() => void) | undefined;
+}) {
+  const button =
+    'grid size-[46px] place-items-center rounded-full bg-card text-ink shadow-float ' +
+    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ' +
+    'disabled:opacity-40';
+  return (
+    <div className="absolute right-4 bottom-4 flex flex-col items-end gap-2">
+      {home ? (
+        <button
+          type="button"
+          onClick={home}
+          disabled={!camera}
+          className="h-[46px] rounded-full bg-card px-4 font-medium text-[15px] shadow-float focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-40"
+        >
+          Me retrouver
+        </button>
+      ) : undefined}
+      <button
+        type="button"
+        aria-label="Zoomer"
+        disabled={!camera}
+        onClick={() => camera?.zoomTo(camera.get().k * ZOOM_STEP)}
+        className={button}
+      >
+        <span aria-hidden="true" className="text-[22px] leading-none">
+          +
+        </span>
+      </button>
+      <button
+        type="button"
+        aria-label="Dézoomer"
+        disabled={!camera}
+        onClick={() => camera?.zoomTo(camera.get().k / ZOOM_STEP)}
+        className={button}
+      >
+        <span aria-hidden="true" className="text-[22px] leading-none">
+          −
+        </span>
+      </button>
+    </div>
+  );
+}
+
+function useRows(nodes: TreeNode[]) {
+  return useMemo(() => {
+    const grouped = new Map<number, TreeNode[]>();
+    for (const node of nodes) grouped.set(node.row, [...(grouped.get(node.row) ?? []), node]);
+    return grouped;
+  }, [nodes]);
+}
+
 export function FamilyTree({
   drawing,
   focusId,
@@ -113,32 +183,47 @@ export function FamilyTree({
 }) {
   const { nodes, links, unknownPartners, width, height } = drawing;
   const byId = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
-  const rows = useMemo(() => {
-    const grouped = new Map<number, TreeNode[]>();
-    for (const node of nodes) grouped.set(node.row, [...(grouped.get(node.row) ?? []), node]);
-    return grouped;
-  }, [nodes]);
-  const start = focusId && byId.has(focusId) ? focusId : nodes[0]?.id;
-  const [chosenId, setActiveId] = useState(start);
+  const rows = useRows(nodes);
+  const me = focusId ? byId.get(focusId) : undefined;
+  const start = me ?? nodes[0];
+  const [chosenId, setActiveId] = useState(start?.id);
   // Une bulle disparue après un nouveau rendu serveur ne doit pas emporter le Tab.
-  const activeId = chosenId && byId.has(chosenId) ? chosenId : start;
-  const canvas = useRef<HTMLDivElement>(null); // allow-null: contrat des refs de React
+  const activeId = chosenId && byId.has(chosenId) ? chosenId : start?.id;
+  const viewport = useRef<HTMLDivElement>(null); // allow-null: contrat des refs de React
+  const layer = useRef<HTMLDivElement>(null); // allow-null: contrat des refs de React
   const elements = useRef(new Map<string, HTMLAnchorElement>());
-
-  // À l'ouverture, la bulle de départ au centre du canevas.
-  useEffect(() => {
-    const node = start ? byId.get(start) : undefined;
-    const element = canvas.current;
-    if (!node || !element) return;
-    element.scrollLeft = node.x + PADDING - element.clientWidth / 2;
-    element.scrollTop = node.y + PADDING - element.clientHeight / 2;
-  }, [byId, start]);
+  const content = useMemo<Size>(() => ({ width, height }), [width, height]);
+  const [view, setView] = useState<Rect>();
+  const onSettle = useCallback(
+    (state: Camera, size: Size) => {
+      if (nodes.length > VIRTUALIZE_ABOVE) setView(visibleWorld(state, size));
+    },
+    [nodes.length],
+  );
+  const camera = useTreeCamera({ viewport, layer, content, start, onSettle });
 
   // Rappels stables : une flèche ne re-rend que les deux bulles dont l'état change.
   const register = useCallback((id: string, element: HTMLAnchorElement | undefined) => {
     if (element) elements.current.set(id, element);
     else elements.current.delete(id);
   }, []);
+
+  // Une bulle prise au clavier, hors de l'écran ou trop près du bord : la caméra y va.
+  const onFocus = useCallback(
+    (id: string) => {
+      setActiveId(id);
+      const node = byId.get(id);
+      if (!camera || !node) return;
+      const state = camera.get();
+      const { width: w, height: h } = camera.viewport();
+      const screenX = node.x * state.k + state.x;
+      const screenY = node.y * state.k + state.y;
+      const inside =
+        Math.abs(screenX) < w / 2 - REVEAL_MARGIN && Math.abs(screenY) < h / 2 - REVEAL_MARGIN;
+      if (!inside) camera.flyTo(cameraOn(node, state.k));
+    },
+    [byId, camera],
+  );
 
   const onKeyDown = useCallback(
     (id: string, event: KeyboardEvent<HTMLAnchorElement>) => {
@@ -149,12 +234,12 @@ export function FamilyTree({
       event.preventDefault();
       if (!target) return;
       setActiveId(target);
-      elements.current.get(target)?.focus();
+      elements.current.get(target)?.focus({ preventScroll: true });
     },
     [byId, rows],
   );
 
-  if (nodes.length === 0) {
+  if (!start) {
     return (
       <p className="text-[15px] text-ink-2">
         L’arbre est encore vide : les fiches de la famille arrivent avec la reprise des données.
@@ -162,45 +247,65 @@ export function FamilyTree({
     );
   }
 
+  const shown = view ? nodesInView(nodes, view, activeId ? [activeId] : []) : nodes;
+  const home =
+    me && camera ? () => camera.flyTo(cameraOn(me, Math.max(camera.get().k, 0.75))) : undefined;
+
   return (
-    <div
-      ref={canvas}
-      className="canvas-grid h-[calc(100dvh-9rem)] min-h-[420px] overflow-auto overscroll-contain rounded-[var(--radius-panel)] border border-line"
-    >
-      <div
-        className="relative mx-auto"
-        style={{ width: width + PADDING * 2, height: height + PADDING * 2 }}
+    <div className="relative h-[calc(100dvh-9rem)] min-h-[420px] overflow-hidden rounded-[var(--radius-panel)] border border-line">
+      <section
+        ref={viewport}
+        aria-label="Canevas de l’arbre"
+        // Le focus d'une bulle ne doit jamais faire défiler le canevas : la caméra s'en charge.
+        onScroll={(event) => {
+          event.currentTarget.scrollTop = 0;
+          event.currentTarget.scrollLeft = 0;
+        }}
+        className="canvas-grid absolute inset-0 cursor-grab touch-none select-none overflow-hidden overscroll-none [--k0:0.75] active:cursor-grabbing md:[--k0:1]"
       >
-        <TreeLinks links={links} width={width} height={height} />
-        {unknownPartners.map((slot) => (
-          <div
-            key={slot.id}
-            aria-hidden="true"
-            className="absolute flex w-[120px] flex-col items-center"
-            style={{
-              left: slot.x - NODE_HALF_WIDTH + PADDING,
-              top: slot.y - BUBBLE_RADIUS + PADDING,
-            }}
-          >
-            <span className="grid size-[76px] place-items-center rounded-full border-2 border-link border-dashed font-display text-[24px] text-ink-2">
-              ?
-            </span>
-            <span className="mt-1.5 text-xs text-ink-2">À découvrir</span>
-          </div>
-        ))}
-        <div role="tree" aria-label="Arbre de la famille" className="absolute inset-0">
-          {nodes.map((node) => (
-            <TreeItem
-              key={node.id}
-              node={node}
-              active={node.id === activeId}
-              register={register}
-              onFocus={setActiveId}
-              onKeyDown={onKeyDown}
-            />
+        <div
+          ref={layer}
+          data-camera-layer
+          className="absolute top-1/2 left-1/2 origin-top-left will-change-transform"
+          // Rendu serveur déjà centré sur la bulle de départ : pas de saut à l'hydratation.
+          style={{
+            width,
+            height,
+            transform: `translate(calc(${-start.x}px * var(--k0)), calc(${-start.y}px * var(--k0))) scale(var(--k0))`,
+          }}
+        >
+          <TreeLinks links={links} width={width} height={height} />
+          {unknownPartners.map((slot) => (
+            <div
+              key={slot.id}
+              aria-hidden="true"
+              className="absolute flex w-[120px] flex-col items-center"
+              style={{ left: slot.x - NODE_HALF_WIDTH, top: slot.y - BUBBLE_RADIUS }}
+            >
+              <span className="grid size-[76px] place-items-center rounded-full border-2 border-link border-dashed font-display text-[24px] text-ink-2">
+                ?
+              </span>
+              <span className="mt-1.5 text-xs text-ink-2">À découvrir</span>
+            </div>
           ))}
+          <div role="tree" aria-label="Arbre de la famille" className="absolute inset-0">
+            {shown.map((node) => (
+              <TreeItem
+                key={node.id}
+                node={node}
+                active={node.id === activeId}
+                register={register}
+                onFocus={onFocus}
+                onKeyDown={onKeyDown}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
+      {camera ? (
+        <TreeMinimap points={nodes} width={width} height={height} camera={camera} />
+      ) : undefined}
+      <CanvasControls camera={camera} home={me ? home : undefined} />
     </div>
   );
 }
