@@ -19,7 +19,7 @@ const KIND_LABELS: Record<MigrationAnomaly['kind'], string> = {
 };
 
 export function renderNotionReport(transform: NotionTransform, meta: { exportedAt: string }) {
-  const { stats, anomalies, nicknames, graph } = transform;
+  const { stats, anomalies, graph } = transform;
   const names = new Map(graph.persons.map((p) => [p.id, `${p.firstName} ${p.lastName}`]));
   const day = new Date(meta.exportedAt);
   const title = formatFuzzyDate({
@@ -59,13 +59,7 @@ export function renderNotionReport(transform: NotionTransform, meta: { exportedA
     '',
     ...section('À corriger', 'a-corriger'),
     ...section('À vérifier', 'a-verifier'),
-    `## Surnoms (${nicknames.length}), à reprendre quand la fiche les portera`,
-    '',
-    ...(nicknames.length
-      ? nicknames.map((n) => `- ${names.get(n.personId) ?? n.personId} : « ${n.nickname} »`)
-      : ['Aucun.']),
-    '',
   ].join('\n');
 
-  return { markdown, json: { exportedAt: meta.exportedAt, stats, anomalies, nicknames } };
+  return { markdown, json: { exportedAt: meta.exportedAt, stats, anomalies } };
 }

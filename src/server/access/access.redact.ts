@@ -5,7 +5,13 @@ import type { VisibilityLevel } from './access.types';
 // absents de l'objet (jamais `null`), pour ne rien laisser fuiter vers le client,
 // et le type de sortie reflète ce qui reste.
 
-type Identity = { id: string; firstName: string; lastName: string; gender: Gender };
+type Identity = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  nickname?: string;
+  gender: Gender;
+};
 
 export type RedactedPerson =
   | ({ level: 'full' } & Person)
@@ -29,6 +35,7 @@ function identity(person: Person): Identity {
     id: person.id,
     firstName: person.firstName,
     lastName: person.lastName,
+    ...(person.nickname ? { nickname: person.nickname } : {}),
     gender: person.gender,
   };
 }

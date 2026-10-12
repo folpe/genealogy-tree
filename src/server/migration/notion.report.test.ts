@@ -31,15 +31,10 @@ describe('renderNotionReport', () => {
     );
   });
 
-  it('liste les surnoms à reprendre plus tard', () => {
-    expect(report.markdown).toContain('Luc Marchand : « Lulu »');
-  });
-
   it('fournit la même chose en JSON', () => {
     expect(report.json).toMatchObject({
       exportedAt: '2026-10-12T09:30:00.000Z',
       stats: { persons: 8, photoFailures: 1 },
-      nicknames: [{ personId: N.luc, nickname: 'Lulu' }],
     });
     expect(report.json.anomalies.length).toBe(transform.anomalies.length);
   });

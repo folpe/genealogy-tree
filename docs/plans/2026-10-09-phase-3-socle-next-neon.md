@@ -15,7 +15,7 @@ Remplacer l'app Farm + Notion + Netlify par le socle définitif, sans encore ref
 - better-auth : magic link puis passkey, comptes liés à une fiche, invitations, demandes d'accès ;
 - toutes les données Notion migrées dans Neon, photos comprises, avec rapports validés par Folpe ;
 - les lieux géocodés ;
-- l'ancienne app coupée, `ances-tree.netlify.app` redirigée.
+- ~~l'ancienne app coupée, `ances-tree.netlify.app` redirigée~~ : reporté à la bascule, une fois la nouvelle app à parité (arbre graphique de la phase 4, édition de la phase 6), voir la [décision du 2026-10-12](../decisions-log/2026-10-12-bascule-apres-parite--c78945f9-9b5c-4ac6-859b-e34d3403431b.md).
 
 Sortie : la famille se connecte sur `famille.folpe.me`, voit ses données depuis Neon, à travers la policy de la phase 2 appliquée côté serveur. L'arbre affiché peut encore être un rendu provisoire (liste et fiche) : le vrai moteur arrive en phase 4.
 
@@ -133,7 +133,7 @@ scripts/
 
 Script `scripts/migrate-notion/`, idempotent, mode `--dry-run`, cible choisie explicitement (`--target dev|preview|main`).
 
-Réalisé (2026-10-12) : `scripts/migrate-notion.ts` (`extract`, `report`, `load --target <branche> [--dry-run]`, `--confirm-production` exigé pour `main`) ; logique pure et testée dans `src/server/migration/`. Secrets (jeton Notion, base, clé AES-256-GCM de l'export) dans le trousseau macOS ; export, photos et rapport chiffrés ou en `0600` sous `~/.local/share/ances-tree/notion-exports/`. Écart au plan : les essais se font sur une branche Neon dédiée `notion-import` (copie de `main`) plutôt que `dev` et `preview`, qui portent la famille fictive Marchand ; le chargement refuse toute base contenant des fiches sans identifiant Notion. Premier export : 103 pages, 21 photos, 27 unions, 130 filiations, 0 anomalie à corriger, 21 à vérifier (dates au 1er janvier, un doublon probable, fiches sans date), 19 surnoms à reprendre plus tard. Les photos sont conservées chiffrées ; leur chargement attend le pipeline du lot 6.
+Réalisé (2026-10-12) : `scripts/migrate-notion.ts` (`extract`, `report`, `load --target <branche> [--dry-run]`, `--confirm-production` exigé pour `main`) ; logique pure et testée dans `src/server/migration/`. Secrets (jeton Notion, base, clé AES-256-GCM de l'export) dans le trousseau macOS ; export, photos et rapport chiffrés ou en `0600` sous `~/.local/share/ances-tree/notion-exports/`. Écart au plan : les essais se font sur une branche Neon dédiée `notion-import` (copie de `main`) plutôt que `dev` et `preview`, qui portent la famille fictive Marchand ; le chargement refuse toute base contenant des fiches sans identifiant Notion. Premier export : 103 pages, 21 photos, 27 unions, 130 filiations, 0 anomalie à corriger, 21 à vérifier (dates au 1er janvier, un doublon probable, fiches sans date), 19 surnoms. Les surnoms sont portés par la fiche depuis le 2026-10-12 (colonne `persons.nickname`, affichés sur la fiche, cherchables, masqués pour un mineur comme les autres noms). Les photos sont conservées chiffrées ; leur chargement attend le pipeline du lot 6.
 
 - [x] **Extraction** : export brut de toute la base Notion (pages et propriétés) en JSON daté, stocké hors du repo et chiffré au repos ; la suite de la migration lit ce fichier, pas l'API.
 - [x] **Photos, pendant l'extraction** : les URLs de fichiers Notion sont signées et expirent au bout d'une heure, les URLs externes peuvent disparaître. Chaque photo est téléchargée immédiatement, son empreinte SHA-256 calculée, le binaire conservé avec l'export ; les échecs sont listés.
@@ -145,15 +145,17 @@ Réalisé (2026-10-12) : `scripts/migrate-notion.ts` (`extract`, `report`, `load
 - [x] Tests : transformation testée sur un export Notion anonymisé en fixture ; idempotence testée (deux exécutions = même état).
 - **Garde-fou destructif :** l'écriture sur la branche `main` de Neon n'a lieu qu'après validation écrite de Folpe du rapport `preview`. Notion n'est jamais modifié par le script.
 
-### Lot 9 : bascule
+### Lot 9 : envoi et bascule
+
+La bascule (redirection, suppressions, fin de Notion) est reportée après parité fonctionnelle : [décision du 2026-10-12](../decisions-log/2026-10-12-bascule-apres-parite--c78945f9-9b5c-4ac6-859b-e34d3403431b.md). D'ici là, Notion reste la source et Neon est resynchronisé à la demande (`load`, rejouable).
 
 - [x] Domaine `famille.folpe.me` branché sur Vercel (CNAME chez Gandi), certificat Let's Encrypt actif.
 - [x] Domaine d'envoi Resend `mail.folpe.me` (créé par Folpe) : DKIM `resend._domainkey.mail.folpe.me`, MX et SPF sur `send.mail.folpe.me` ; DMARC hérité de `folpe.me`. Clé posée dans Vercel sur les 3 environnements, `EMAIL_FROM=Ances-Tree <famille@mail.folpe.me>`.
-- [ ] Envoi de test reçu en boîte principale chez Gmail et chez un webmail Orange (aînés). Gmail validé le 2026-10-12 (lien de connexion de production) ; Orange reste à faire.
+- [ ] Envoi de test reçu en boîte principale chez Gmail et chez un webmail Orange (aînés). Gmail validé le 2026-10-12 (lien de connexion de production) ; Orange à vérifier avec les vraies adresses des premiers invités.
   Les liens de connexion ne fonctionnent pas sur les previews : la protection Vercel retire le paramètre `token` de l'URL. Tester la connexion en local ou en production.
 - [ ] Création des comptes : Folpe (propriétaire, admin) puis premières invitations envoyées par Folpe. Compte propriétaire créé en production le 2026-10-12 ; invitations à venir.
-- [ ] Redirection 301 de `ances-tree.netlify.app` vers `famille.folpe.me` (règle `[[redirects]]` dans `netlify.toml` d'une branche de redirection publiée une dernière fois sur Netlify).
-- [ ] Suppression de `netlify/functions`, du client Notion, de `netlify.toml` (après la publication de la redirection) et du dossier `legacy/`.
+- [ ] **Bascule, reportée.** Redirection 301 de `ances-tree.netlify.app` vers `famille.folpe.me` (règle `[[redirects]]` dans `netlify.toml` d'une branche de redirection publiée une dernière fois sur Netlify).
+- [ ] **Bascule, reportée.** Suppression de `netlify/functions`, du client Notion, de `netlify.toml` (après la publication de la redirection) et du dossier `legacy/`.
 - [ ] Mise à jour de la spec et de `docs/decisions-log/` si des écarts sont apparus.
 - **Garde-fou destructif :** la révocation du token Notion et l'archivage de la base Notion n'ont lieu qu'après feu vert explicite de Folpe, une fois la production vérifiée pendant au moins une semaine.
 
@@ -204,7 +206,7 @@ bun run migrate:notion -- --dry-run --target dev
 - `famille.folpe.me` en production sur Vercel, connexion par magic link et passkey fonctionnelle.
 - Toutes les fiches et photos Notion présentes dans Neon et Blob, rapport final validé par Folpe.
 - Policy appliquée côté serveur, vérifiée par des tests d'intégration.
-- Ancienne app redirigée, fonctions Netlify et intégration Notion supprimées du repo.
+- ~~Ancienne app redirigée, fonctions Netlify et intégration Notion supprimées du repo~~ : reporté à la bascule.
 - CI verte (lint, types, unitaires, intégration, build, knip, audit, gitleaks, e2e).
 
 ## 11. PR proposées

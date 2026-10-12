@@ -116,6 +116,7 @@ export const persons = pgTable('persons', {
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
   birthName: text('birth_name'),
+  nickname: text('nickname'),
   gender: genderEnum('gender').notNull().default('inconnu'),
   visibility: visibilityEnum('visibility').notNull().default('famille'),
   /** Forcé à la main ; absent : déduit des événements (décès, âge). */

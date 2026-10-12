@@ -94,6 +94,7 @@ describe('PersonSheet', () => {
   it('fiche entière : dates, lieux, résidence et proches', () => {
     render(<PersonSheet tree={hugo} personId="luc" />);
     expect(screen.getByRole('heading', { name: 'Luc Marchand' })).toBeVisible();
+    expect(screen.getByText('Surnom : Lulu')).toBeVisible();
     expect(screen.getByText('21 août 1963, Toulouse')).toBeVisible();
     expect(screen.getByText('Toulouse', { selector: 'dd' })).toBeVisible();
     const parents = screen.getByRole('list', { name: 'Parents' });

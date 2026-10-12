@@ -221,6 +221,9 @@ export function PersonSheet({ tree, personId }: { tree: TreeForViewer; personId:
         />
         <div>
           <h1 className="font-display text-[32px] leading-tight">{personLabel(person)}</h1>
+          {person.level !== 'minor' && person.nickname ? (
+            <p className="text-[15px] text-ink-2">Surnom : {person.nickname}</p>
+          ) : undefined}
           {person.level !== 'minor' && person.birthName ? (
             <p className="text-[15px] text-ink-2">Nom de naissance : {person.birthName}</p>
           ) : undefined}

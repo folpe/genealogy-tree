@@ -59,8 +59,9 @@ describe('transformNotionExport : fiches', () => {
     expect(person(N.hugo)?.residence).toBeUndefined();
   });
 
-  it('met de côté les surnoms, que le schéma ne porte pas encore', () => {
-    expect(run().nicknames).toEqual([{ personId: N.luc, nickname: 'Lulu' }]);
+  it('reprend le surnom sur la fiche', () => {
+    expect(person(N.luc)?.nickname).toBe('Lulu');
+    expect(person(N.hugo)).not.toHaveProperty('nickname');
   });
 
   it('garde une fiche sans prénom, avec « ? », et la signale', () => {
