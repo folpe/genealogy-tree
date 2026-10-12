@@ -7,7 +7,7 @@ import type { MigrationAnomaly, NotionTransform } from './notion.transform';
 const KIND_LABELS: Record<MigrationAnomaly['kind'], string> = {
   'fiche-incomplete': 'Fiche incomplète',
   'date-impossible': 'Date impossible',
-  'date-a-verifier': 'Date à vérifier',
+  'nom-inconnu': 'Nom inconnu',
   'deces-presume': 'Décès présumé',
   'vivant-sans-date': 'Vivant sans date',
   'genre-inconnu': 'Genre inconnu',
@@ -54,6 +54,7 @@ export function renderNotionReport(transform: NotionTransform, meta: { exportedA
     `| Unions | ${stats.unions} |`,
     `| Filiations | ${stats.parentChildren} |`,
     `| Liens déclarés d’un seul côté dans Notion | ${stats.oneSidedRelations} |`,
+    `| Dates au 1er janvier lues comme l’année seule | ${stats.yearOnlyDates} |`,
     `| Photos récupérées | ${stats.photos} / ${stats.photos + stats.photoFailures} |`,
     '',
     ...section('À corriger', 'a-corriger'),

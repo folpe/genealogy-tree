@@ -14,7 +14,7 @@ import { type NotionPage, notionPageSchema, plainText } from './notion.schema';
 type AnomalyKind =
   | 'fiche-incomplete'
   | 'date-impossible'
-  | 'date-a-verifier'
+  | 'nom-inconnu'
   | 'deces-presume'
   | 'vivant-sans-date'
   | 'genre-inconnu'
@@ -46,6 +46,8 @@ export type NotionTransform = {
     parentChildren: number;
     /** Liens déclarés d'un seul côté dans Notion (repris quand même). */
     oneSidedRelations: number;
+    /** Dates au 1er janvier, lues comme l'année seule. */
+    yearOnlyDates: number;
     photos: number;
     photoFailures: number;
   };
@@ -70,7 +72,7 @@ const normalized = (value: string) =>
 const yearOf = (date: FuzzyDate) => (date.precision === 'entre' ? date.from : date.year);
 const messageOf = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
-type Context = { anomalies: MigrationAnomaly[]; urls: Map<string, string> };
+type Context = { anomalies: MigrationAnomaly[]; urls: Map<string, string>; yearOnlyDates: number };
 
 function report(
   ctx: Context,
@@ -102,14 +104,11 @@ function parseDate(
     report(ctx, 'date-impossible', 'a-corriger', page.id, `${label} illisible : « ${start} »`);
     return undefined;
   }
-  if (month === 1 && day === 1) {
-    report(
-      ctx,
-      'date-a-verifier',
-      'a-verifier',
-      page.id,
-      `${label} au 1er janvier ${year} : date exacte, ou seulement l’année ?`,
-    );
+  // Notion impose un jour : un 1er janvier y est saisi quand seule l'année est
+  // connue (règle donnée par Folpe le 2026-10-12).
+  if (parsed.data.precision === 'exacte' && parsed.data.month === 1 && parsed.data.day === 1) {
+    ctx.yearOnlyDates += 1;
+    return { precision: 'annee', year: parsed.data.year };
   }
   return parsed.data;
 }
@@ -126,21 +125,25 @@ function lifeEvent(date: FuzzyDate | undefined, place: string) {
   return { ...(date ? { date } : {}), ...(place ? { place } : {}) };
 }
 
+/** Nom inconnu : convention des logiciels de généalogie, plutôt qu'une fiche perdue. */
+const UNKNOWN_NAME = '?';
+const PLACEHOLDERS = new Set(['', 'non renseigne', 'inconnu', 'inconnue', '?']);
+const knownName = (value: string) => (PLACEHOLDERS.has(normalized(value)) ? UNKNOWN_NAME : value);
+
 function toPerson(ctx: Context, page: NotionPage, today: FuzzyDate): Person | undefined {
   const p = page.properties;
-  const firstName = plainText(p.firstName);
-  const lastName = plainText(p.lastName);
-  if (!firstName || !lastName) {
+  const firstName = knownName(plainText(p.firstName));
+  const lastName = knownName(plainText(p.lastName));
+  const label = `${firstName} ${lastName}`;
+  if (firstName === UNKNOWN_NAME || lastName === UNKNOWN_NAME) {
     report(
       ctx,
-      'fiche-incomplete',
-      'a-corriger',
+      'nom-inconnu',
+      'a-verifier',
       page.id,
-      'Prénom ou nom manquant : fiche écartée',
+      `${label} : prénom ou nom inconnu, gardé avec « ? »`,
     );
-    return undefined;
   }
-  const label = `${firstName} ${lastName}`;
   const gender = GENDERS[p.gender?.select?.name ?? ''];
   if (!gender)
     report(ctx, 'genre-inconnu', 'a-verifier', page.id, `Genre non renseigné : ${label}`);
@@ -339,7 +342,7 @@ export function transformNotionExport(
   rawPages: unknown[],
   options: { today: FuzzyDate; photos: PhotoOutcome[] },
 ): NotionTransform {
-  const ctx: Context = { anomalies: [], urls: new Map() };
+  const ctx: Context = { anomalies: [], urls: new Map(), yearOnlyDates: 0 };
   const pages = readPages(ctx, rawPages);
 
   const graph: FamilyGraph = { persons: [], unions: [], parentChildren: [] };
@@ -379,6 +382,7 @@ export function transformNotionExport(
       unions: graph.unions.length,
       parentChildren: graph.parentChildren.length,
       oneSidedRelations: pairs.filter((pair) => pair.sides === 1).length,
+      yearOnlyDates: ctx.yearOnlyDates,
       photos: options.photos.length - failed.length,
       photoFailures: failed.length,
     },
