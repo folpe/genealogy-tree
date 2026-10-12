@@ -82,7 +82,7 @@ Sortie : un membre crée, modifie et supprime des fiches dans son périmètre ; 
 
 ### Lot 9 : emails
 
-- [ ] React Email + Resend depuis `famille@folpe.me` : invitation, magic link (phase 3), veille de lignée (maquette EmailVeille : avant / après, source, "C'est bon", "Annuler la modification"), suggestion reçue, décision sur ma suggestion, escalade, résumé quotidien.
+- [ ] React Email + Resend depuis `famille@mail.folpe.me` : invitation, magic link (phase 3), veille de lignée (maquette EmailVeille : avant / après, source, "C'est bon", "Annuler la modification"), suggestion reçue, décision sur ma suggestion, escalade, résumé quotidien.
 - [ ] Liens d'action signés, désinscription et passage au résumé quotidien en un clic.
 
 ### Lot 10 : GEDCOM

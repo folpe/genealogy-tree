@@ -1,9 +1,9 @@
 // tdd-cover: e2e src/server/auth/auth.integration.test.ts
 import 'server-only';
-import { Resend } from 'resend';
 import { resolveAppUrl, resolvePasskeyRpID, serverEnv } from '../../env';
 import { getDb } from '../db/client';
-import { createEmailSender, magicLinkEmail } from '../notifications/email';
+import { magicLinkEmail } from '../notifications/email';
+import { getEmailSender } from '../notifications/email.instance';
 import { type Auth, createAuth } from './auth';
 
 // Instance de l'app : créée à la première requête (jamais au build), à partir de l'env.
@@ -13,12 +13,7 @@ export function getAuth(): Auth {
   if (cached) return cached;
   const env = serverEnv();
   const baseURL = resolveAppUrl(env);
-  const sendEmail = createEmailSender({
-    from: env.EMAIL_FROM,
-    isProduction: env.VERCEL_ENV === 'production' || env.VERCEL_ENV === 'preview',
-    transport: env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY).emails : undefined,
-    log: (line) => process.stderr.write(`${line}\n`),
-  });
+  const sendEmail = getEmailSender();
   cached = createAuth({
     db: getDb(),
     secret: env.BETTER_AUTH_SECRET,

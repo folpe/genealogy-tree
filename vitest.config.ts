@@ -26,6 +26,10 @@ export default defineConfig({
         '**/*.types.ts',
         // Couverts par les tests d'intégration (`bun run test:integration`).
         '**/*.repository.ts',
+        '**/*.service.ts',
+        '**/*.instance.ts',
+        'src/server/auth/auth.ts',
+        'src/server/db/client.ts',
         'src/server/db/schema/**',
         'src/server/db/migrations/**',
         'src/server/db/types.ts',

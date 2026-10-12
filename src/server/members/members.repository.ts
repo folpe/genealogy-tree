@@ -1,7 +1,7 @@
 // tdd-cover: e2e src/server/auth/auth.integration.test.ts
 import { createHash, randomBytes } from 'node:crypto';
-import { and, eq, isNull } from 'drizzle-orm';
-import { invitations, memberships } from '../db/schema';
+import { and, eq, gt, isNull } from 'drizzle-orm';
+import { invitations, memberships, persons } from '../db/schema';
 import type { Db } from '../db/types';
 import type { Admission } from './admission';
 import { normalizeEmail } from './admission';
@@ -27,6 +27,27 @@ export async function findPendingInvitation(db: Db, email: string) {
       ),
     );
   return invitation;
+}
+
+/** Invitation en cours désignée par son jeton, avec la fiche invitée et qui invite. */
+export async function findInvitationByToken(db: Db, token: string, now: Date) {
+  const [row] = await db
+    .select({
+      email: invitations.email,
+      firstName: persons.firstName,
+      invitedBy: invitations.invitedBy,
+    })
+    .from(invitations)
+    .innerJoin(persons, eq(persons.id, invitations.personId))
+    .where(
+      and(
+        eq(invitations.tokenHash, hashToken(token)),
+        isNull(invitations.usedAt),
+        isNull(invitations.revokedAt),
+        gt(invitations.expiresAt, now),
+      ),
+    );
+  return row;
 }
 
 /** Crée une invitation ; renvoie le jeton en clair, à mettre dans l'email et nulle part ailleurs. */

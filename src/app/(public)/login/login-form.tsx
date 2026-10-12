@@ -12,10 +12,10 @@ type Step = { name: 'email' } | { name: 'sent'; email: string };
 const button =
   'h-[50px] w-full rounded-full text-[15px] font-semibold disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
 
-export function LoginForm() {
+export function LoginForm({ defaultEmail = '' }: { defaultEmail?: string }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>({ name: 'email' });
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(defaultEmail);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
