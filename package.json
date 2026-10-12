@@ -28,7 +28,7 @@
     "db:seed": "bun scripts/db-seed.ts"
   },
   "dependencies": {
-    "@better-auth/drizzle-adapter": "~1.6.33",
+    "@better-auth/drizzle-adapter": "~1.7.0",
     "@better-auth/passkey": "~1.6.33",
     "@notionhq/client": "^2.3.0",
     "@t3-oss/env-nextjs": "^0.13.11",
