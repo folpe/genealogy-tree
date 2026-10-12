@@ -46,52 +46,89 @@ describe('createEmailSender', () => {
   });
 });
 
-describe('magicLinkEmail', () => {
-  it('donne le lien, sa durée et son usage unique, en tutoyant', () => {
-    const email = magicLinkEmail('luc@exemple.fr', 'https://famille.folpe.me/api/auth/x?token=t');
-    expect(email.to).toBe('luc@exemple.fr');
-    expect(email.subject).toBe('Ton lien pour entrer dans l’arbre');
-    expect(email.text).toContain('https://famille.folpe.me/api/auth/x?token=t');
-    expect(email.text).toContain('15 minutes');
-    expect(email.html).toContain('href="https://famille.folpe.me/api/auth/x?token=t"');
+/** Attributs `href` du HTML, décodés comme le ferait un client mail. */
+const hrefs = (html: string) =>
+  [...html.matchAll(/href="([^"]*)"/g)].map((m) => (m[1] ?? '').replaceAll('&amp;', '&'));
+
+describe('gabarits (React Email, style Album)', () => {
+  it('posent la mise en page commune : français, 600 px, logo servi par l’app, aperçu', async () => {
+    const email = await magicLinkEmail(
+      'luc@exemple.fr',
+      'https://famille.folpe.me/api/auth/x?token=t',
+    );
+    expect(email.html).toMatch(/^<!DOCTYPE html/);
+    expect(email.html).toContain('lang="fr"');
+    expect(email.html).toContain('max-width:600px');
+    expect(email.html).toContain('src="https://famille.folpe.me/email/logo.png"');
+    expect(email.html).toContain('Fraunces');
+    // Aperçu affiché par les boîtes mail à côté de l'objet.
+    expect(email.html).toContain('Valable 15 minutes, pour une seule connexion.');
   });
 
-  it('échappe le lien dans le HTML', () => {
-    expect(magicLinkEmail('a@b.fr', 'https://x.fr/?a=1&b="2"').html).toContain(
-      'https://x.fr/?a=1&amp;b=&quot;2&quot;',
+  it('n’ont qu’un texte brut lisible, sans balise', async () => {
+    const email = await magicLinkEmail(
+      'luc@exemple.fr',
+      'https://famille.folpe.me/api/auth/x?token=t',
     );
+    expect(email.text).not.toMatch(/<[a-z]/i);
+    expect(email.text).not.toContain('Valable 15 minutes, pour une seule connexion.');
+  });
+});
+
+describe('magicLinkEmail', () => {
+  it('donne le lien, sa durée et son usage unique, en tutoyant', async () => {
+    const url = 'https://famille.folpe.me/api/auth/x?token=t&callbackURL=%2Ftree';
+    const email = await magicLinkEmail('luc@exemple.fr', url);
+    expect(email.to).toBe('luc@exemple.fr');
+    expect(email.subject).toBe('Ton lien pour entrer dans l’arbre');
+    expect(email.text).toContain(url);
+    expect(email.text).toContain('15 minutes');
+    expect(hrefs(email.html)).toContain(url);
+    expect(email.html).toContain('Entrer dans l’arbre');
+  });
+
+  it('échappe le lien dans le HTML', async () => {
+    const email = await magicLinkEmail('a@b.fr', 'https://x.fr/?a=1&b="2"');
+    expect(email.html).not.toContain('b="2"');
+    expect(email.html).toContain('&quot;2&quot;');
   });
 });
 
 describe('invitationEmail', () => {
-  it('dit qui invite, pour quelle fiche, et donne le lien', () => {
-    const email = invitationEmail({
-      to: 'lea@exemple.fr',
-      inviterName: 'Hugo',
-      firstName: 'Léa',
-      url: 'https://famille.folpe.me/invite/jeton',
-    });
+  const invitation = {
+    to: 'lea@exemple.fr',
+    inviterName: 'Hugo',
+    firstName: 'Léa',
+    url: 'https://famille.folpe.me/invite/jeton',
+  };
+
+  it('dit qui invite, pour quelle fiche, et donne le lien', async () => {
+    const email = await invitationEmail(invitation);
     expect(email.subject).toBe('Hugo t’invite dans l’arbre de la famille');
     expect(email.text).toContain('Bonjour Léa');
     expect(email.text).toContain('https://famille.folpe.me/invite/jeton');
     expect(email.text).toContain('14 jours');
-    expect(email.html).toContain('href="https://famille.folpe.me/invite/jeton"');
+    expect(hrefs(email.html)).toContain('https://famille.folpe.me/invite/jeton');
+    expect(email.html).toContain('Rejoindre l’arbre');
   });
 
-  it('échappe les noms dans le HTML', () => {
-    const email = invitationEmail({
-      to: 'a@b.fr',
-      inviterName: '<b>X</b>',
-      firstName: 'Y',
-      url: 'https://x.fr',
-    });
-    expect(email.html).not.toContain('<b>X</b>');
+  it('annonce une demande acceptée quand l’invitation y répond', async () => {
+    const email = await invitationEmail({ ...invitation, reason: 'accepted-request' });
+    expect(email.subject).toBe('Ta demande est acceptée : bienvenue dans l’arbre');
+    expect(email.text).toContain('Hugo a accepté ta demande');
+    expect(hrefs(email.html)).toContain('https://famille.folpe.me/invite/jeton');
+  });
+
+  it('échappe les noms saisis par la famille', async () => {
+    const email = await invitationEmail({ ...invitation, inviterName: '<b>Hugo</b>' });
+    expect(email.html).not.toContain('<b>Hugo</b>');
+    expect(email.html).toContain('&lt;b&gt;Hugo&lt;/b&gt;');
   });
 });
 
 describe('accessRequestEmail', () => {
-  it('résume la demande pour les admins et renvoie vers l’administration', () => {
-    const email = accessRequestEmail({
+  it('résume la demande pour les admins et renvoie vers l’administration', async () => {
+    const email = await accessRequestEmail({
       to: 'folpe@exemple.fr',
       name: 'Isabelle Lefèvre',
       email: 'isabelle@exemple.fr',
@@ -102,5 +139,6 @@ describe('accessRequestEmail', () => {
     expect(email.text).toContain('isabelle@exemple.fr');
     expect(email.text).toContain('Cousine de Luc');
     expect(email.text).toContain('https://famille.folpe.me/admin');
+    expect(hrefs(email.html)).toContain('https://famille.folpe.me/admin');
   });
 });

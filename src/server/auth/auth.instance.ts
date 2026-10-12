@@ -23,7 +23,7 @@ export function getAuth(): Auth {
       .map((host) => `https://${host}`),
     passkeyRpID: resolvePasskeyRpID(baseURL, env.PASSKEY_RP_ID),
     bootstrapAdminEmail: env.AUTH_BOOTSTRAP_ADMIN_EMAIL,
-    sendMagicLink: ({ email, url }) => sendEmail(magicLinkEmail(email, url)),
+    sendMagicLink: async ({ email, url }) => sendEmail(await magicLinkEmail(email, url)),
   });
   return cached;
 }

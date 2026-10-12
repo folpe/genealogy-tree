@@ -7,6 +7,7 @@ import type { Db } from '../db/types';
 import { buildFamilyIndex } from '../family/family.helper';
 import { loadFamilyGraph } from '../family/family.repository';
 import { accessRequestEmail, type EmailMessage, invitationEmail } from '../notifications/email';
+import type { InvitationReason } from '../notifications/emails/email-templates';
 import { normalizeEmail } from './admission';
 import { canInvite, canSetAdmin, type MemberRecord } from './members.policy';
 import { createInvitation, findInvitationByToken } from './members.repository';
@@ -47,7 +48,13 @@ async function loadMembers(db: Db): Promise<(MemberRecord & { userId: string })[
 
 async function sendInvitation(
   deps: MembersDeps,
-  input: { viewer: MemberRecord; viewerUserId: string; personId: string; email: string },
+  input: {
+    viewer: MemberRecord;
+    viewerUserId: string;
+    personId: string;
+    email: string;
+    reason?: InvitationReason;
+  },
 ) {
   const index = buildFamilyIndex(await loadFamilyGraph(deps.db));
   const members = await loadMembers(deps.db);
@@ -89,11 +96,12 @@ async function sendInvitation(
   const inviter = input.viewer.personId ? index.persons.get(input.viewer.personId) : undefined;
   const person = index.persons.get(input.personId);
   await deps.sendEmail(
-    invitationEmail({
+    await invitationEmail({
       to: normalizeEmail(input.email),
       inviterName: inviter?.firstName ?? 'L’administrateur de l’arbre',
       firstName: person?.firstName ?? '',
       url: `${deps.appUrl}/invite/${token}`,
+      ...(input.reason ? { reason: input.reason } : {}),
     }),
   );
 }
@@ -160,7 +168,13 @@ export async function requestAccess(
     .where(eq(memberships.isAdmin, true));
   for (const admin of admins) {
     await deps.sendEmail(
-      accessRequestEmail({ to: admin.email, name, email, relation, url: `${deps.appUrl}/admin` }),
+      await accessRequestEmail({
+        to: admin.email,
+        name,
+        email,
+        relation,
+        url: `${deps.appUrl}/admin`,
+      }),
     );
   }
   return { id: created.id };
@@ -193,6 +207,7 @@ export async function decideAccessRequest(
       viewerUserId,
       personId: decision.personId,
       email: request.email,
+      reason: 'accepted-request',
     });
   }
   await deps.db
