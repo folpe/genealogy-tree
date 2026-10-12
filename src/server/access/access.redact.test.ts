@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { aPerson, exact } from '../../../tests/fixtures/builders';
-import { redactPerson } from './access.redact';
+import { redactPerson, showsProfilePhoto } from './access.redact';
 
 const luc = aPerson('luc', {
   firstName: 'Luc',
@@ -63,5 +63,18 @@ describe('redactPerson', () => {
       initials: 'JM',
       gender: 'femme',
     });
+  });
+});
+
+describe('showsProfilePhoto', () => {
+  // Spec section 6.4 : la photo de profil d'un vivant est visible de toute la famille,
+  // pas celle d'une fiche restreinte ni celle d'un mineur hors de son cercle proche.
+  it.each([
+    ['full', true],
+    ['family', true],
+    ['structure', false],
+    ['minor', false],
+  ] as const)('niveau %s : %s', (level, expected) => {
+    expect(showsProfilePhoto(level)).toBe(expected);
   });
 });

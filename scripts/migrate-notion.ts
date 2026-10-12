@@ -9,7 +9,9 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '../src/server/db/schema';
 import { todayIn } from '../src/server/family/fuzzy-date.helper';
+import { vercelBlobStore } from '../src/server/media/media.blob';
 import { decryptExport, encryptExport } from '../src/server/migration/export-crypto';
+import { loadNotionPhotos, type NotionPhoto } from '../src/server/migration/notion.media';
 import { renderNotionReport } from '../src/server/migration/notion.report';
 import { loadNotionGraph } from '../src/server/migration/notion.repository';
 import { notionPageSchema, photoFiles } from '../src/server/migration/notion.schema';
@@ -22,9 +24,13 @@ import { type PhotoOutcome, transformNotionExport } from '../src/server/migratio
 //   bun scripts/migrate-notion.ts report <dossier>
 //   bun scripts/migrate-notion.ts load <dossier> --target notion-import [--dry-run]
 //   bun scripts/migrate-notion.ts load <dossier> --target main --confirm-production
+//   bun scripts/migrate-notion.ts photos <dossier> --target main --confirm-production
 //
 // Secrets lus dans le trousseau macOS (compte `ances-tree`) : jeton Notion, base,
-// clé de chiffrement de l'export. L'export et le rapport vivent hors du dépôt.
+// clé de chiffrement de l'export, jeton du store Blob. L'export et le rapport
+// vivent hors du dépôt.
+
+type ExportedPhoto = PhotoOutcome & { sha256?: string; mime?: string; bytes?: number };
 
 const EXPORT_ROOT = join(homedir(), '.local/share/ances-tree/notion-exports');
 const NEON_PROJECT_ID = 'frosty-feather-00901702';
@@ -88,7 +94,7 @@ async function extract() {
   if (cursor) throw new Error(`Plus de ${MAX_PAGES} pages : export interrompu`);
 
   // Les URLs Notion expirent au bout d'une heure : chaque photo est téléchargée tout de suite.
-  const photos: (PhotoOutcome & { sha256?: string; mime?: string; bytes?: number })[] = [];
+  const photos: ExportedPhoto[] = [];
   for (const raw of pages) {
     const page = notionPageSchema.safeParse(raw);
     if (!page.success) continue;
@@ -130,7 +136,7 @@ function readExport(dir: string) {
     readFileSync(join(dir, 'export.json.enc')),
     secret('ances-tree-export-key'),
   );
-  const bundle: { exportedAt: string; pages: unknown[]; photos: PhotoOutcome[] } = JSON.parse(
+  const bundle: { exportedAt: string; pages: unknown[]; photos: ExportedPhoto[] } = JSON.parse(
     clear.toString('utf8'),
   );
   const transform = transformNotionExport(bundle.pages, {
@@ -155,14 +161,16 @@ function report(dir: string) {
 
 class DryRun extends Error {}
 
-async function load(dir: string, target: string, options: { dryRun: boolean; confirmed: boolean }) {
+function guardProduction(target: string, options: { dryRun: boolean; confirmed: boolean }) {
   if (target === 'main' && !options.dryRun && !options.confirmed) {
     throw new Error(
       'Écriture en production : ajoute --confirm-production après validation de Folpe',
     );
   }
-  const { transform } = readExport(dir);
-  // Rôle applicatif : droits sur les données, aucun sur le schéma.
+}
+
+/** Rôle applicatif : droits sur les données, aucun sur le schéma. */
+function connect(target: string) {
   const url = execFileSync('neonctl', [
     'connection-string',
     target,
@@ -176,7 +184,13 @@ async function load(dir: string, target: string, options: { dryRun: boolean; con
     .toString()
     .trim();
   const connection = postgres(url, { max: 1, prepare: false, onnotice: () => {} });
-  const db = drizzle(connection, { schema });
+  return { db: drizzle(connection, { schema }), close: () => connection.end() };
+}
+
+async function load(dir: string, target: string, options: { dryRun: boolean; confirmed: boolean }) {
+  guardProduction(target, options);
+  const { transform } = readExport(dir);
+  const { db, close } = connect(target);
   try {
     const result = await db.transaction(async (tx) => {
       const loaded = await loadNotionGraph(tx, transform.graph);
@@ -189,7 +203,36 @@ async function load(dir: string, target: string, options: { dryRun: boolean; con
     if (!(error instanceof DryRun)) throw error;
     console.log(`Dry-run sur ${target}, rien n'est écrit :`, JSON.parse(error.message));
   } finally {
-    await connection.end();
+    await close();
+  }
+}
+
+/**
+ * Photos de l'export vers le store Blob privé, après `load` (les fiches doivent
+ * exister). Pas de dry-run : les fichiers portent leur empreinte, un passage de
+ * trop ne réécrit rien d'autre que les mêmes octets.
+ */
+async function loadPhotos(dir: string, target: string, options: { confirmed: boolean }) {
+  guardProduction(target, { dryRun: false, confirmed: options.confirmed });
+  const { bundle } = readExport(dir);
+  const key = secret('ances-tree-export-key');
+  const photos: NotionPhoto[] = bundle.photos.flatMap((p) => {
+    if (!p.ok || !p.sha256 || !p.mime) return [];
+    const file = join(dir, 'photos', `${p.sha256}.${EXTENSIONS[p.mime]}.enc`);
+    return [{ pageId: p.pageId, name: p.name, bytes: decryptExport(readFileSync(file), key) }];
+  });
+  const { db, close } = connect(target);
+  try {
+    const blob = vercelBlobStore({ token: secret('ances-tree-blob-token') });
+    const result = await loadNotionPhotos({ db, blob }, photos);
+    console.log(`Photos sur ${target} :`, {
+      stored: result.stored,
+      reused: result.reused,
+      failures: result.failures.length,
+    });
+    for (const f of result.failures) console.log(`  échec ${f.pageId} (${f.name}) : ${f.error}`);
+  } finally {
+    await close();
   }
 }
 
@@ -212,9 +255,12 @@ if (command === 'extract') {
     dryRun: values['dry-run'],
     confirmed: values['confirm-production'],
   });
+} else if (command === 'photos' && dir && values.target) {
+  await loadPhotos(dir, values.target, { confirmed: values['confirm-production'] });
 } else {
   console.error(
-    'Usage : extract | report <dossier> | load <dossier> --target <branche> [--dry-run]',
+    'Usage : extract | report <dossier> | load <dossier> --target <branche> [--dry-run] | ' +
+      'photos <dossier> --target <branche>',
   );
   process.exit(1);
 }

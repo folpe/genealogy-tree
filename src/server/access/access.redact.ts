@@ -67,6 +67,11 @@ export function redactPerson(person: Person, level: VisibilityLevel): RedactedPe
   }
 }
 
+/** La photo de profil suit la ligne « année et ville de naissance » de la spec (6.4). */
+export function showsProfilePhoto(level: VisibilityLevel): boolean {
+  return level === 'full' || level === 'family';
+}
+
 /**
  * Projection d'une union selon le niveau le plus restrictif de ses partenaires :
  * dates gardées en `full`, ramenées à l'année en `family`, retirées au-delà (le

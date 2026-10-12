@@ -118,9 +118,9 @@ scripts/
 
 ### Lot 6 : médias
 
-- [ ] Store Vercel Blob privé ; `media.service.ts` : upload, normalisation avec `sharp` (rotation EXIF appliquée, métadonnées EXIF et GPS retirées, dérivées WebP 256 / 768 / 1600 px, `blur_data_url`), déduplication par SHA-256, chemin `persons/<person_id>/<sha256>.<ext>`.
-- [ ] Accès aux médias privés par URL signée de courte durée, générée après vérification de la policy.
-- [ ] Tests : une image avec GPS ressort sans GPS ; un doublon n'est pas réuploadé.
+- [x] Store Vercel Blob privé ; `media.service.ts` : upload, normalisation avec `sharp` (rotation EXIF appliquée, métadonnées EXIF et GPS retirées, dérivées WebP 256 / 768 / 1600 px, `blur_data_url`), déduplication par SHA-256, chemin `persons/<person_id>/<sha256>.<ext>`.
+- [x] Accès aux médias privés par URL signée de courte durée, générée après vérification de la policy. HMAC sur une clé dérivée de `BETTER_AUTH_SECRET`, expiration arrondie à l'heure (1 à 2 h) pour garder le cache du navigateur ; route `/media/[id]/[width]`. La photo de profil suit la policy (`showsProfilePhoto` : niveaux `full` et `family`). Le store lui-même reste à provisionner (accès Vercel).
+- [x] Tests : une image avec GPS ressort sans GPS ; un doublon n'est pas réuploadé.
 
 ### Lot 7 : géocodage des lieux
 

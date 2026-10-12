@@ -23,9 +23,19 @@ function treeOf(memberId: string): TreeForViewer {
     ...view,
     generations: Object.fromEntries(generationLevels(index)),
     viewerPersonId: viewer.personId ?? undefined,
+    photos: {},
   };
 }
 const hugo = treeOf('m-hugo');
+// Photo signée telle que le service la fournit (URLs fictives).
+const lucPhoto = {
+  src: '/media/p-luc/768?e=1&s=x',
+  srcSet: '/media/p-luc/256?e=1&s=x 256w, /media/p-luc/768?e=1&s=x 768w',
+  width: 768,
+  height: 1024,
+  blurDataUrl: 'data:image/webp;base64,AA',
+};
+const hugoWithPhoto: TreeForViewer = { ...hugo, photos: { luc: lucPhoto } };
 
 describe('GenerationList', () => {
   it('range les fiches par génération, de la plus ancienne à la plus récente', () => {
@@ -50,6 +60,19 @@ describe('GenerationList', () => {
     expect(screen.queryByText(/2018/)).toBeNull();
   });
 
+  it('montre la photo dans la bulle, sinon les initiales', () => {
+    render(<GenerationList tree={hugoWithPhoto} />);
+    const luc = screen.getByRole('link', { name: /Luc Marchand/ });
+    // Décorative : le nom suit dans le lien.
+    const img = luc.querySelector('img');
+    expect(img).toHaveAttribute('alt', '');
+    expect(img).toHaveAttribute('src', lucPhoto.src);
+    expect(img).toHaveAttribute('srcset', lucPhoto.srcSet);
+    const paul = screen.getByRole('link', { name: /Paul Marchand/ });
+    expect(paul.querySelector('img')).toBeNull();
+    expect(within(paul).getByText('PM')).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('invite à patienter quand l’arbre est encore vide', () => {
     render(
       <GenerationList
@@ -59,6 +82,7 @@ describe('GenerationList', () => {
           parentChildren: [],
           generations: {},
           viewerPersonId: undefined,
+          photos: {},
         }}
       />,
     );
@@ -83,6 +107,21 @@ describe('PersonSheet', () => {
     const unions = screen.getByRole('list', { name: 'Unions' });
     expect(unions).toHaveTextContent('Claire Dumont : Union libre (1985), séparation (1989)');
     expect(unions).toHaveTextContent('Sophie Marchand : Mariage depuis 1990');
+  });
+
+  it('photo de la fiche, nommée, avec son aperçu flou en attendant', () => {
+    render(<PersonSheet tree={hugoWithPhoto} personId="luc" />);
+    const img = screen.getByRole('img', { name: 'Luc Marchand' });
+    expect(img).toHaveAttribute('srcset', lucPhoto.srcSet);
+    expect(img).toHaveAttribute('width', '768');
+    expect(img).toHaveAttribute('height', '1024');
+    expect(img.parentElement?.style.backgroundImage).toContain(lucPhoto.blurDataUrl);
+  });
+
+  it('sans photo : les initiales dans la bulle', () => {
+    render(<PersonSheet tree={hugo} personId="luc" />);
+    expect(screen.queryByRole('img')).toBeNull();
+    expect(screen.getByText('LM')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('vivant hors de mon périmètre : année et ville de naissance, et pourquoi', () => {
