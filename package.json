@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "~1.6.33",
-    "@better-auth/passkey": "~1.6.33",
+    "@better-auth/passkey": "~1.7.0",
     "@notionhq/client": "^2.3.0",
     "@t3-oss/env-nextjs": "^0.13.11",
     "better-auth": "~1.6.33",
