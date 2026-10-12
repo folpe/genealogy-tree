@@ -51,6 +51,8 @@ export const personSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   birthName: z.string().min(1).optional(),
+  /** Nom d'usage dans la famille (« Lulu », « 三叔 ») : un nom comme un autre pour les droits. */
+  nickname: z.string().min(1).optional(),
   gender: genderSchema,
   birth: lifeEventSchema.optional(),
   /** Présent dès que la personne est décédée, même si date et lieu sont inconnus. */

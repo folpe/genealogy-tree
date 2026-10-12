@@ -5,6 +5,7 @@ import { redactPerson, showsProfilePhoto } from './access.redact';
 const luc = aPerson('luc', {
   firstName: 'Luc',
   lastName: 'Marchand',
+  nickname: 'Lulu',
   gender: 'homme',
   birth: { date: exact(1963, 8, 21), place: 'Toulouse' },
   residence: 'Toulouse',
@@ -23,6 +24,7 @@ describe('redactPerson', () => {
       id: 'luc',
       firstName: 'Luc',
       lastName: 'Marchand',
+      nickname: 'Lulu',
       gender: 'homme',
       birth: { date: { precision: 'annee', year: 1963 }, place: 'Toulouse' },
     });
@@ -44,6 +46,7 @@ describe('redactPerson', () => {
       firstName: 'Luc',
       lastName: 'Marchand',
       birthName: 'Martin',
+      nickname: 'Lulu',
       gender: 'homme',
     });
     expect('birth' in redacted).toBe(false);
@@ -51,6 +54,7 @@ describe('redactPerson', () => {
 
   it('minor : prénom et initiales seulement', () => {
     const jade = aPerson('jade', {
+      nickname: 'Jaja',
       firstName: 'Jade',
       lastName: 'Marchand',
       gender: 'femme',

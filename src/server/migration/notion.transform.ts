@@ -38,7 +38,6 @@ export type PhotoOutcome = { pageId: string; name: string; ok: boolean; error?: 
 export type NotionTransform = {
   graph: FamilyGraph;
   anomalies: MigrationAnomaly[];
-  nicknames: { personId: string; nickname: string }[];
   stats: {
     pages: number;
     persons: number;
@@ -174,6 +173,7 @@ function toPerson(ctx: Context, page: NotionPage, today: FuzzyDate): Person | un
   }
   const birth = lifeEvent(birthDate, plainText(p.birthLocation));
   const birthName = plainText(p.maidenName);
+  const nickname = plainText(p.nickName);
   const residence = residenceOf(page);
 
   return {
@@ -181,6 +181,7 @@ function toPerson(ctx: Context, page: NotionPage, today: FuzzyDate): Person | un
     firstName,
     lastName,
     ...(birthName ? { birthName } : {}),
+    ...(nickname ? { nickname } : {}),
     gender: gender ?? 'inconnu',
     ...(birth ? { birth } : {}),
     ...(deathDate ? { death: { date: deathDate } } : presumedDead ? { death: {} } : {}),
@@ -346,13 +347,9 @@ export function transformNotionExport(
   const pages = readPages(ctx, rawPages);
 
   const graph: FamilyGraph = { persons: [], unions: [], parentChildren: [] };
-  const nicknames: NotionTransform['nicknames'] = [];
   for (const page of pages) {
     const person = toPerson(ctx, page, options.today);
-    if (!person) continue;
-    graph.persons.push(person);
-    const nickname = plainText(page.properties.nickName);
-    if (nickname) nicknames.push({ personId: page.id, nickname });
+    if (person) graph.persons.push(person);
   }
   flagDuplicates(ctx, graph.persons);
 
@@ -375,7 +372,6 @@ export function transformNotionExport(
   return {
     graph,
     anomalies: ctx.anomalies,
-    nicknames,
     stats: {
       pages: rawPages.length,
       persons: graph.persons.length,

@@ -107,6 +107,7 @@ export const marchandFamily: FamilyGraph = {
     person('luc', {
       firstName: 'Luc',
       lastName: 'Marchand',
+      nickname: 'Lulu',
       gender: 'homme',
       birth: { date: exact(1963, 8, 21), place: 'Toulouse' },
       residence: 'Toulouse',

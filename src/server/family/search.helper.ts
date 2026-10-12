@@ -31,7 +31,9 @@ export type SearchResult = { id: string; score: number };
 
 function searchableNames(person: RedactedPerson): string[] {
   if (person.level === 'minor') return [person.firstName];
-  return [person.firstName, person.lastName, person.birthName ?? ''].filter(Boolean);
+  return [person.firstName, person.lastName, person.birthName ?? '', person.nickname ?? ''].filter(
+    Boolean,
+  );
 }
 
 export function buildSearchIndex(

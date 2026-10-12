@@ -25,6 +25,10 @@ describe('search', () => {
     expect(ids('née Roux')).toEqual(['jeanne']);
   });
 
+  it('trouve le surnom', () => {
+    expect(ids('lulu')).toEqual(['luc']);
+  });
+
   it('exige que chaque mot corresponde', () => {
     expect(ids('hugo marchand')).toEqual(['hugo']);
     expect(ids('hugo lefevre')).toEqual([]);
