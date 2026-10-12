@@ -115,6 +115,7 @@ describe.skipIf(!db)('members.service (intégration)', () => {
       const [invitation] = await client.select().from(invitations);
       expect(invitation).toMatchObject({ email: 'isabelle@exemple.fr', personId: 'isabelle' });
       expect(sent[0]?.to).toBe('isabelle@exemple.fr');
+      expect(sent[0]?.subject).toBe('Ta demande est acceptée : bienvenue dans l’arbre');
     });
 
     it('un refus ne crée rien et n’envoie rien au demandeur', async () => {
