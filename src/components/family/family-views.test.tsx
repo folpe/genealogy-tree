@@ -1,32 +1,11 @@
 // @vitest-environment jsdom
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { buildAccessContext } from '@/server/access/access.policy';
-import { viewTreeAs } from '@/server/access/access.view';
-import { buildFamilyIndex, generationLevels } from '@/server/family/family.helper';
 import type { TreeForViewer } from '@/server/family/family.service';
-import { exact } from '../../../tests/fixtures/builders';
-import { marchandFamily, marchandMembers } from '../../../tests/fixtures/marchand-family';
-import { GenerationList, PersonSheet } from './family-views';
+import { treeForViewer } from '../../../tests/fixtures/tree-for-viewer';
+import { PersonSheet } from './family-views';
 
-/** L'arbre tel que Hugo le reçoit du service. */
-function treeOf(memberId: string): TreeForViewer {
-  const index = buildFamilyIndex(marchandFamily);
-  const viewer = marchandMembers.find((m) => m.id === memberId);
-  if (!viewer) throw new Error(memberId);
-  const { audited: _, ...view } = viewTreeAs(
-    buildAccessContext(index, [...marchandMembers]),
-    viewer,
-    exact(2026, 10, 12),
-  );
-  return {
-    ...view,
-    generations: Object.fromEntries(generationLevels(index)),
-    viewerPersonId: viewer.personId ?? undefined,
-    photos: {},
-  };
-}
-const hugo = treeOf('m-hugo');
+const hugo = treeForViewer('m-hugo');
 // Photo signée telle que le service la fournit (URLs fictives).
 const lucPhoto = {
   src: '/media/p-luc/768?e=1&s=x',
@@ -36,59 +15,6 @@ const lucPhoto = {
   blurDataUrl: 'data:image/webp;base64,AA',
 };
 const hugoWithPhoto: TreeForViewer = { ...hugo, photos: { luc: lucPhoto } };
-
-describe('GenerationList', () => {
-  it('range les fiches par génération, de la plus ancienne à la plus récente', () => {
-    render(<GenerationList tree={hugo} />);
-    const generations = screen.getAllByRole('region');
-    expect(generations).toHaveLength(5);
-    expect(within(generations[0] as HTMLElement).getByText('Génération 1')).toBeVisible();
-    expect(
-      within(generations[3] as HTMLElement).getByRole('link', { name: /Hugo Marchand/ }),
-    ).toHaveAttribute('href', '/people/hugo');
-  });
-
-  it('signale ma fiche et affiche les années de vie', () => {
-    render(<GenerationList tree={hugo} />);
-    expect(screen.getByRole('link', { name: /Hugo Marchand.*c’est toi/ })).toBeVisible();
-    expect(screen.getByRole('link', { name: /Henri Marchand.*1902 - 1979/ })).toBeVisible();
-  });
-
-  it('ne nomme un mineur hors du cercle proche que par son prénom et son initiale', () => {
-    render(<GenerationList tree={hugo} />);
-    expect(screen.getByRole('link', { name: /^Jade M\./ })).toBeVisible();
-    expect(screen.queryByText(/2018/)).toBeNull();
-  });
-
-  it('montre la photo dans la bulle, sinon les initiales', () => {
-    render(<GenerationList tree={hugoWithPhoto} />);
-    const luc = screen.getByRole('link', { name: /Luc Marchand/ });
-    // Décorative : le nom suit dans le lien.
-    const img = luc.querySelector('img');
-    expect(img).toHaveAttribute('alt', '');
-    expect(img).toHaveAttribute('src', lucPhoto.src);
-    expect(img).toHaveAttribute('srcset', lucPhoto.srcSet);
-    const paul = screen.getByRole('link', { name: /Paul Marchand/ });
-    expect(paul.querySelector('img')).toBeNull();
-    expect(within(paul).getByText('PM')).toHaveAttribute('aria-hidden', 'true');
-  });
-
-  it('invite à patienter quand l’arbre est encore vide', () => {
-    render(
-      <GenerationList
-        tree={{
-          persons: [],
-          unions: [],
-          parentChildren: [],
-          generations: {},
-          viewerPersonId: undefined,
-          photos: {},
-        }}
-      />,
-    );
-    expect(screen.getByText(/L’arbre est encore vide/)).toBeVisible();
-  });
-});
 
 describe('PersonSheet', () => {
   it('fiche entière : dates, lieux, résidence et proches', () => {
