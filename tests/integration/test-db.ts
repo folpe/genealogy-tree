@@ -5,6 +5,7 @@ import * as schema from '../../src/server/db/schema';
 import type { Db } from '../../src/server/db/types';
 
 const TABLES = [
+  'admin_record_views',
   'access_requests',
   'invitations',
   'memberships',

@@ -6,6 +6,7 @@ import {
   buildFamilyIndex,
   childrenOf,
   descendantsOf,
+  generationLevels,
   isOngoing,
   parentsOf,
   partnersOf,
@@ -145,5 +146,48 @@ describe('performance', () => {
     descendantsOf(big, 'p0');
     siblingsOf(big, 'p1000');
     expect(performance.now() - start).toBeLessThan(50);
+  });
+});
+
+describe('generationLevels', () => {
+  const byLevel = (levels: Map<string, number>) => {
+    const rows: string[][] = [];
+    for (const [id, level] of levels) rows[level] = [...(rows[level] ?? []), id];
+    return rows.map((row) => row.sort());
+  };
+
+  it('range la famille Marchand par génération, conjoints au même niveau', () => {
+    expect(byLevel(generationLevels(index))).toEqual([
+      ['emile', 'henri', 'louise', 'marthe'],
+      ['bernard', 'claude', 'jacques', 'jeanne', 'marie', 'odette', 'paul'],
+      ['anne', 'claire', 'isabelle', 'luc', 'sophie'],
+      ['hugo', 'lea', 'maxime', 'tom'],
+      ['jade'],
+    ]);
+  });
+
+  it('commence chaque branche isolée à la génération 0', () => {
+    const graph: FamilyGraph = {
+      persons: [aPerson('a'), aPerson('b'), aPerson('seul')],
+      unions: [],
+      parentChildren: [aChildOf('a', 'b')],
+    };
+    expect(Object.fromEntries(generationLevels(buildFamilyIndex(graph)))).toEqual({
+      a: 0,
+      b: 1,
+      seul: 0,
+    });
+  });
+
+  it('ignore la filiation « a élevé » pour placer les générations', () => {
+    const graph: FamilyGraph = {
+      persons: [aPerson('beau-parent'), aPerson('enfant')],
+      unions: [],
+      parentChildren: [aChildOf('beau-parent', 'enfant', { kind: 'a_eleve' })],
+    };
+    expect(Object.fromEntries(generationLevels(buildFamilyIndex(graph)))).toEqual({
+      'beau-parent': 0,
+      enfant: 0,
+    });
   });
 });

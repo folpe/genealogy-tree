@@ -1,4 +1,4 @@
-import type { FuzzyDate, Gender, Person } from '../family/family.types';
+import type { FuzzyDate, Gender, Person, Union } from '../family/family.types';
 import type { VisibilityLevel } from './access.types';
 
 // Projection d'une fiche selon le niveau de visibilité. Les champs retirés sont
@@ -65,4 +65,24 @@ export function redactPerson(person: Person, level: VisibilityLevel): RedactedPe
         gender: person.gender,
       };
   }
+}
+
+/**
+ * Projection d'une union selon le niveau le plus restrictif de ses partenaires :
+ * dates gardées en `full`, ramenées à l'année en `family`, retirées au-delà (le
+ * lien et sa nature restent, comme le nom sur une fiche restreinte).
+ */
+export function redactUnion(union: Union, level: VisibilityLevel): Union {
+  if (level === 'full') return union;
+  const { start, end, ...rest } = union;
+  if (level !== 'family') {
+    return { ...rest, ...(end ? { end: { reason: end.reason } } : {}) };
+  }
+  return {
+    ...rest,
+    ...(start ? { start: toYear(start) } : {}),
+    ...(end
+      ? { end: { reason: end.reason, ...(end.date ? { date: toYear(end.date) } : {}) } }
+      : {}),
+  };
 }

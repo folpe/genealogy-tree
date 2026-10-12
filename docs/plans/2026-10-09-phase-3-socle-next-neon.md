@@ -109,10 +109,10 @@ scripts/
 
 ### Lot 5 : lecture des données à travers la policy
 
-- [ ] `family.service.ts` : `getTreeForViewer(viewer)` qui charge le graphe, calcule le niveau de visibilité de chaque fiche avec `access.policy`, applique `access.redact` **avant** de sérialiser vers le client.
-- [ ] Pages `(app)/tree` (rendu provisoire : liste par génération et fiche) et `(app)/people/[id]`.
-- [ ] Journalisation des consultations admin de fiches restreintes (`activity`).
-- [ ] Tests d'intégration : un membre hors périmètre ne reçoit jamais la date exacte ni la résidence d'un vivant dans la réponse sérialisée (assertion sur le payload RSC, pas sur l'UI).
+- [x] `family.service.ts` : `getTreeForViewer(viewer)` qui charge le graphe, calcule le niveau de visibilité de chaque fiche avec `access.policy`, applique `access.redact` **avant** de sérialiser vers le client. La projection pure est `access.view` (`viewTreeAs`) ; les dates d'une union suivent le niveau le plus restrictif de ses partenaires (année en `family`, retirées au-delà).
+- [x] Pages `(app)/tree` (rendu provisoire : liste par génération et fiche) et `(app)/people/[id]`. Générations calculées par `generationLevels` (conjoints au même niveau, « a élevé » ignoré).
+- [x] Journalisation des consultations admin de fiches restreintes : table `admin_record_views` (migration `0002`), une ligne par admin, fiche et jour (fuseau Europe/Paris).
+- [x] Tests d'intégration : un membre hors périmètre ne reçoit jamais la date exacte ni la résidence d'un vivant dans la réponse sérialisée. L'intégration porte sur la sortie sérialisée du service ; le payload RSC des pages a été contrôlé sur un build local (Hugo : rien sur Anne, Tom ni Jade au-delà de leur niveau). L'assertion automatique sur le payload RSC ira dans l'e2e Playwright.
 - **Acceptation :** les cas de la section 6.4 sont vérifiés sur des données en base.
 
 ### Lot 6 : médias
