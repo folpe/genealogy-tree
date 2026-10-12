@@ -119,7 +119,9 @@ export function FamilyTree({
     return grouped;
   }, [nodes]);
   const start = focusId && byId.has(focusId) ? focusId : nodes[0]?.id;
-  const [activeId, setActiveId] = useState(start);
+  const [chosenId, setActiveId] = useState(start);
+  // Une bulle disparue après un nouveau rendu serveur ne doit pas emporter le Tab.
+  const activeId = chosenId && byId.has(chosenId) ? chosenId : start;
   const canvas = useRef<HTMLDivElement>(null); // allow-null: contrat des refs de React
   const elements = useRef(new Map<string, HTMLAnchorElement>());
 
