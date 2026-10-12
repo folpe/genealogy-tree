@@ -154,3 +154,19 @@ function residence(id: string, placeId: string, start: string | null, end: strin
     endValueEnd: null,
   };
 }
+
+describe('graphToRows : identifiants', () => {
+  it('prend des identifiants fournis, pour qu’une reprise rejouée retrouve ses lignes', () => {
+    const graph = emptyGraph([
+      aPerson('a', { birth: { place: 'Rodez' }, death: { place: 'Rodez' }, residence: 'Albi' }),
+    ]);
+    const rows = graphToRows(graph, {
+      place: (key) => `lieu:${key}`,
+      event: (personId, kind) => `evt:${personId}:${kind}`,
+      residence: (personId) => `res:${personId}`,
+    });
+    expect(rows.places.map((p) => p.id)).toEqual(['lieu:rodez', 'lieu:albi']);
+    expect(rows.events.map((e) => e.id)).toEqual(['evt:a:naissance', 'evt:a:deces']);
+    expect(rows.residences.map((r) => r.id)).toEqual(['res:a']);
+  });
+});

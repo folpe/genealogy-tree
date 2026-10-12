@@ -132,14 +132,16 @@ scripts/
 
 Script `scripts/migrate-notion/`, idempotent, mode `--dry-run`, cible choisie explicitement (`--target dev|preview|main`).
 
-- [ ] **Extraction** : export brut de toute la base Notion (pages et propriétés) en JSON daté, stocké hors du repo et chiffré au repos ; la suite de la migration lit ce fichier, pas l'API.
-- [ ] **Photos, pendant l'extraction** : les URLs de fichiers Notion sont signées et expirent au bout d'une heure, les URLs externes peuvent disparaître. Chaque photo est téléchargée immédiatement, son empreinte SHA-256 calculée, le binaire conservé avec l'export ; les échecs sont listés.
-- [ ] **Transformation** : mapping Notion -> schéma (personnes, unions, filiations, événements, lieux, résidences), validation Zod, invariants de phase 2 appliqués, `legacy_notion_id` conservé ; anomalies collectées (parent introuvable, cycle, date impossible, doublon probable, photo en échec) au lieu d'arrêter le script.
+Réalisé (2026-10-12) : `scripts/migrate-notion.ts` (`extract`, `report`, `load --target <branche> [--dry-run]`, `--confirm-production` exigé pour `main`) ; logique pure et testée dans `src/server/migration/`. Secrets (jeton Notion, base, clé AES-256-GCM de l'export) dans le trousseau macOS ; export, photos et rapport chiffrés ou en `0600` sous `~/.local/share/ances-tree/notion-exports/`. Écart au plan : les essais se font sur une branche Neon dédiée `notion-import` (copie de `main`) plutôt que `dev` et `preview`, qui portent la famille fictive Marchand ; le chargement refuse toute base contenant des fiches sans identifiant Notion. Premier export : 103 pages, 21 photos, 27 unions, 130 filiations, 0 anomalie à corriger, 21 à vérifier (dates au 1er janvier, un doublon probable, fiches sans date), 19 surnoms à reprendre plus tard. Les photos sont conservées chiffrées ; leur chargement attend le pipeline du lot 6.
+
+- [x] **Extraction** : export brut de toute la base Notion (pages et propriétés) en JSON daté, stocké hors du repo et chiffré au repos ; la suite de la migration lit ce fichier, pas l'API.
+- [x] **Photos, pendant l'extraction** : les URLs de fichiers Notion sont signées et expirent au bout d'une heure, les URLs externes peuvent disparaître. Chaque photo est téléchargée immédiatement, son empreinte SHA-256 calculée, le binaire conservé avec l'export ; les échecs sont listés.
+- [x] **Transformation** : mapping Notion -> schéma (personnes, unions, filiations, événements, lieux, résidences), validation Zod, invariants de phase 2 appliqués, `legacy_notion_id` conservé ; anomalies collectées (parent introuvable, cycle, date impossible, doublon probable, photo en échec) au lieu d'arrêter le script.
 - [ ] **Chargement** : transaction unique par cible ; médias passés par le pipeline du lot 6 ; upsert par `legacy_notion_id` et empreinte, donc rejouable sans doublon.
 - [ ] **Rapport** : Markdown et JSON (comptes par type, anomalies avec lien Notion, photos en échec, lieux non géocodés), relu avec Folpe.
 - [ ] **Contrôles** : comptages Notion vs Neon par type ; échantillon de 20 fiches comparées visuellement ; toutes les photos accessibles par URL signée.
 - [ ] Ordre d'exécution : `--dry-run` sur `dev`, puis réel sur `dev`, puis `preview` ; corrections dans Notion ou dans le mapping ; **validation explicite de Folpe** ; puis exécution sur `main`.
-- [ ] Tests : transformation testée sur un export Notion anonymisé en fixture ; idempotence testée (deux exécutions = même état).
+- [x] Tests : transformation testée sur un export Notion anonymisé en fixture ; idempotence testée (deux exécutions = même état).
 - **Garde-fou destructif :** l'écriture sur la branche `main` de Neon n'a lieu qu'après validation écrite de Folpe du rapport `preview`. Notion n'est jamais modifié par le script.
 
 ### Lot 9 : bascule

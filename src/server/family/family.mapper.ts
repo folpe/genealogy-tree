@@ -96,7 +96,20 @@ export function normalizePlaceLabel(label: string): string {
   return label.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
-export function graphToRows(graph: FamilyGraph): FamilyRows {
+/** Fabrique des identifiants des lignes dérivées (lieux, événements, résidences). */
+export type RowIds = {
+  place: (normalizedLabel: string) => string;
+  event: (personId: string, kind: EventRow['kind']) => string;
+  residence: (personId: string) => string;
+};
+
+const randomIds: RowIds = {
+  place: () => crypto.randomUUID(),
+  event: () => crypto.randomUUID(),
+  residence: () => crypto.randomUUID(),
+};
+
+export function graphToRows(graph: FamilyGraph, ids: RowIds = randomIds): FamilyRows {
   const rows: FamilyRows = {
     persons: [],
     events: [],
@@ -112,7 +125,7 @@ export function graphToRows(graph: FamilyGraph): FamilyRows {
     const key = normalizePlaceLabel(label);
     const known = placeIds.get(key);
     if (known) return known;
-    const created = crypto.randomUUID();
+    const created = ids.place(key);
     placeIds.set(key, created);
     rows.places.push({ id: created, label, normalizedLabel: key });
     return created;
@@ -135,7 +148,7 @@ export function graphToRows(graph: FamilyGraph): FamilyRows {
       if (!event) continue;
       const d = fuzzyDateToColumns(event.date);
       rows.events.push({
-        id: crypto.randomUUID(),
+        id: ids.event(p.id, kind),
         personId: p.id,
         kind,
         datePrecision: d.precision,
@@ -147,7 +160,7 @@ export function graphToRows(graph: FamilyGraph): FamilyRows {
     const residencePlace = placeId(p.residence);
     if (residencePlace) {
       rows.residences.push({
-        id: crypto.randomUUID(),
+        id: ids.residence(p.id),
         personId: p.id,
         placeId: residencePlace,
         startPrecision: undefined,

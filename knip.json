@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": ["netlify/functions/*.js", "src/server/*/index.ts", "scripts/*.ts"],
-  "project": ["src/**/*.{ts,tsx,css}", "tests/**/*.ts", "netlify/**/*.js", "scripts/**/*.ts"]
+  "project": ["src/**/*.{ts,tsx,css}", "tests/**/*.ts", "netlify/**/*.js", "scripts/**/*.ts"],
+  "ignoreBinaries": ["neonctl"]
 }
