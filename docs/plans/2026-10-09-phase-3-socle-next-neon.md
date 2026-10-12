@@ -143,10 +143,11 @@ Script `scripts/migrate-notion/`, idempotent, mode `--dry-run`, cible choisie ex
 
 ### Lot 9 : bascule
 
-- [ ] Domaine `famille.folpe.me` branché sur Vercel (CNAME), certificat actif.
+- [x] Domaine `famille.folpe.me` branché sur Vercel (CNAME chez Gandi), certificat Let's Encrypt actif.
 - [x] Domaine d'envoi Resend `mail.folpe.me` (créé par Folpe) : DKIM `resend._domainkey.mail.folpe.me`, MX et SPF sur `send.mail.folpe.me` ; DMARC hérité de `folpe.me`. Clé posée dans Vercel sur les 3 environnements, `EMAIL_FROM=Ances-Tree <famille@mail.folpe.me>`.
-- [ ] Envoi de test reçu en boîte principale chez Gmail et chez un webmail Orange (aînés).
-- [ ] Création des comptes : Folpe (propriétaire, admin) puis premières invitations envoyées par Folpe.
+- [ ] Envoi de test reçu en boîte principale chez Gmail et chez un webmail Orange (aînés). Gmail validé le 2026-10-12 (lien de connexion de production) ; Orange reste à faire.
+  Les liens de connexion ne fonctionnent pas sur les previews : la protection Vercel retire le paramètre `token` de l'URL. Tester la connexion en local ou en production.
+- [ ] Création des comptes : Folpe (propriétaire, admin) puis premières invitations envoyées par Folpe. Compte propriétaire créé en production le 2026-10-12 ; invitations à venir.
 - [ ] Redirection 301 de `ances-tree.netlify.app` vers `famille.folpe.me` (règle `[[redirects]]` dans `netlify.toml` d'une branche de redirection publiée une dernière fois sur Netlify).
 - [ ] Suppression de `netlify/functions`, du client Notion, de `netlify.toml` (après la publication de la redirection) et du dossier `legacy/`.
 - [ ] Mise à jour de la spec et de `docs/decisions-log/` si des écarts sont apparus.
