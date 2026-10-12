@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { expect } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { E2E_SERVER_LOG } from './e2e.constants';
 
 // Boîte d'envoi des tests : sans clé Resend, l'app écrit chaque email dans ses logs
@@ -26,4 +26,14 @@ export async function nextMagicLink(address: string, before: number): Promise<st
   const link = LINK.exec(emailsTo(address).at(-1) ?? '')?.[0];
   if (!link) throw new Error(`Email sans lien de connexion pour ${address}`);
   return link;
+}
+
+/** Connexion par lien magique, jusqu'à l'arbre. */
+export async function signIn(page: Page, email: string) {
+  const before = countEmails(email);
+  await page.goto('/login');
+  await page.getByRole('textbox', { name: 'Ton email' }).fill(email);
+  await page.getByRole('button', { name: 'Recevoir mon lien' }).click();
+  await page.goto(await nextMagicLink(email, before));
+  await expect(page).toHaveURL(/\/tree$/);
 }

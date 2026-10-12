@@ -72,6 +72,23 @@ describe.skipIf(!db)('family.service (intégration)', () => {
     expect(tree.viewerPersonId).toBe('hugo');
   });
 
+  it('dessine l’arbre depuis le lecteur : l’union passée de son père reste masquée', async () => {
+    const hugo = await getTreeForViewer(deps(), 'u-hugo');
+    expect(hugo.drawn.unions.map((u) => u.id)).toContain('u-luc-sophie');
+    expect(hugo.drawn.unions.map((u) => u.id)).not.toContain('u-luc-claire');
+    expect(hugo.drawn.edges).toContainEqual({ kind: 'parent', from: 'luc', to: 'maxime' });
+
+    await addMember('u-maxime', 'maxime');
+    const maxime = await getTreeForViewer(deps(), 'u-maxime');
+    expect(maxime.drawn.unions.map((u) => u.id)).toContain('u-luc-claire');
+  });
+
+  it('dessine aussi l’arbre d’un admin non relié à une fiche', async () => {
+    const tree = await getTreeForViewer(deps(), 'u-owner');
+    expect(tree.drawn.personIds).toContain('hugo');
+    expect(tree.drawn.unions.length).toBeGreaterThan(0);
+  });
+
   it('un admin voit tout, et ses lectures de fiches protégées sont journalisées une fois par jour', async () => {
     const tree = await getTreeForViewer(deps(), 'u-owner');
     expect(tree.persons.every((p) => p.level === 'full')).toBe(true);

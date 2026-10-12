@@ -8,6 +8,7 @@ import type { Db } from '../db/types';
 import { loadProfilePhotos } from '../media/media.service';
 import { type PersonPhoto, signedPhoto } from '../media/media.url';
 import { loadAccessMembers } from '../members/members.repository';
+import { type DisplayedGraph, selectDisplayedGraph } from './family.display';
 import { buildFamilyIndex, generationLevels } from './family.helper';
 import { loadFamilyGraph } from './family.repository';
 import { todayIn } from './fuzzy-date.helper';
@@ -27,6 +28,12 @@ export type TreeForViewer = Omit<TreeView, 'audited'> & {
   viewerPersonId: string | undefined;
   /** Photo de profil des seules fiches dont le niveau la montre, en URLs signées. */
   photos: Record<string, PersonPhoto>;
+  /**
+   * Ce que le canevas dessine, centré sur le lecteur (ou, pour un admin non relié,
+   * sur la première fiche la plus ancienne). Rien que des identifiants et la forme
+   * des liens : la vue filtrée les expose déjà tous, unions et filiations comprises.
+   */
+  drawn: DisplayedGraph;
 };
 
 export async function getTreeForViewer(
@@ -66,10 +73,14 @@ export async function getTreeForViewer(
     }),
   );
 
+  const generations = generationLevels(index);
+  const focusId =
+    viewer.personId ?? graph.persons.find((p) => generations.get(p.id) === 0)?.id ?? '';
   return {
     ...view,
-    generations: Object.fromEntries(generationLevels(index)),
+    generations: Object.fromEntries(generations),
     viewerPersonId: viewer.personId ?? undefined,
     photos,
+    drawn: selectDisplayedGraph(graph, { focusId }),
   };
 }

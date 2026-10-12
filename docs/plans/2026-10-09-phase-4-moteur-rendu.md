@@ -3,7 +3,7 @@
 - **Date :** 2026-10-09
 - **Spec :** [refonte Ances-Tree](../specs/2026-10-09-refonte-ances-tree.md), sections 4, 8, 8.1, 9, 14
 - **Visuels :** [DESIGN.md](../design/DESIGN.md), maquettes `docs/design/maquettes/Arbre.dc.html`, `ArbreSombre.dc.html`, `Mobile.dc.html`
-- **Statut :** en cours (lots 1 et 2 faits le 2026-10-12)
+- **Statut :** en cours (lots 1 à 3 faits le 2026-10-12)
 
 ## Objectif et sortie attendue
 
@@ -45,18 +45,18 @@ Prototype sur la famille réelle (branche `notion-import`, 103 fiches) le 2026-1
 
 - [x] `src/lib/tree/tree.layout.ts` (`computeTreeLayout`) : blocs de couples, ports fixes (`FIXED_POS`), algorithme `layered` vers le bas, `NETWORK_SIMPLEX` pour les couches et le placement, espacements en paramètres (`LayoutMetrics`, bulle de 76 px), « a élevé » exclu du calcul des générations. Sortie : centre de chaque bulle, milieu de chaque union, emplacement de chaque parent inconnu.
 - [x] Réponse d'ELK validée par Zod ; positions par identifiant, déterministes (même graphe, même placement).
-- [ ] Web Worker et hook `useTreeLayout` (annulation des requêtes obsolètes, cache par empreinte, état `pending`) : livrés avec le lot 3, qui les consomme et les teste dans un vrai navigateur. Le worker se réduit à `import 'elkjs/lib/elk-worker.min.js'` (le script s'enregistre seul dans un worker) ; le thread principal utilise `elkjs/lib/elk-api` avec `workerFactory`.
+- [x] Placement initial calculé au rendu serveur (`src/lib/tree/tree.instance.ts`, décision du 2026-10-12 « Placement de l'arbre calculé au rendu serveur »). Le Web Worker et le hook `useTreeLayout` (annulation, cache par empreinte, état `pending`) arrivent avec le premier nouveau placement fait dans le navigateur, au lot 5. Le worker se réduit à `import 'elkjs/lib/elk-worker.min.js'` (le script s'enregistre seul) ; le thread principal utilise `elkjs/lib/elk-api` avec `workerFactory`.
 - [x] Routes (`src/lib/tree/tree.routes.ts`, `routeLinks`) : trait d'union droit d'un bord de bulle à l'autre, Bézier depuis le milieu du trait vers le haut de la bulle de l'enfant, branche directe depuis le bas de la bulle du parent (DESIGN.md, section 7), « a élevé » à part pour le pointillé. Pas besoin de d3-shape.
-- [ ] Premier rendu depuis le dernier placement en cache (IndexedDB par empreinte) : avec le lot 3.
+- [x] ~~Premier rendu depuis le dernier placement en cache (IndexedDB)~~ : abandonné, le rendu serveur arrive déjà dessiné.
 - [x] Bench (`bun run bench`, ELK sans worker sur une machine de dev) : 200 personnes 30 ms, 500 personnes 87 ms (objectif 150 ms), 2 000 personnes environ 1 s, acceptable dans le worker.
 
 ### Lot 3 : rendu SVG
 
-- [ ] `components/FamilyTree/FamilyTree.tsx` : SVG unique, groupe caméra transformé, calques ordonnés (liens, nœuds, surbrillances, chemin de parenté).
-- [ ] `components/PersonNode/PersonNode.tsx` : bulle ronde à bord blanc, initiales ou photo (Next Image avec blur placeholder), prénom, années ; états sélectionné, moi, décédé, hors périmètre (estompé), conformes à DESIGN.md.
-- [ ] Liens : un `<path>` par arête, mémoïsé, pas de re-render global au pan.
-- [ ] Virtualisation : ne rendre que les nœuds dans le viewport élargi (quadtree d3 sur les positions) au-delà de 300 nœuds.
-- [ ] Accessibilité : `role="tree"` / `treeitem`, `aria-level`, `aria-expanded`, navigation clavier (flèches parent / enfant / fratrie, Entrée ouvre la fiche, Échap ferme), focus visible.
+- [x] `src/components/family/family-tree.tsx` : un calque commun (que la caméra transformera au lot 4), les liens en SVG dessous, les bulles en liens HTML dessus comme dans la maquette Arbre (photo en `srcset`, focus et Entrée natifs). Modèle de rendu `drawTree` (`family-tree.helper.ts`) : positions et textes rédigés côté serveur, rien de plus que ce que la policy laisse passer. Surbrillances et chemin de parenté : phase 5.
+- [x] Bulle (`person-bubble.tsx`, partagée avec la fiche) : bord blanc, initiales ou photo (`<img srcset>` signé et aperçu flou, pas de Next Image : décision de la phase 3), prénom, années ; états moi (« Toi » en accent), décédé, focus clavier. Sélectionné : avec la fiche en panneau (phase 5). Hors périmètre : avec l'interrupteur (phase 6). Les branches partent sous l'étiquette d'une bulle, jamais à travers.
+- [x] Liens : un `<path>` par arête, calque mémoïsé ; une flèche ne re-rend que les deux bulles qui changent d'état. Identifiants de branche dédoublonnés (avis de la revue du lot 2).
+- [ ] Virtualisation au-delà de 300 nœuds : reportée au lot 4, elle dépend du viewport que la caméra définit (103 fiches aujourd'hui).
+- [x] Accessibilité : `role="tree"` / `treeitem` (motif « arbre de navigation » : chaque entrée est un lien), `aria-level` par génération, nom « Prénom Nom, années », focus itinérant, flèches spatiales (`treeNeighbors` : gauche et droite dans la génération, haut et bas vers le parent ou l'enfant le plus proche), Début et Fin, Entrée ouvre la fiche, focus visible. `aria-expanded` arrive avec le pliage (lot 5), Échap avec la fiche en panneau (phase 5). Testé dans Chromium mobile et desktop (`tests/e2e/tree.spec.ts`).
 
 ### Lot 4 : caméra
 

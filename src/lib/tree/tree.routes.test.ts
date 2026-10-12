@@ -4,6 +4,8 @@ import { DEFAULT_METRICS, type TreeLayout } from './tree.layout';
 import { routeLinks } from './tree.routes';
 
 const r = DEFAULT_METRICS.bubble / 2;
+/** Bas de l'emprise d'une personne, sous le prénom et les années. */
+const below = DEFAULT_METRICS.nodeHeight - r;
 
 // Un couple (a, b) et leur enfant c ; d, parent seul de e ; b a élevé e.
 const drawn: DisplayedGraph = {
@@ -45,14 +47,15 @@ describe('routeLinks', () => {
 
   it('fait partir l’enfant du milieu du trait d’union, jusqu’en haut de sa bulle', () => {
     const d = link('child:u>c')?.d ?? '';
-    expect(d.startsWith('M168,50 C168,')).toBe(true);
+    // Descente droite entre les deux étiquettes du couple, puis la courbe.
+    expect(d.startsWith(`M168,50 L168,${50 + below} C168,`)).toBe(true);
     expect(d.endsWith(` 168,${300 - r}`)).toBe(true);
   });
 
-  it('fait partir une branche directe du bas de la bulle du parent', () => {
+  it('fait partir une branche directe sous l’étiquette du parent, sans la barrer', () => {
     expect(link('parent:d>e')).toMatchObject({ kind: 'parent', filiation: 'adoptive' });
     const d = link('parent:d>e')?.d ?? '';
-    expect(d.startsWith(`M500,${50 + r} C`)).toBe(true);
+    expect(d.startsWith(`M500,${50 + below} C`)).toBe(true);
     expect(d.endsWith(` 500,${300 - r}`)).toBe(true);
   });
 
@@ -102,6 +105,32 @@ describe('routeLinks', () => {
       'parent:a>f',
       'parent:d>f',
     ]);
+  });
+
+  it('ne trace qu’une fois la branche d’un parent vers un enfant', () => {
+    // Deux unions détachées du même couple (remariage) : la même branche a > f.
+    const links = routeLinks(
+      {
+        personIds: ['a', 'd', 'f'],
+        unions: [
+          { id: 'w1', partnerIds: ['a', 'd'], past: true, unknownPartner: false },
+          { id: 'w2', partnerIds: ['a', 'd'], past: false, unknownPartner: false },
+        ],
+        edges: [
+          { kind: 'child', from: 'w1', to: 'f' },
+          { kind: 'child', from: 'w2', to: 'f' },
+        ],
+      },
+      {
+        ...layout,
+        persons: { a: { x: 100, y: 50 }, d: { x: 500, y: 50 }, f: { x: 300, y: 300 } },
+        unions: {},
+        detachedUnions: ['w1', 'w2'],
+      },
+    );
+    const ids = links.map((l) => l.id);
+    expect(ids).toEqual([...new Set(ids)]);
+    expect(ids.filter((id) => id.startsWith('parent:'))).toEqual(['parent:a>f', 'parent:d>f']);
   });
 
   it('ignore un lien dont un bout n’est pas placé', () => {
