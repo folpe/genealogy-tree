@@ -27,6 +27,7 @@ const layout: TreeLayout = {
   },
   unions: { u: { x: 168, y: 50 } },
   unknownPartners: {},
+  detachedUnions: [],
   width: 600,
   height: 400,
 };
@@ -74,6 +75,33 @@ describe('routeLinks', () => {
       },
     );
     expect(only).toEqual({ id: 'union:v', kind: 'union', d: `M${100 + r},50 L${236 - r},50` });
+  });
+
+  it('union détachée : arc au-dessus des bulles, enfant rattaché à chaque parent', () => {
+    const links = routeLinks(
+      {
+        personIds: ['a', 'd', 'f'],
+        unions: [{ id: 'w', partnerIds: ['a', 'd'], past: true, unknownPartner: false }],
+        edges: [
+          { kind: 'partner', from: 'a', to: 'w' },
+          { kind: 'partner', from: 'd', to: 'w' },
+          { kind: 'child', from: 'w', to: 'f' },
+        ],
+      },
+      {
+        ...layout,
+        persons: { a: { x: 100, y: 50 }, d: { x: 500, y: 50 }, f: { x: 300, y: 300 } },
+        unions: {},
+        detachedUnions: ['w'],
+      },
+    );
+    const arc = links.find((l) => l.id === 'union:w');
+    expect(arc?.d.startsWith(`M100,${50 - r} C`)).toBe(true);
+    expect(arc?.d.endsWith(` 500,${50 - r}`)).toBe(true);
+    expect(links.filter((l) => l.kind === 'parent').map((l) => l.id)).toEqual([
+      'parent:a>f',
+      'parent:d>f',
+    ]);
   });
 
   it('ignore un lien dont un bout n’est pas placé', () => {

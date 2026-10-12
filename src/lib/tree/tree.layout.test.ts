@@ -87,6 +87,103 @@ describe('computeTreeLayout', () => {
     expect(unions['u-inconnu']?.x).toBe((pere + inconnu) / 2);
   });
 
+  it('remariage : deux unions du même couple partagent un même point', async () => {
+    const drawn = selectDisplayedGraph(
+      {
+        persons: [aPerson('a'), aPerson('b'), aPerson('c1'), aPerson('c2')],
+        unions: [anUnion('u1', 'a', 'b', { end: { reason: 'divorce' } }), anUnion('u2', 'a', 'b')],
+        parentChildren: [
+          aChildOf('a', 'c1', { unionId: 'u1' }),
+          aChildOf('b', 'c1', { unionId: 'u1' }),
+          aChildOf('a', 'c2', { unionId: 'u2' }),
+          aChildOf('b', 'c2', { unionId: 'u2' }),
+        ],
+      },
+      { focusId: 'c1', showPastUnions: true },
+    );
+    const { unions, persons } = await computeTreeLayout(drawn, elk);
+    expect(unions['u1']).toBeDefined();
+    expect(unions['u1']).toEqual(unions['u2']);
+    expect(persons['c1']?.y).toBe(persons['c2']?.y);
+  });
+
+  it('trois unions : chacune est posée entre voisins ou détachée, jamais perdue', async () => {
+    const drawn = selectDisplayedGraph(
+      {
+        persons: ['p', 'a', 'b', 'c', 'ea', 'eb', 'ec'].map((id) => aPerson(id)),
+        unions: [
+          anUnion('u-a', 'p', 'a', { end: { reason: 'divorce' } }),
+          anUnion('u-b', 'p', 'b', { end: { reason: 'divorce' } }),
+          anUnion('u-c', 'p', 'c'),
+        ],
+        parentChildren: ['a', 'b', 'c'].flatMap((x) => [
+          aChildOf('p', `e${x}`, { unionId: `u-${x}` }),
+          aChildOf(x, `e${x}`, { unionId: `u-${x}` }),
+        ]),
+      },
+      { focusId: 'p', showPastUnions: true },
+    );
+    const layout = await computeTreeLayout(drawn, elk);
+    expect(drawn.unions).toHaveLength(3);
+    for (const union of drawn.unions) {
+      const point = layout.unions[union.id];
+      if (point) {
+        // Posée : entre deux voisins directs.
+        const [a, b] = union.partnerIds.map((id) => layout.persons[id ?? '']?.x ?? 0);
+        expect(Math.abs((a ?? 0) - (b ?? 0))).toBe(SLOT);
+      } else {
+        expect(layout.detachedUnions).toContain(union.id);
+      }
+    }
+    // Chaque enfant est sous ses parents.
+    for (const child of ['ea', 'eb', 'ec']) {
+      expect(layout.persons[child]?.y).toBeGreaterThan(layout.persons['p']?.y ?? 0);
+    }
+  });
+
+  it('parent inconnu sans côté libre : union détachée, aucun emplacement inventé', async () => {
+    const drawn = selectDisplayedGraph(
+      {
+        persons: ['a', 'p', 'b', 'e'].map((id) => aPerson(id)),
+        unions: [
+          anUnion('u-a', 'a', 'p'),
+          anUnion('u-b', 'p', 'b', { end: { reason: 'deces' } }),
+          anUnion('u-x', 'p', null),
+        ],
+        parentChildren: [aChildOf('p', 'e', { unionId: 'u-x' })],
+      },
+      { focusId: 'e', showPastUnions: true },
+    );
+    const layout = await computeTreeLayout(drawn, elk);
+    if (layout.unknownPartners['u-x']) {
+      expect(
+        Math.abs((layout.unknownPartners['u-x']?.x ?? 0) - (layout.persons['p']?.x ?? 0)),
+      ).toBe(SLOT);
+    } else {
+      expect(layout.detachedUnions).toContain('u-x');
+    }
+    expect(layout.persons['e']?.y).toBeGreaterThan(layout.persons['p']?.y ?? 0);
+  });
+
+  it('deux unions à parent inconnu : un emplacement de chaque côté', async () => {
+    const drawn = selectDisplayedGraph(
+      {
+        persons: ['p', 'e1', 'e2'].map((id) => aPerson(id)),
+        unions: [anUnion('u1', 'p', null), anUnion('u2', 'p', null)],
+        parentChildren: [
+          aChildOf('p', 'e1', { unionId: 'u1' }),
+          aChildOf('p', 'e2', { unionId: 'u2' }),
+        ],
+      },
+      { focusId: 'e1' },
+    );
+    const { persons, unknownPartners } = await computeTreeLayout(drawn, elk);
+    const p = persons['p']?.x ?? 0;
+    expect([unknownPartners['u1']?.x, unknownPartners['u2']?.x].sort()).toEqual(
+      [p - SLOT, p + SLOT].sort(),
+    );
+  });
+
   it('rend le même placement pour le même graphe', async () => {
     expect(await computeTreeLayout(marchand, elk)).toEqual(await computeTreeLayout(marchand, elk));
   });
@@ -96,6 +193,7 @@ describe('computeTreeLayout', () => {
       persons: {},
       unions: {},
       unknownPartners: {},
+      detachedUnions: [],
       width: 0,
       height: 0,
     });

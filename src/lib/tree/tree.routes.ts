@@ -28,21 +28,45 @@ export function routeLinks(
   const r = metrics.bubble / 2;
   const links: TreeLink[] = [];
 
+  const detached = new Set(layout.detachedUnions);
+  const partnersOf = new Map(drawn.unions.map((u) => [u.id, u.partnerIds]));
   for (const union of drawn.unions) {
     const [a, b] = union.partnerIds;
     const first = layout.persons[a];
     const second = typeof b === 'string' ? layout.persons[b] : layout.unknownPartners[union.id];
     if (!first || !second) continue;
     const [left, right] = first.x <= second.x ? [first, second] : [second, first];
-    links.push({
-      id: `union:${union.id}`,
-      kind: 'union',
-      d: `M${left.x + r},${left.y} L${right.x - r},${right.y}`,
-    });
+    // Une union détachée passe en arc au-dessus des bulles qui la séparent.
+    const d = detached.has(union.id)
+      ? `M${left.x},${left.y - r} C${left.x},${left.y - r * 3} ${right.x},${right.y - r * 3} ${right.x},${right.y - r}`
+      : `M${left.x + r},${left.y} L${right.x - r},${right.y}`;
+    links.push({ id: `union:${union.id}`, kind: 'union', d });
   }
+
+  const branch = (from: string, to: string, filiation?: ParentChildKind) => {
+    const parent = layout.persons[from];
+    const child = layout.persons[to];
+    if (!parent || !child) return;
+    links.push({
+      id: `parent:${from}>${to}`,
+      kind: 'parent',
+      d: curve({ x: parent.x, y: parent.y + r }, { x: child.x, y: child.y - r }),
+      ...(filiation ? { filiation } : {}),
+    });
+  };
 
   for (const edge of drawn.edges) {
     if (edge.kind === 'partner') continue;
+    if (edge.kind === 'parent') {
+      branch(edge.from, edge.to, edge.filiation);
+      continue;
+    }
+    if (edge.kind === 'child' && detached.has(edge.from)) {
+      for (const parentId of partnersOf.get(edge.from) ?? []) {
+        if (typeof parentId === 'string') branch(parentId, edge.to, edge.filiation);
+      }
+      continue;
+    }
     const child = layout.persons[edge.to];
     const parent = edge.kind === 'child' ? layout.unions[edge.from] : layout.persons[edge.from];
     if (!child || !parent) continue;
