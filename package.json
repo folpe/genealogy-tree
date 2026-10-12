@@ -23,6 +23,7 @@
     "test:mutation": "stryker run --coverageAnalysis off",
     "start": "next start",
     "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "bun scripts/db-seed.ts"
@@ -49,6 +50,7 @@
     "@biomejs/biome": "^2.5.15",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
+    "@playwright/test": "1.64.0",
     "@stryker-mutator/core": "^9",
     "@stryker-mutator/vitest-runner": "^9",
     "@tailwindcss/postcss": "^4.3.3",
