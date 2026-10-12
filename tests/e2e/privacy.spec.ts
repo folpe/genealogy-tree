@@ -25,12 +25,14 @@ async function served(page: Page, path: string): Promise<string> {
 
 // Ce qu'un membre hors périmètre ne doit jamais recevoir d'Anne, vivante.
 const ANNE_RESIDENCE = 'Bordeaux';
-const ANNE_EXACT_BIRTH = /mai 1960|"month\\?":5,\\?"day\\?":2/;
+const ANNE_EXACT_BIRTH = /mai 1960|1960-05-02|"month\\?":5,\\?"day\\?":2/;
 
 test('hors périmètre : ni résidence ni date exacte d’un vivant, ni sur l’arbre ni sur sa fiche', async ({
   page,
 }) => {
   await signIn(page, E2E_ISABELLE_EMAIL);
+  // L'arbre n'affiche aujourd'hui que des années : son contrôle garde la porte pour
+  // l'arbre graphique de la phase 4, qui recevra les fiches côté navigateur.
   for (const path of ['/tree', '/people/anne']) {
     const document = await served(page, path);
     expect(document).toContain('Anne');
