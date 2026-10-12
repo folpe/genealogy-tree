@@ -66,6 +66,18 @@ describe('FamilyTree', () => {
     expect(document.activeElement).toBe(row[0]);
   });
 
+  it('garde une entrée atteignable par Tab si la bulle active disparaît', () => {
+    const { rerender } = render(<FamilyTree drawing={drawing} focusId="hugo" />);
+    const henri = item(/^Henri Marchand/);
+    henri.focus();
+    fireEvent.keyDown(henri, { key: 'ArrowRight' });
+    const gone = (document.activeElement as HTMLElement).getAttribute('href')?.split('/').at(-1);
+    const without = { ...drawing, nodes: drawing.nodes.filter((n) => n.id !== gone) };
+    rerender(<FamilyTree drawing={without} focusId="hugo" />);
+    const reachable = screen.getAllByRole('treeitem').filter((el) => el.tabIndex === 0);
+    expect(reachable).toEqual([item(/c’est toi$/)]);
+  });
+
   it('laisse passer les autres touches, Entrée comprise', () => {
     render(<FamilyTree drawing={drawing} focusId="hugo" />);
     const hugo = item(/c’est toi$/);
