@@ -78,6 +78,29 @@ describe('FamilyTree', () => {
     expect(reachable).toEqual([item(/c’est toi$/)]);
   });
 
+  it('au-delà de 300 bulles, Fin atteint une bulle qui n’était pas encore rendue', () => {
+    const row = Array.from({ length: 302 }, (_, i) => ({
+      id: `p${i}`,
+      x: i * 136,
+      y: 0,
+      row: 0,
+      ...(i > 0 ? { left: `p${i - 1}` } : {}),
+      ...(i < 301 ? { right: `p${i + 1}` } : {}),
+      name: `P${i}`,
+      label: `Personne ${i}`,
+      initials: 'PP',
+      deceased: false,
+      me: false,
+    }));
+    const wide = { nodes: row, links: [], unknownPartners: [], width: 302 * 136, height: 132 };
+    render(<FamilyTree drawing={wide} focusId="p0" />);
+    const first = screen.getByRole('treeitem', { name: 'Personne 0' });
+    expect(screen.queryByRole('treeitem', { name: 'Personne 301' })).toBeNull();
+    first.focus();
+    fireEvent.keyDown(first, { key: 'End' });
+    expect(document.activeElement).toBe(screen.getByRole('treeitem', { name: 'Personne 301' }));
+  });
+
   it('laisse passer les autres touches, Entrée comprise', () => {
     render(<FamilyTree drawing={drawing} focusId="hugo" />);
     const hugo = item(/c’est toi$/);

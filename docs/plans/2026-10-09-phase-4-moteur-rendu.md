@@ -3,7 +3,7 @@
 - **Date :** 2026-10-09
 - **Spec :** [refonte Ances-Tree](../specs/2026-10-09-refonte-ances-tree.md), sections 4, 8, 8.1, 9, 14
 - **Visuels :** [DESIGN.md](../design/DESIGN.md), maquettes `docs/design/maquettes/Arbre.dc.html`, `ArbreSombre.dc.html`, `Mobile.dc.html`
-- **Statut :** en cours (lots 1 à 3 faits le 2026-10-12)
+- **Statut :** en cours (lots 1 à 4 faits le 2026-10-12)
 
 ## Objectif et sortie attendue
 
@@ -55,19 +55,19 @@ Prototype sur la famille réelle (branche `notion-import`, 103 fiches) le 2026-1
 - [x] `src/components/family/family-tree.tsx` : un calque commun (que la caméra transformera au lot 4), les liens en SVG dessous, les bulles en liens HTML dessus comme dans la maquette Arbre (photo en `srcset`, focus et Entrée natifs). Modèle de rendu `drawTree` (`family-tree.helper.ts`) : positions et textes rédigés côté serveur, rien de plus que ce que la policy laisse passer. Surbrillances et chemin de parenté : phase 5.
 - [x] Bulle (`person-bubble.tsx`, partagée avec la fiche) : bord blanc, initiales ou photo (`<img srcset>` signé et aperçu flou, pas de Next Image : décision de la phase 3), prénom, années ; états moi (« Toi » en accent), décédé, focus clavier. Sélectionné : avec la fiche en panneau (phase 5). Hors périmètre : avec l'interrupteur (phase 6). Les branches partent sous l'étiquette d'une bulle, jamais à travers.
 - [x] Liens : un `<path>` par arête, calque mémoïsé ; une flèche ne re-rend que les deux bulles qui changent d'état. Identifiants de branche dédoublonnés (avis de la revue du lot 2).
-- [ ] Virtualisation au-delà de 300 nœuds : reportée au lot 4, elle dépend du viewport que la caméra définit (103 fiches aujourd'hui).
+- [x] Virtualisation au-delà de 300 nœuds (livrée au lot 4, avec le viewport de la caméra) : `nodesInView` rend les bulles à moins d'un écran du bord visible, plus la bulle au clavier, recalculé à l'arrêt de la caméra. Un filtre linéaire suffit à ces tailles (2 000 comparaisons), pas de quadtree.
 - [x] Accessibilité : `role="tree"` / `treeitem` (motif « arbre de navigation » : chaque entrée est un lien), `aria-level` par génération, nom « Prénom Nom, années », focus itinérant, flèches spatiales (`treeNeighbors` : gauche et droite dans la génération, haut et bas vers le parent ou l'enfant le plus proche), Début et Fin, Entrée ouvre la fiche, focus visible. `aria-expanded` arrive avec le pliage (lot 5), Échap avec la fiche en panneau (phase 5). Testé dans Chromium mobile et desktop (`tests/e2e/tree.spec.ts`).
 
 ### Lot 4 : caméra
 
-- [ ] `src/motion/camera.ts` : état caméra `{x, y, k}` hors React (ref + `gsap.quickSetter` sur le `transform` du groupe), React ne re-rend pas à chaque frame.
-- [ ] Pan : Pointer Events unifiés souris / tactile, Draggable + InertiaPlugin, bornes élastiques sur l'emprise du layout.
-- [ ] Zoom : molette et trackpad (ctrlKey = pinch), pinch tactile à deux doigts, zoom centré sur le point, limites `kMin` / `kMax`.
-- [ ] Vol caméra : `focusOn(id | ids[])` sur la trajectoire `d3.interpolateZoom`, durée proportionnelle à la distance, pilotée par une timeline GSAP interruptible.
-- [ ] Trame de points : `background-position` et `background-size` du canevas synchronisés avec la caméra (spec 12 : points de 1,5 px tous les 46 px, 24 % clair, 16 % sombre), même setter que la caméra.
-- [ ] `touch-action: none` sur le canvas et blocage de `gesturestart` limité à cette zone ; suppression de `useDisablePinch`.
-- [ ] Double-clic / double-tap : recentrage sur le nœud. Bouton "Me retrouver".
-- [ ] Mini-carte (`components/Minimap`) : positions réduites, rectangle de viewport déplaçable.
+- [x] `src/motion/camera.ts` : état caméra `{x, y, k}` hors React, un seul setter écrit la transformation du calque et la trame ; React n'est prévenu qu'à l'arrêt. Géométrie pure et testée dans `src/lib/tree/tree.camera.ts`. Premier rendu serveur déjà centré sur la bulle du lecteur (`--k0` : 0,75 sur mobile, 1 au-delà), sans saut à l'hydratation.
+- [x] Pan : Pointer Events unifiés souris / tactile (`src/motion/camera.gestures.ts`), InertiaPlugin au lâcher, bornes élastiques (le centre de l'écran reste au-dessus du placement). Pas de Draggable : il ne gère pas le pincement, un seul gestionnaire fait les deux. Un glissé commencé sur une bulle n'ouvre pas sa fiche.
+- [x] Zoom : Ctrl ou ⌘ + molette et pincement du trackpad (Chrome, Firefox, et `gesture*` de Safari), pincement à deux doigts, centré sur le point ; la molette seule déplace. `kMin` jusqu'à voir tout l'arbre (au moins 0,5), `kMax` 2,5. Boutons + et −.
+- [x] Vol caméra : `flyTo` sur la trajectoire `d3.interpolateZoom`, durée proportionnelle (0,35 à 1,2 s), tween GSAP interrompu par le moindre geste. Utilisé par « Me retrouver » et par le focus clavier quand la bulle sort de l'écran. Le vol vers plusieurs bulles (`ids[]`) viendra avec « Notre lien » (phase 5).
+- [x] Trame de points synchronisée par le même setter (`--cam-x`, `--cam-y`, `--cam-k`).
+- [x] `touch-action: none` et blocage de `gesture*` limités au canevas. `useDisablePinch` vit dans `legacy/`, toujours en ligne : il part avec la bascule (phase 3, reportée).
+- [x] Bouton « Me retrouver ». Double-clic sur le fond : zoom ×2 centré. Recentrage au double-clic sur une bulle : avec la fiche en panneau (phase 5), tant qu'un clic sur une bulle ouvre sa fiche.
+- [x] Mini-carte (`tree-minimap.tsx`) : points, cadre de l'écran suivi à chaque frame hors React, clic ou glissé pour s'y rendre. Grands écrans seulement : sur téléphone, le pincement donne la même vue d'ensemble sans prendre de place.
 
 ### Lot 5 : zoom sémantique et transitions de layout
 
