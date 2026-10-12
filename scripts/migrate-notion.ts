@@ -28,7 +28,7 @@ import { geocodePlaces, pickPlace } from '../src/server/places/places.service';
 //   bun scripts/migrate-notion.ts load <dossier> --target main --confirm-production
 //   bun scripts/migrate-notion.ts photos <dossier> --target main --confirm-production
 //   bun scripts/migrate-notion.ts geocode --target main [--dry-run] [--confirm-production]
-//   bun scripts/migrate-notion.ts geocode-pick --target main --label <libellé> --ref <réf>
+//   bun scripts/migrate-notion.ts geocode-pick --target main --label <libellé> --ref <réf> --confirm-production
 //
 // Secrets lus dans le trousseau macOS (compte `ances-tree`) : jeton Notion, base,
 // clé de chiffrement de l'export, jeton du store Blob. L'export et le rapport
@@ -333,7 +333,7 @@ if (command === 'extract') {
   console.error(
     'Usage : extract | report <dossier> | load <dossier> --target <branche> [--dry-run] | ' +
       'photos <dossier> --target <branche> | geocode --target <branche> [--dry-run] | ' +
-      'geocode-pick --target <branche> --label <libellé> --ref <réf>',
+      'geocode-pick --target <branche> --label <libellé> --ref <réf> [--confirm-production]',
   );
   process.exit(1);
 }

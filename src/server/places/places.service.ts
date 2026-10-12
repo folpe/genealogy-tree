@@ -188,9 +188,12 @@ export async function pickPlace(
   const picked = (await candidatesFor(query, deps)).find((c) => c.ref === input.ref);
   if (!picked) throw new Error(`Candidat ${input.ref} absent des réponses pour ${place.label}`);
   const { geocodeScore: _score, ...fields } = placeFields(query, picked);
-  await deps.db
+  const written = await deps.db
     .update(places)
     .set({ ...fields, geocoder: 'manuel' })
-    .where(and(eq(places.id, place.id), isNull(places.geocoder)));
+    .where(and(eq(places.id, place.id), isNull(places.geocoder)))
+    .returning({ id: places.id });
+  // Géocodé pendant l'appel au géocodeur : le choix n'est pas écrit, on le dit.
+  if (written.length === 0) throw new Error(`${place.label} est déjà géocodé, choix non écrit`);
   return picked;
 }

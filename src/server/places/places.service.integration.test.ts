@@ -247,6 +247,19 @@ describe.skipIf(!db)('places.service (intégration)', () => {
       ).rejects.toThrow('11339');
     });
 
+    it('refuse quand le lieu est géocodé pendant l’appel au géocodeur', async () => {
+      await seed('Saint-Denis');
+      const { deps } = fakeGeocoders({});
+      deps.ban.search = async () => {
+        await client.update(places).set({ geocoder: 'ban', lat: 1, lng: 2 });
+        return saintDenis;
+      };
+      await expect(
+        pickPlace({ db: client, ...deps }, { label: 'Saint-Denis', ref: '93066' }),
+      ).rejects.toThrow('déjà géocodé');
+      expect(await row('Saint-Denis')).toMatchObject({ geocoder: 'ban', lat: 1 });
+    });
+
     it('refuse un libellé inconnu ou un lieu déjà géocodé', async () => {
       await seed('Saint-Denis');
       await client.update(places).set({ geocoder: 'ban', lat: 1, lng: 2 });
