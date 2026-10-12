@@ -47,10 +47,10 @@ describe('transformNotionExport : fiches', () => {
     expect(kinds(result, 'x')).toEqual(['vivant-sans-date']);
   });
 
-  it('signale une date au 1er janvier, souvent saisie faute de mieux', () => {
+  it('lit un 1er janvier comme l’année seule : Notion oblige à saisir un jour', () => {
     const result = run();
-    expect(person(N.henri, result)?.birth?.date).toEqual(exact(1902, 1, 1));
-    expect(kinds(result, N.henri)).toContain('date-a-verifier');
+    expect(person(N.henri, result)?.birth?.date).toEqual({ precision: 'annee', year: 1902 });
+    expect(result.stats.yearOnlyDates).toBe(1);
   });
 
   it('compose la résidence : ville, et pays hors de France', () => {
@@ -63,20 +63,27 @@ describe('transformNotionExport : fiches', () => {
     expect(run().nicknames).toEqual([{ personId: N.luc, nickname: 'Lulu' }]);
   });
 
-  it('écarte une fiche sans prénom et le signale à corriger', () => {
+  it('garde une fiche sans prénom, avec « ? », et la signale', () => {
     const pages = [
       ...marchandNotionPages(),
-      aNotionPage({ id: 'vide', firstName: '', lastName: 'X' }),
+      aNotionPage({ id: 'vide', firstName: '', lastName: 'Khau' }),
     ];
     const result = run(pages);
-    expect(person('vide', result)).toBeUndefined();
-    expect(result.anomalies).toContainEqual(
-      expect.objectContaining({
-        kind: 'fiche-incomplete',
-        personId: 'vide',
-        severity: 'a-corriger',
+    expect(person('vide', result)).toMatchObject({ firstName: '?', lastName: 'Khau' });
+    expect(kinds(result, 'vide')).toContain('nom-inconnu');
+  });
+
+  it('lit « non renseigné » comme un nom inconnu, pas comme un prénom', () => {
+    const result = run([
+      aNotionPage({
+        id: 'x',
+        firstName: 'non renseigné',
+        lastName: 'Non Renseigné',
+        gender: 'male',
       }),
-    );
+    ]);
+    expect(person('x', result)).toMatchObject({ firstName: '?', lastName: '?' });
+    expect(kinds(result, 'x')).toContain('nom-inconnu');
   });
 
   it('genre absent : inconnu, à vérifier', () => {

@@ -98,7 +98,7 @@ export function marchandNotionPages() {
       firstName: 'Henri',
       lastName: 'Marchand',
       gender: 'male',
-      // Saisi au 1er janvier faute de mieux : précision à vérifier.
+      // Saisi au 1er janvier faute de mieux : seule l'année est connue.
       birthDate: '1902-01-01',
       birthLocation: 'Rodez',
       deathDate: '1979-11-12',
