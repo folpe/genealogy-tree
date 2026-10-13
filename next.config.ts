@@ -8,6 +8,11 @@ const config: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    // Une photo réduite dans le navigateur pèse moins d'1 Mo. Un peu au-dessus du plafond
+    // du service (4 Mo) : c'est lui qui refuse, avec son message.
+    serverActions: { bodySizeLimit: '5mb' },
+  },
   images: {
     remotePatterns: [{ protocol: 'https', hostname: '*.public.blob.vercel-storage.com' }],
   },

@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   getSearchDirectory: vi.fn(),
   getRelationship: vi.fn(),
   editPerson: vi.fn(),
+  changePhoto: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 vi.mock('server-only', () => ({}));
@@ -20,9 +21,12 @@ vi.mock('@/server/family/family.service', () => ({
 }));
 vi.mock('@/server/family/relatives.service', () => ({ addRelative: mocks.addRelative }));
 vi.mock('@/server/family/person-edit.service', () => ({ editPerson: mocks.editPerson }));
+vi.mock('@/server/family/person-photo.service', () => ({ changePhoto: mocks.changePhoto }));
+vi.mock('@/server/media/media.instance', () => ({ getMediaDeps: () => ({ media: true }) }));
 
 import {
   addRelativeAction,
+  changePhotoAction,
   editPersonAction,
   relationshipAction,
   searchDirectoryAction,
@@ -148,5 +152,35 @@ describe('editPersonAction', () => {
     );
     expect(await editPersonAction(form({}))).toEqual({ ok: false, error: 'Ce fait est sourcé' });
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe('changePhotoAction', () => {
+  beforeEach(() => {
+    mocks.requireSession.mockReset().mockResolvedValue({ user: { id: 'u-hugo' } });
+    mocks.changePhoto.mockReset();
+    mocks.revalidatePath.mockReset();
+  });
+
+  it('range la photo au nom de la session et rafraîchit', async () => {
+    const data = new FormData();
+    data.set('personId', 'luc');
+    data.set('photo', new File([new Uint8Array([1, 2, 3])], 'p.jpg', { type: 'image/jpeg' }));
+    expect(await changePhotoAction(data)).toEqual({ ok: true });
+    expect(mocks.changePhoto).toHaveBeenCalledWith(
+      { media: true },
+      'u-hugo',
+      'luc',
+      Buffer.from([1, 2, 3]),
+    );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith('/', 'layout');
+  });
+
+  it('sans fichier ou sans fiche : refusé sans appeler le service', async () => {
+    expect(await changePhotoAction(form({ personId: 'luc' }))).toEqual({
+      ok: false,
+      error: 'Choisis une photo.',
+    });
+    expect(mocks.changePhoto).not.toHaveBeenCalled();
   });
 });
