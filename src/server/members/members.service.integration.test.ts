@@ -9,6 +9,7 @@ import {
   ACCESS_REQUESTS_PER_HOUR,
   decideAccessRequest,
   getInvitationPreview,
+  getViewerAccount,
   inviteMember,
   listAccessRequests,
   listMembers,
@@ -139,6 +140,35 @@ describe.skipIf(!db)('members.service (intégration)', () => {
       await expect(
         decideAccessRequest(deps(), 'u-hugo', id, { accept: true, personId: 'isabelle' }),
       ).rejects.toMatchObject({ code: 'MEMBERS_FORBIDDEN' });
+    });
+  });
+
+  describe('getViewerAccount', () => {
+    it('Hugo : sa fiche, son nom et ses initiales pour l’avatar', async () => {
+      expect(await getViewerAccount(deps(), 'u-hugo')).toEqual({
+        personId: 'hugo',
+        name: 'Hugo Marchand',
+        initials: 'HM',
+        email: 'hugo@exemple.fr',
+        isAdmin: false,
+      });
+    });
+
+    it('un admin sans fiche : son email tient lieu de nom', async () => {
+      expect(await getViewerAccount(deps(), 'u-owner')).toEqual({
+        personId: undefined,
+        name: 'folpe@exemple.fr',
+        initials: 'F',
+        email: 'folpe@exemple.fr',
+        isAdmin: true,
+      });
+    });
+
+    it('un compte sans adhésion n’a rien à voir', async () => {
+      await client.insert(users).values({ id: 'u-x', email: 'x@exemple.fr', name: '' });
+      await expect(getViewerAccount(deps(), 'u-x')).rejects.toMatchObject({
+        code: 'MEMBERS_FORBIDDEN',
+      });
     });
   });
 

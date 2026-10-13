@@ -2,7 +2,7 @@
 import { and, count, eq, gt } from 'drizzle-orm';
 import { z } from 'zod';
 import { AppError, ValidationError } from '../_shared/errors';
-import { accessRequests, memberships, users } from '../db/schema';
+import { accessRequests, memberships, persons, users } from '../db/schema';
 import type { Db } from '../db/types';
 import { buildFamilyIndex } from '../family/family.helper';
 import { loadFamilyGraph } from '../family/family.repository';
@@ -271,6 +271,39 @@ export async function getInvitationPreview(db: Db, token: string, now: Date) {
     email: invitation.email,
     firstName: invitation.firstName,
     inviterName: inviterPerson?.firstName ?? 'L’administrateur de l’arbre',
+  };
+}
+
+/**
+ * Le compte connecté, pour l'avatar et le menu de l'app : sa propre fiche (qu'on voit
+ * toujours en entier), ou son email s'il n'est relié à aucune.
+ */
+export async function getViewerAccount(deps: Pick<MembersDeps, 'db'>, viewerUserId: string) {
+  const [row] = await deps.db
+    .select({
+      email: users.email,
+      isAdmin: memberships.isAdmin,
+      personId: memberships.personId,
+      firstName: persons.firstName,
+      lastName: persons.lastName,
+    })
+    .from(memberships)
+    .innerJoin(users, eq(users.id, memberships.userId))
+    .leftJoin(persons, eq(persons.id, memberships.personId))
+    .where(eq(memberships.userId, viewerUserId));
+  if (!row) throw forbidden();
+  const person =
+    typeof row.firstName === 'string' && typeof row.lastName === 'string'
+      ? { firstName: row.firstName, lastName: row.lastName }
+      : undefined;
+  return {
+    personId: person ? (row.personId ?? undefined) : undefined,
+    name: person ? fullName(person) : row.email,
+    initials: person
+      ? `${person.firstName.charAt(0)}${person.lastName.charAt(0)}`.toUpperCase()
+      : row.email.charAt(0).toUpperCase(),
+    email: row.email,
+    isAdmin: row.isAdmin,
   };
 }
 

@@ -35,9 +35,12 @@ test('un clic sur une bulle ouvre sa fiche', async ({ page }) => {
     await settled(page);
   }
   await expect(henri).toBeInViewport();
+  // Une navigation dans l'app, pas un rechargement : la page garde son état.
+  await page.evaluate(() => Reflect.set(window, 'stayedInApp', true));
   await henri.click();
   await expect(page).toHaveURL(/\/people\/henri$/);
   await expect(page.getByRole('heading', { name: 'Henri Marchand' })).toBeVisible();
+  expect(await page.evaluate(() => Reflect.get(window, 'stayedInApp'))).toBe(true);
 });
 
 test('les liens sont tracés sous les bulles', async ({ page }) => {
