@@ -54,7 +54,11 @@ export async function changePhoto(
   try {
     ({ mediaId } = await storeImage(deps, { personId, bytes }));
   } catch (error) {
-    if (error instanceof ImageTooLargeError) {
+    // Refusée sur l'en-tête, ou au décodage si l'en-tête taisait ses dimensions.
+    if (
+      error instanceof ImageTooLargeError ||
+      (error instanceof Error && /pixel limit/i.test(error.message))
+    ) {
       throw new AppError({
         message: 'Photo trop grande : choisis-en une plus petite.',
         code: 'MEDIA_TOO_LARGE',
