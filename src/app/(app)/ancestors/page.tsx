@@ -44,11 +44,17 @@ export default async function AncestorsPage({
           {heading(params.generations, rootName)}
         </h1>
         <p className="text-sm text-ink-2">
-          Les cases en pointillés attendent quelqu’un. Touche-les pour voir qui manque.
+          Les cases en pointillés attendent quelqu’un. Touche-les pour compléter.
         </p>
       </header>
       {fan ? (
-        <AncestorsView key={fanHref(params)} fan={fan} params={params} rootName={rootName} />
+        <AncestorsView
+          key={fanHref(params)}
+          fan={fan}
+          params={params}
+          rootName={rootName}
+          editable={tree.editableIds}
+        />
       ) : (
         <p role="note" className="text-sm text-ink-2">
           Ton compte n’est relié à aucune fiche : l’éventail ne sait pas d’où partir. Ouvre ta fiche

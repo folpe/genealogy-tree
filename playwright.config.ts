@@ -26,6 +26,8 @@ const blank = Object.fromEntries(
   [...documented, 'VERCEL_OIDC_TOKEN', 'VERCEL_ENV'].map((name) => [name, '']),
 );
 
+const WRITES = /\.writes\.spec\.ts$/;
+
 export default defineConfig({
   testDir: 'tests/e2e',
   globalSetup: './tests/e2e/global-setup.ts',
@@ -35,9 +37,23 @@ export default defineConfig({
   retries: process.env['CI'] ? 1 : 0,
   reporter: process.env['CI'] ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: { baseURL: E2E_BASE_URL, trace: 'retain-on-failure' },
+  // Les specs `*.writes.spec.ts` écrivent dans la base partagée (nouvelles fiches) :
+  // elles passent après toutes les autres, qui lisent la famille telle que seedée.
   projects: [
-    { name: 'mobile', use: { ...devices['Pixel 7'] } },
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
+    { name: 'mobile', use: { ...devices['Pixel 7'] }, testIgnore: WRITES },
+    { name: 'desktop', use: { ...devices['Desktop Chrome'] }, testIgnore: WRITES },
+    {
+      name: 'writes-mobile',
+      use: { ...devices['Pixel 7'] },
+      testMatch: WRITES,
+      dependencies: ['mobile', 'desktop'],
+    },
+    {
+      name: 'writes-desktop',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: WRITES,
+      dependencies: ['mobile', 'desktop'],
+    },
   ],
   webServer: {
     command: `mkdir -p .e2e && bun run build && bun run start --port ${E2E_PORT} 2> ${E2E_SERVER_LOG}`,

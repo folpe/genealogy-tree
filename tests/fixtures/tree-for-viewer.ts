@@ -1,4 +1,4 @@
-import { buildAccessContext } from '../../src/server/access/access.policy';
+import { buildAccessContext, editableIds } from '../../src/server/access/access.policy';
 import { viewTreeAs } from '../../src/server/access/access.view';
 import { selectDisplayedGraph } from '../../src/server/family/family.display';
 import { buildFamilyIndex, generationLevels } from '../../src/server/family/family.helper';
@@ -11,11 +11,8 @@ export function treeForViewer(memberId: string): TreeForViewer {
   const index = buildFamilyIndex(marchandFamily);
   const viewer = marchandMembers.find((m) => m.id === memberId);
   if (!viewer) throw new Error(memberId);
-  const { audited: _, ...view } = viewTreeAs(
-    buildAccessContext(index, [...marchandMembers]),
-    viewer,
-    exact(2026, 10, 12),
-  );
+  const ctx = buildAccessContext(index, [...marchandMembers]);
+  const { audited: _, ...view } = viewTreeAs(ctx, viewer, exact(2026, 10, 12));
   return {
     ...view,
     generations: Object.fromEntries(generationLevels(index)),
@@ -25,5 +22,6 @@ export function treeForViewer(memberId: string): TreeForViewer {
     centerId: viewer.personId ?? 'henri',
     shownView: 'all',
     centerInCouple: false,
+    editableIds: editableIds(ctx, viewer),
   };
 }

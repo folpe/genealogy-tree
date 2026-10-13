@@ -213,6 +213,16 @@ export function canEdit(
   return { mode: 'direct', reason, guardians: [] };
 }
 
+/**
+ * Fiches où le membre ajoute directement un proche (parent, enfant, conjoint). Même
+ * règle pour l'écran et pour l'écriture : la policy décide, l'écran suit.
+ */
+export function editableIds(ctx: AccessContext, viewer: Member): string[] {
+  return [...ctx.index.persons.keys()].filter(
+    (id) => canEdit(ctx, viewer, id, { fields: ['relatives'] }).mode === 'direct',
+  );
+}
+
 function isMinor(birth: FuzzyDate | undefined, today: FuzzyDate): boolean {
   if (!birth) return false;
   const age = ageAt(birth, today);
