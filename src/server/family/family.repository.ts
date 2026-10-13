@@ -73,11 +73,15 @@ export async function insertRelative(
     parentChildren: plan.parentChildren,
   });
   await db.transaction(async (tx) => {
-    await tx
+    const [anchor] = await tx
       .select({ id: persons.id })
       .from(persons)
       .where(eq(persons.id, guard.anchorId))
       .for('update');
+    // Supprimée entre la lecture et l'écriture : rien ne s'écrit.
+    if (!anchor) {
+      throw new AppError({ message: 'Fiche introuvable', code: 'FAMILY_NOT_FOUND', status: 404 });
+    }
     if (guard.maxParents !== undefined) {
       const parents = await tx
         .select({ id: parentChild.parentId })

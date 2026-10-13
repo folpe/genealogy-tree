@@ -1,8 +1,11 @@
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { marchandFamily } from '../../../tests/fixtures/marchand-family';
 import { testDb } from '../../../tests/integration/test-db';
-import { memberships, users } from '../db/schema';
-import { insertFamilyGraph, loadFamilyGraph } from './family.repository';
+import { memberships, persons, users } from '../db/schema';
+import { buildFamilyIndex } from './family.helper';
+import { insertFamilyGraph, insertRelative, loadFamilyGraph } from './family.repository';
+import { parseAddRelative, planAddRelative } from './relatives.helper';
 import { addRelative } from './relatives.service';
 
 // Ajout d'un proche sur des données en base : policy, invariants et écriture d'un bloc.
@@ -116,6 +119,19 @@ describe.skipIf(!db)('relatives.service (intégration)', () => {
     expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
     const graph = await loadFamilyGraph(client);
     expect(graph.parentChildren.filter((l) => l.childId === 'bernard')).toHaveLength(2);
+  });
+
+  it('une fiche de départ supprimée entre-temps : « Fiche introuvable », rien d’écrit', async () => {
+    const graph = await loadFamilyGraph(client);
+    const plan = planAddRelative(buildFamilyIndex(graph), parseAddRelative(bernardsFather), {
+      person: 'p-orphan',
+      union: 'u-orphan',
+    });
+    await client.delete(persons).where(eq(persons.id, 'bernard'));
+    await expect(insertRelative(client, plan, { anchorId: 'bernard' })).rejects.toMatchObject({
+      code: 'FAMILY_NOT_FOUND',
+    });
+    expect((await loadFamilyGraph(client)).persons.some((p) => p.id === 'p-orphan')).toBe(false);
   });
 
   it('un compte inconnu est refusé', async () => {
