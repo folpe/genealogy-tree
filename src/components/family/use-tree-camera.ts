@@ -1,7 +1,7 @@
 // tdd-cover: e2e tests/e2e/tree-camera.spec.ts
 'use client';
 
-import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type RefObject, useLayoutEffect, useRef, useState } from 'react';
 import { type Camera, cameraOn, detailLevel, type Size } from '@/lib/tree/tree.camera';
 import type { Point } from '@/lib/tree/tree.metrics';
 import { type CameraController, createCamera } from '@/motion/camera';
@@ -23,33 +23,38 @@ export function useTreeCamera({
   layer,
   content,
   start,
+  restore,
   onSettle,
 }: {
   viewport: RefObject<HTMLDivElement | null>; // allow-null: contrat des refs de React
   layer: RefObject<HTMLDivElement | null>; // allow-null: contrat des refs de React
   content: Size;
   start: Point | undefined;
+  /** Caméra retrouvée (retour d'une fiche), à la place de celle du départ. */
+  restore: () => Camera | undefined;
   onSettle: (camera: Camera, viewport: Size) => void;
 }): CameraController | undefined {
   const [controller, setController] = useState<CameraController>();
   // Lus au montage seulement : un nouveau placement (branche pliée) passe par
   // setContent et jump, sans remonter la caméra ni la ramener au départ.
-  const mount = useRef({ content, start });
+  const mount = useRef({ content, start, restore });
   const settleTo = useRef(onSettle);
   useLayoutEffect(() => {
     settleTo.current = onSettle;
   });
 
-  useEffect(() => {
+  // Avant le premier affichage : au retour d'une fiche, l'arbre apparaît directement
+  // à la position retrouvée, sans passer par celle du départ.
+  useLayoutEffect(() => {
     const viewportElement = viewport.current;
     const layerElement = layer.current;
     if (!viewportElement || !layerElement) return;
-    const { content: firstContent, start: firstStart } = mount.current;
+    const { content: firstContent, start: firstStart, restore: recall } = mount.current;
     const camera = createCamera({
       viewport: viewportElement,
       layer: layerElement,
       content: firstContent,
-      initial: cameraOn(firstStart ?? { x: 0, y: 0 }, initialScale(viewportElement)),
+      initial: recall() ?? cameraOn(firstStart ?? { x: 0, y: 0 }, initialScale(viewportElement)),
       onSettle: (state) => settleTo.current(state, camera.viewport()),
     });
     const unbind = bindCameraGestures(viewportElement, camera);

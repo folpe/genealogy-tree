@@ -1,29 +1,21 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import ELK from 'elkjs/lib/elk.bundled.js';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { computeTreeLayout } from '@/lib/tree/tree.layout';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { treeForViewer } from '../../../tests/fixtures/tree-for-viewer';
 import { FamilyTree } from './family-tree';
-
-// Le worker de placement n'existe pas sous jsdom : même calcul, dans le processus.
-vi.mock('./tree-layout.client', () => ({
-  createLayoutClient: () => {
-    const elk = new ELK();
-    return { layout: (graph: never) => computeTreeLayout(graph, elk), dispose: () => {} };
-  },
-}));
-
 import { drawTree } from './family-tree.helper';
 import type { TreeDrawing } from './tree-drawing';
 
-/**
- * Un pliage refait le placement avec ELK dans le processus de test : sous la charge
- * de la suite complète, cela dépasse les délais par défaut (5 s, 1 s pour waitFor).
- */
-const FOLD_TIMEOUT = { test: 20_000, wait: { timeout: 10_000 } };
-
 const hugoView = treeForViewer('m-hugo');
+const emptyLayout = {
+  persons: {},
+  unions: {},
+  unknownPartners: {},
+  detachedUnions: [],
+  width: 0,
+  height: 0,
+};
 let drawing: TreeDrawing;
 beforeAll(async () => {
   const photo = { src: '/media/p-luc/256?e=1&s=x', srcSet: '', width: 256, height: 256 };
@@ -31,6 +23,11 @@ beforeAll(async () => {
 });
 
 const item = (name: RegExp) => screen.getByRole('treeitem', { name });
+
+// Le canevas retient position et plis pour l'onglet : chaque test part d'un onglet neuf.
+beforeEach(() => {
+  window.sessionStorage.clear();
+});
 
 describe('FamilyTree', () => {
   it('un arbre nommé, une entrée par bulle, chacune menant à sa fiche', () => {
@@ -118,6 +115,7 @@ describe('FamilyTree', () => {
       links: [],
       unknownPartners: [],
       branches: [],
+      layout: emptyLayout,
       width: 302 * 136,
       height: 132,
     };
@@ -140,84 +138,46 @@ describe('FamilyTree', () => {
     expect(within(hugo).getByText('Hugo Marchand')).toBeInTheDocument();
   });
 
-  it(
-    '« - » replie la branche de Luc, « + » la rouvre',
-    async () => {
-      render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
-      const luc = item(/^Luc Marchand/);
-      expect(luc).toHaveAttribute('aria-expanded', 'true');
-      luc.focus();
-      fireEvent.keyDown(luc, { key: '-' });
-      await waitFor(
-        () => expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull(),
-        FOLD_TIMEOUT.wait,
-      );
-      expect(item(/^Luc Marchand/)).toHaveAttribute('aria-expanded', 'false');
-      expect(
-        screen.getByRole('button', {
-          name: /^Déplier la branche de Luc Marchand et Sophie Marchand, \d+ personnes$/,
-        }),
-      ).toBeInTheDocument();
+  it('« - » replie la branche de Luc, « + » la rouvre', () => {
+    render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
+    const luc = item(/^Luc Marchand/);
+    expect(luc).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.keyDown(luc, { key: '-' });
+    expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull();
+    expect(item(/^Luc Marchand/)).toHaveAttribute('aria-expanded', 'false');
+    expect(
+      screen.getByRole('button', {
+        name: /^Déplier la branche de Luc Marchand et Sophie Marchand, \d+ personnes$/,
+      }),
+    ).toBeInTheDocument();
+    fireEvent.keyDown(item(/^Luc Marchand/), { key: '+' });
+    expect(item(/c’est toi$/)).toBeInTheDocument();
+    expect(item(/^Luc Marchand/)).toHaveAttribute('aria-expanded', 'true');
+  });
 
-      fireEvent.keyDown(item(/^Luc Marchand/), { key: '+' });
-      await waitFor(() => expect(item(/c’est toi$/)).toBeInTheDocument(), FOLD_TIMEOUT.wait);
-      expect(item(/^Luc Marchand/)).toHaveAttribute('aria-expanded', 'true');
-    },
-    FOLD_TIMEOUT.test,
-  );
+  it('plier ne déplace aucune bulle restante', () => {
+    render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
+    const henri = item(/^Henri Marchand/);
+    const before = henri.getAttribute('style');
+    fireEvent.keyDown(item(/^Léa Marchand/), { key: '-' });
+    fireEvent.keyDown(item(/^Luc Marchand/), { key: '-' });
+    expect(screen.queryByRole('treeitem', { name: /^Jade/ })).toBeNull();
+    expect(item(/^Henri Marchand/).getAttribute('style')).toBe(before);
+  });
 
-  it(
-    'deux pliages coup sur coup s’ajoutent, et le canevas n’est plus occupé ensuite',
-    async () => {
-      render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
-      const canvas = screen.getByRole('region', { name: 'Canevas de l’arbre' });
-      // Léa d'abord (sa fille Jade), puis le couple de Luc, sans attendre le premier calcul.
-      fireEvent.keyDown(item(/^Léa Marchand/), { key: '-' });
-      fireEvent.keyDown(item(/^Luc Marchand/), { key: '-' });
-      await waitFor(
-        () => expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull(),
-        FOLD_TIMEOUT.wait,
-      );
-      expect(screen.queryByRole('treeitem', { name: /^Jade/ })).toBeNull();
-      await waitFor(() => expect(canvas).toHaveAttribute('aria-busy', 'false'));
-    },
-    FOLD_TIMEOUT.test,
-  );
-
-  it(
-    'replier puis rouvrir aussitôt : le dessin connu revient, sans rester occupé',
-    async () => {
-      render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
-      const canvas = screen.getByRole('region', { name: 'Canevas de l’arbre' });
-      fireEvent.keyDown(item(/^Luc Marchand/), { key: '-' });
-      fireEvent.keyDown(item(/^Luc Marchand/), { key: '+' });
-      await waitFor(() => expect(canvas).toHaveAttribute('aria-busy', 'false'), FOLD_TIMEOUT.wait);
-      expect(item(/c’est toi$/)).toBeInTheDocument();
-    },
-    FOLD_TIMEOUT.test,
-  );
-
-  it(
-    'la poignée suit la demande aussitôt, avant la fin du calcul',
-    async () => {
-      render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
-      fireEvent.click(
-        screen.getByRole('button', {
-          name: 'Replier la branche de Luc Marchand et Sophie Marchand',
-        }),
-      );
-      expect(
-        screen.getByRole('button', {
-          name: /^Déplier la branche de Luc Marchand et Sophie Marchand/,
-        }),
-      ).toBeInTheDocument();
-      await waitFor(
-        () => expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull(),
-        FOLD_TIMEOUT.wait,
-      );
-    },
-    FOLD_TIMEOUT.test,
-  );
+  it('la poignée plie et déplie sa branche', () => {
+    render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Replier la branche de Luc Marchand et Sophie Marchand' }),
+    );
+    expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull();
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /^Déplier la branche de Luc Marchand et Sophie Marchand/,
+      }),
+    );
+    expect(item(/c’est toi$/)).toBeInTheDocument();
+  });
 
   it('une bulle sans enfant n’a ni poignée ni état plié', () => {
     render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
@@ -249,7 +209,15 @@ describe('FamilyTree', () => {
   });
 
   it('invite à patienter quand l’arbre est encore vide', () => {
-    const empty = { nodes: [], links: [], unknownPartners: [], branches: [], width: 0, height: 0 };
+    const empty = {
+      nodes: [],
+      links: [],
+      unknownPartners: [],
+      branches: [],
+      layout: emptyLayout,
+      width: 0,
+      height: 0,
+    };
     render(<FamilyTree drawing={empty} graph={hugoView.drawn} focusId={undefined} />);
     expect(screen.getByText(/L’arbre est encore vide/)).toBeVisible();
     expect(screen.queryByRole('tree')).toBeNull();

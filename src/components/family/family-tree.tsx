@@ -6,6 +6,7 @@ import {
   memo,
   type Ref,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -20,12 +21,14 @@ import {
   VIRTUALIZE_ABOVE,
   visibleWorld,
 } from '@/lib/tree/tree.camera';
+import { recallCamera, rememberCamera, type TreeMemory } from '@/lib/tree/tree.memory';
 import { DEFAULT_METRICS } from '@/lib/tree/tree.metrics';
 import type { TreeLink } from '@/lib/tree/tree.routes';
 import type { CameraController } from '@/motion/camera';
 import type { DisplayedGraph } from '@/server/family/family.display';
 import { PersonBubble } from './person-bubble';
 import type { BranchHandle, TreeDrawing, TreeNode } from './tree-drawing';
+import { readTreeMemory, writeTreeMemory } from './tree-memory.storage';
 import { TreeMinimap } from './tree-minimap';
 import { useFoldedTree } from './use-folded-tree';
 import { useRelayout } from './use-relayout';
@@ -39,9 +42,9 @@ import { useTreeCamera } from './use-tree-camera';
 // Zoom sémantique : la caméra pose `data-detail` (far, mid, near) sur le canevas, et
 // chaque bulle porte déjà ses trois rendus ; le CSS montre le bon, sans re-rendu.
 //
-// Branches : sous chaque bulle qui a des enfants, une poignée plie ou déplie la
-// branche ; le nouveau placement vient du worker (`use-folded-tree.ts`), puis les
-// bulles glissent vers leur nouvelle place (`use-relayout.ts`).
+// Branches : sur le trait de chaque branche, une poignée la plie ou la déplie. Rien
+// d'autre ne bouge, le dessin plié garde le placement d'origine (`use-folded-tree.ts`) ;
+// les bulles cachées s'effacent, celles qui reviennent apparaissent (`use-relayout.ts`).
 
 /** Sélecteurs du niveau de détail, posé sur le canevas (`group/canvas`). */
 const FAR_HIDDEN = 'group-data-[detail=far]/canvas:hidden';
@@ -366,17 +369,30 @@ export function FamilyTree({
   const pendingFocus = useRef<string | undefined>(undefined);
   const content = useMemo<Size>(() => ({ width, height }), [width, height]);
   const [view, setView] = useState<Rect>();
+  // Retour d'une fiche : l'arbre revient là où on l'avait laissé, plis compris.
+  // Lue une seule fois par affichage de l'arbre : un remontage (StrictMode) ne doit pas
+  // relire une mémoire déjà réécrite par le premier montage.
+  const memory = useRef<{ read: boolean; value: TreeMemory | undefined }>({
+    read: false,
+    value: undefined,
+  });
+  const restore = useCallback(() => {
+    if (!memory.current.read) memory.current = { read: true, value: readTreeMemory() };
+    const remembered = memory.current.value;
+    return remembered ? recallCamera(remembered, nodes) : undefined;
+  }, [nodes]);
   const onSettle = useCallback(
     (state: Camera, size: Size) => {
       if (nodes.length > VIRTUALIZE_ABOVE) setView(visibleWorld(state, size));
       else setView(undefined);
+      const remembered = rememberCamera(state, nodes, [...fold.folded]);
+      if (remembered) writeTreeMemory(remembered);
     },
-    [nodes.length],
+    [nodes, fold.folded],
   );
-  const camera = useTreeCamera({ viewport, layer, content, start, onSettle });
+  const camera = useTreeCamera({ viewport, layer, content, start, restore, onSettle });
   const leaving = useRelayout({
     drawing: fold.drawing,
-    anchorId: fold.anchorId,
     camera,
     elements,
     links: linksRef,
@@ -406,18 +422,18 @@ export function FamilyTree({
     [byId, camera],
   );
 
-  const { folded, branchesOf, isRequested, setFolded } = fold;
+  const { folded, branchesOf, setFolded } = fold;
   const onKeyDown = useCallback(
     (id: string, event: KeyboardEvent<HTMLAnchorElement>) => {
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       // « - » replie les branches sous la bulle, « + » les déplie (DESIGN.md, section 11).
       const keys = branchesOf.get(id) ?? [];
       // D'après la dernière demande : « - » puis « + » coup sur coup s'annulent.
-      const collapse = event.key === '-' && keys.some((k) => !isRequested(k));
-      const expand = (event.key === '+' || event.key === '=') && keys.some(isRequested);
+      const collapse = event.key === '-' && keys.some((k) => !folded.has(k));
+      const expand = (event.key === '+' || event.key === '=') && keys.some((k) => folded.has(k));
       if (collapse || expand) {
         event.preventDefault();
-        setFolded(keys, collapse, id);
+        setFolded(keys, collapse);
         return;
       }
       const move = MOVES[event.key];
@@ -432,12 +448,31 @@ export function FamilyTree({
       // Bulle virtualisée, pas encore rendue : le focus suit après le rendu.
       else pendingFocus.current = target;
     },
-    [byId, rows, branchesOf, isRequested, setFolded],
+    [byId, rows, branchesOf, folded, setFolded],
   );
 
+  // Les plis retenus reviennent une fois la caméra en place, autour de la bulle repère.
+  const foldsRestored = useRef(false);
+  useEffect(() => {
+    if (!camera || foldsRestored.current) return;
+    foldsRestored.current = true;
+    const remembered = memory.current.value;
+    if (remembered && remembered.folded.length > 0) {
+      setFolded(remembered.folded, true);
+    }
+  }, [camera, setFolded]);
+
+  // Un pli ne fait pas bouger la caméra : la mémoire suit aussi chaque pli, sans
+  // attendre le prochain arrêt de la caméra.
+  useEffect(() => {
+    if (!camera) return;
+    const remembered = rememberCamera(camera.get(), nodes, [...folded]);
+    if (remembered) writeTreeMemory(remembered);
+  }, [camera, nodes, folded]);
+
   const toggleBranch = useCallback(
-    (branch: BranchHandle) => setFolded([branch.id], !isRequested(branch.id), branch.anchorId),
-    [isRequested, setFolded],
+    (branch: BranchHandle) => setFolded([branch.id], !folded.has(branch.id)),
+    [folded, setFolded],
   );
 
   useLayoutEffect(() => {
@@ -470,7 +505,6 @@ export function FamilyTree({
       <section
         ref={viewport}
         aria-label="Canevas de l’arbre"
-        aria-busy={fold.pending}
         // Niveau des échelles de départ ; la caméra le tient ensuite à jour.
         data-detail="mid"
         // Le focus d'une bulle ne doit jamais faire défiler le canevas : la caméra s'en charge.
@@ -526,9 +560,6 @@ export function FamilyTree({
         <TreeMinimap points={nodes} width={width} height={height} camera={camera} />
       ) : undefined}
       <CanvasControls camera={camera} home={me ? home : undefined} />
-      <p role="status" className="absolute top-4 left-4 text-sm text-ink-2 empty:hidden">
-        {fold.failed ? 'La branche n’a pas pu se replacer. Réessaie dans un instant.' : undefined}
-      </p>
     </div>
   );
 }
