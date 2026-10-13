@@ -42,9 +42,9 @@ import { useTreeCamera } from './use-tree-camera';
 // Zoom sémantique : la caméra pose `data-detail` (far, mid, near) sur le canevas, et
 // chaque bulle porte déjà ses trois rendus ; le CSS montre le bon, sans re-rendu.
 //
-// Branches : sous chaque bulle qui a des enfants, une poignée plie ou déplie la
-// branche ; le nouveau placement vient du worker (`use-folded-tree.ts`), puis les
-// bulles glissent vers leur nouvelle place (`use-relayout.ts`).
+// Branches : sur le trait de chaque branche, une poignée la plie ou la déplie. Rien
+// d'autre ne bouge, le dessin plié garde le placement d'origine (`use-folded-tree.ts`) ;
+// les bulles cachées s'effacent, celles qui reviennent apparaissent (`use-relayout.ts`).
 
 /** Sélecteurs du niveau de détail, posé sur le canevas (`group/canvas`). */
 const FAR_HIDDEN = 'group-data-[detail=far]/canvas:hidden';
@@ -370,10 +370,16 @@ export function FamilyTree({
   const content = useMemo<Size>(() => ({ width, height }), [width, height]);
   const [view, setView] = useState<Rect>();
   // Retour d'une fiche : l'arbre revient là où on l'avait laissé, plis compris.
-  const memory = useRef<TreeMemory | undefined>(undefined);
+  // Lue une seule fois par affichage de l'arbre : un remontage (StrictMode) ne doit pas
+  // relire une mémoire déjà réécrite par le premier montage.
+  const memory = useRef<{ read: boolean; value: TreeMemory | undefined }>({
+    read: false,
+    value: undefined,
+  });
   const restore = useCallback(() => {
-    memory.current = readTreeMemory();
-    return memory.current ? recallCamera(memory.current, nodes) : undefined;
+    if (!memory.current.read) memory.current = { read: true, value: readTreeMemory() };
+    const remembered = memory.current.value;
+    return remembered ? recallCamera(remembered, nodes) : undefined;
   }, [nodes]);
   const onSettle = useCallback(
     (state: Camera, size: Size) => {
@@ -450,11 +456,19 @@ export function FamilyTree({
   useEffect(() => {
     if (!camera || foldsRestored.current) return;
     foldsRestored.current = true;
-    const remembered = memory.current;
+    const remembered = memory.current.value;
     if (remembered && remembered.folded.length > 0) {
       setFolded(remembered.folded, true);
     }
   }, [camera, setFolded]);
+
+  // Un pli ne fait pas bouger la caméra : la mémoire suit aussi chaque pli, sans
+  // attendre le prochain arrêt de la caméra.
+  useEffect(() => {
+    if (!camera) return;
+    const remembered = rememberCamera(camera.get(), nodes, [...folded]);
+    if (remembered) writeTreeMemory(remembered);
+  }, [camera, nodes, folded]);
 
   const toggleBranch = useCallback(
     (branch: BranchHandle) => setFolded([branch.id], !folded.has(branch.id)),

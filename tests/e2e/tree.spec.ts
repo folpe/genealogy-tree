@@ -95,3 +95,26 @@ test('au retour d’une fiche, l’arbre revient là où on l’avait laissé, p
   expect(Math.abs(back.x - left.x)).toBeLessThan(2);
   expect(Math.abs(back.y - left.y)).toBeLessThan(2);
 });
+
+test('un pli fait sans bouger l’arbre tient sur deux allers-retours vers une fiche', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await signIn(page, E2E_ISABELLE_EMAIL);
+  await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+  const luc = page.getByRole('treeitem', { name: /^Luc Marchand/ });
+  await luc.focus();
+  await settled(page);
+  await page.keyboard.press('-');
+  await expect(page.getByRole('treeitem', { name: /^Hugo Marchand/ })).toHaveCount(0);
+
+  for (let round = 0; round < 2; round += 1) {
+    await luc.focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(/\/people\/luc$/);
+    await page.getByRole('link', { name: 'Retour à l’arbre' }).click();
+    await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+    await expect(luc).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByRole('treeitem', { name: /^Hugo Marchand/ })).toHaveCount(0);
+  }
+});
