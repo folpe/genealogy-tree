@@ -3,13 +3,14 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Drawer } from 'vaul';
-import type { AddRelativeResult } from '@/actions/family.actions';
+import { type AddRelativeResult, relationshipAction } from '@/actions/family.actions';
 import { FAN_GENERATIONS } from '@/components/fan/fan.helper';
 import { fanHref } from '@/lib/fan/fan.params';
 import { treeHref } from '@/lib/tree/tree.params';
-import type { TreeForViewer } from '@/server/family/family.service';
+import { type PathHighlight, pathHighlight } from '@/lib/tree/tree.path';
+import type { RelationshipView, TreeForViewer } from '@/server/family/family.service';
 import { AddRelative } from './add-relative';
 import { relativeOptions } from './add-relative.helper';
 import { FamilyTree } from './family-tree';
@@ -77,6 +78,16 @@ export function TreeWithSheet({
   const wide = useWide();
   const open = useCallback((id: string) => showFiche(id), []);
   const close = useCallback(() => showFiche(undefined), []);
+  const [link, setLink] = useState<{ view: RelationshipView; highlight: PathHighlight }>();
+  const [cardHeight, setCardHeight] = useState(0);
+  /** « Notre lien » : sur mobile, la feuille s'efface pour laisser voir le chemin. */
+  const showLink = useCallback(
+    (view: RelationshipView) => {
+      setLink({ view, highlight: pathHighlight(view.path, tree.unions) });
+      if (wide === false) close();
+    },
+    [tree.unions, wide, close],
+  );
 
   const panel = person ? (
     <PersonPanel
@@ -84,12 +95,20 @@ export function TreeWithSheet({
       personId={person.id}
       onPick={open}
       onClose={close}
+      onLink={tree.viewerPersonId && tree.viewerPersonId !== person.id ? showLink : undefined}
       addAction={addAction}
     />
   ) : undefined;
   return (
     <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-      <div className="min-w-0 flex-1">
+      <div className="relative min-w-0 flex-1">
+        {link ? (
+          <RelationshipCard
+            view={link.view}
+            onClose={() => setLink(undefined)}
+            onHeight={setCardHeight}
+          />
+        ) : undefined}
         <FamilyTree
           drawing={drawing}
           graph={tree.drawn}
@@ -98,6 +117,8 @@ export function TreeWithSheet({
           viewKey={viewKey}
           selectedId={person?.id}
           onOpen={open}
+          highlight={link?.highlight}
+          coveredTop={link ? cardHeight : 0}
         />
       </div>
       {/* Monté une seule fois : en panneau, sauf sur un écran qu'on sait étroit. */}
@@ -139,12 +160,15 @@ function PersonPanel({
   personId,
   onPick,
   onClose,
+  onLink,
   addAction,
 }: {
   tree: TreeForViewer;
   personId: string;
   onPick: (id: string) => void;
   onClose: () => void;
+  /** Absent pour sa propre fiche, ou sans fiche reliée au compte. */
+  onLink: ((view: RelationshipView) => void) | undefined;
   addAction: AddAction;
 }) {
   const person = tree.persons.find((p) => p.id === personId);
@@ -174,6 +198,7 @@ function PersonPanel({
         </button>
       </div>
       <PersonSheet tree={tree} personId={personId} heading="h2" bare onPick={onPick} />
+      {onLink ? <LinkButton personId={personId} onLink={onLink} /> : undefined}
       <nav aria-label={`Autour de ${name}`} className="flex flex-wrap gap-2">
         <Link href={`/people/${personId}`} className={action}>
           Fiche complète
@@ -198,5 +223,106 @@ function PersonPanel({
         />
       )}
     </div>
+  );
+}
+
+/** Bouton « Notre lien » : le calcul se fait au serveur, à la demande. */
+function LinkButton({
+  personId,
+  onLink,
+}: {
+  personId: string;
+  onLink: (view: RelationshipView) => void;
+}) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string>();
+  async function ask() {
+    setPending(true);
+    setError(undefined);
+    const result = await relationshipAction(personId);
+    setPending(false);
+    if (result.ok) onLink(result.view);
+    else setError(result.error);
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={ask}
+        disabled={pending}
+        className="flex h-12 items-center justify-center rounded-full bg-ink px-6 text-[15px] font-semibold text-on-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-60"
+      >
+        {pending ? 'Je cherche le chemin…' : 'Notre lien'}
+      </button>
+      {error ? (
+        <p role="alert" className="text-sm text-accent">
+          {error}
+        </p>
+      ) : undefined}
+    </div>
+  );
+}
+
+/** Carte en haut du canevas (DESIGN.md, `RelationshipPanel`). */
+function RelationshipCard({
+  view,
+  onClose,
+  onHeight,
+}: {
+  view: RelationshipView;
+  onClose: () => void;
+  /** Hauteur occupée sur le canevas, marge comprise : le cadrage de la caméra l'évite. */
+  onHeight: (height: number) => void;
+}) {
+  const ref = useRef<HTMLElement>(null); // allow-null: contrat des refs de React
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (element) onHeight(element.offsetTop + element.offsetHeight);
+  }, [onHeight]);
+  const common =
+    view.common.length > 1
+      ? `${view.common.slice(0, -1).join(', ')} et ${view.common.at(-1)}`
+      : view.common[0];
+  return (
+    <section
+      ref={ref}
+      aria-label="Notre lien"
+      className="absolute inset-x-3 top-3 z-10 mx-auto flex max-w-lg flex-col gap-2 rounded-[var(--radius-panel)] bg-card p-4 shadow-float md:gap-3 md:p-5"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span className="pt-2 text-xs font-semibold tracking-[0.14em] text-accent uppercase">
+          Notre lien
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fermer le lien"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full border border-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M6 6l12 12M18 6L6 18"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+      <p className="font-display text-[19px] leading-snug md:text-[26px]">{view.sentence}</p>
+      {view.steps.length > 1 ? (
+        <ol className="flex flex-wrap items-center gap-1.5">
+          {view.steps.map((step, i) => (
+            <li
+              key={step.id}
+              className={`flex h-8 items-center rounded-full px-3 text-[13px] ${i === 0 || i === view.steps.length - 1 ? 'bg-accent-soft text-accent-strong' : 'bg-paper'}`}
+            >
+              {i === 0 ? 'Toi' : step.name}
+            </li>
+          ))}
+        </ol>
+      ) : undefined}
+      {common ? <p className="text-sm text-ink-2">Ancêtres communs : {common}</p> : undefined}
+    </section>
   );
 }

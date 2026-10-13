@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cameraBounds,
+  cameraFraming,
   cameraOn,
   clampCamera,
   DETAIL_FAR_BELOW,
@@ -142,5 +143,38 @@ describe('detailLevel', () => {
   it('les échelles de départ (0,75 et 1) tombent au niveau moyen, celui du rendu serveur', () => {
     expect(detailLevel(0.75)).toBe('mid');
     expect(detailLevel(1)).toBe('mid');
+  });
+});
+
+describe('cameraFraming', () => {
+  const limits = { kMin: 0.2, kMax: 2.5 };
+
+  it('centre la zone et la fait tenir dans l’écran, marges comprises', () => {
+    const camera = cameraFraming(
+      { x0: 0, y0: 0, x1: 1000, y1: 400 },
+      { width: 600, height: 600 },
+      limits,
+    );
+    expect(camera.k).toBeCloseTo(600 / (1000 + 2 * 48));
+    expect(camera.x).toBeCloseTo(-500 * camera.k);
+    expect(camera.y).toBeCloseTo(-200 * camera.k);
+  });
+
+  it('laisse libre le haut de l’écran sous une carte posée dessus', () => {
+    const rect = { x0: 0, y0: 0, x1: 200, y1: 200 };
+    const viewport = { width: 1000, height: 600 };
+    const camera = cameraFraming(rect, viewport, limits, { top: 200 });
+    // Centre de la zone à mi-hauteur de l'espace libre : 100 px sous le centre de l'écran.
+    expect(100 * camera.k + camera.y).toBeCloseTo(100);
+    expect(camera.k).toBeCloseTo(Math.min(1.2, 400 / 296));
+  });
+
+  it('ne grossit pas au-delà de la lecture confortable, ni sous la limite basse', () => {
+    expect(
+      cameraFraming({ x0: 0, y0: 0, x1: 10, y1: 10 }, { width: 800, height: 800 }, limits).k,
+    ).toBe(1.2);
+    expect(
+      cameraFraming({ x0: 0, y0: 0, x1: 100_000, y1: 10 }, { width: 800, height: 800 }, limits).k,
+    ).toBe(0.2);
   });
 });
