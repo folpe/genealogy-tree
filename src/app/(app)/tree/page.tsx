@@ -1,9 +1,10 @@
 // tdd-cover: e2e tests/e2e/tree.spec.ts
 import type { Metadata } from 'next';
-import { FamilyTree } from '@/components/family/family-tree';
+import { addRelativeAction } from '@/actions/family.actions';
 import { drawTree } from '@/components/family/family-tree.helper';
 import { personLabel } from '@/components/family/person.helper';
 import { TreeViewControls } from '@/components/family/tree-view-controls';
+import { TreeWithSheet } from '@/components/family/tree-with-sheet';
 import { getElk } from '@/lib/tree/tree.instance';
 import { parseTreeParams, treeHref } from '@/lib/tree/tree.params';
 import { requireSession } from '@/server/auth/session';
@@ -43,12 +44,11 @@ export default async function TreePage({
         centerName={center ? personLabel(center) : undefined}
         canReturn={tree.viewerPersonId !== undefined && tree.centerId !== tree.viewerPersonId}
       />
-      <FamilyTree
+      <TreeWithSheet
+        tree={tree}
         drawing={drawing}
-        graph={tree.drawn}
-        focusId={tree.viewerPersonId}
-        centerId={tree.centerId}
         viewKey={treeHref(params)}
+        addAction={addRelativeAction}
       />
     </main>
   );

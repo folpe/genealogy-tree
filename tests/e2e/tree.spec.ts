@@ -23,8 +23,9 @@ test('l’arbre s’ouvre sur ma bulle, et les flèches suivent les liens', asyn
   await expect(parent).not.toHaveAccessibleName(/c’est toi$/);
   await expect(parent).toHaveAttribute('tabindex', '0');
 
+  // Entrée ouvre la fiche à côté de l'arbre (phase 5, lot 4).
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/people\/[\w-]+$/);
+  await expect(page).toHaveURL(/[?&]fiche=[\w-]+/);
 });
 
 test('un clic sur une bulle ouvre sa fiche', async ({ page }) => {
@@ -42,8 +43,10 @@ test('un clic sur une bulle ouvre sa fiche', async ({ page }) => {
   // Une navigation dans l'app, pas un rechargement : la page garde son état.
   await page.evaluate(() => Reflect.set(window, 'stayedInApp', true));
   await henri.click();
-  await expect(page).toHaveURL(/\/people\/henri$/);
-  await expect(page.getByRole('heading', { name: 'Henri Marchand' })).toBeVisible();
+  await expect(page).toHaveURL(/[?&]fiche=henri/);
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Henri Marchand', exact: true }),
+  ).toBeVisible();
   expect(await page.evaluate(() => Reflect.get(window, 'stayedInApp'))).toBe(true);
 });
 
@@ -56,7 +59,7 @@ test('les liens sont tracés sous les bulles', async ({ page }) => {
   expect(await paths.count()).toBeGreaterThan(10);
 });
 
-test('un tap montre aussitôt que la fiche arrive, et le retour montre l’arbre en chargement', async ({
+test('la fiche complète montre aussitôt qu’elle arrive, et le retour montre l’arbre en chargement', async ({
   page,
 }) => {
   await signIn(page, E2E_ISABELLE_EMAIL);
@@ -69,9 +72,10 @@ test('un tap montre aussitôt que la fiche arrive, et le retour montre l’arbre
     if (navigation) await new Promise((done) => setTimeout(done, 1000));
     await route.continue();
   });
-  const me = page.getByRole('treeitem', { name: /c’est toi$/ });
-  await me.click();
-  await expect(me.locator('[data-link-pending]')).toBeVisible();
+  // Le tap ouvre la fiche sur place, sans attendre le réseau.
+  await page.getByRole('treeitem', { name: /c’est toi$/ }).click();
+  await expect(page.getByRole('heading', { level: 2, name: /^Isabelle/ })).toBeVisible();
+  await page.getByRole('link', { name: 'Fiche complète' }).click();
   await expect(page).toHaveURL(/\/people\/isabelle$/);
 
   await page.getByRole('link', { name: 'Retour à l’arbre' }).click();
@@ -96,6 +100,7 @@ test('au retour d’une fiche, l’arbre revient là où on l’avait laissé, p
   await page.getByRole('treeitem', { name: /^Luc Marchand/ }).focus();
   const left = await settled(page);
   await page.keyboard.press('Enter');
+  await page.getByRole('link', { name: 'Fiche complète' }).click();
   await expect(page).toHaveURL(/\/people\/luc$/);
   await page.getByRole('link', { name: 'Retour à l’arbre' }).click();
   await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
@@ -123,6 +128,7 @@ test('un pli fait sans bouger l’arbre tient sur deux allers-retours vers une f
   for (let round = 0; round < 2; round += 1) {
     await luc.focus();
     await page.keyboard.press('Enter');
+    await page.getByRole('link', { name: 'Fiche complète' }).click();
     await expect(page).toHaveURL(/\/people\/luc$/);
     await page.getByRole('link', { name: 'Retour à l’arbre' }).click();
     await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');

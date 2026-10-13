@@ -216,6 +216,8 @@ describe.skipIf(!db)('family.service (intégration)', () => {
     expect(directory.proximity['luc']).toBe(1);
     const tree = await getTreeForViewer(deps(), 'u-hugo');
     expect(JSON.stringify(directory.persons)).toBe(JSON.stringify(tree.persons));
+    // L'arbre porte les mêmes liens, pour le kicker de la fiche.
+    expect(tree.relations).toEqual(directory.relations);
     const isabelle = JSON.stringify(await getSearchDirectory(deps(), 'u-isabelle'));
     expect(isabelle).not.toContain('Bordeaux');
   });
