@@ -26,7 +26,6 @@ export function FanChart({
 }) {
   const layout = fanLayout(fan.generations.length);
   const scroller = useRef<HTMLDivElement>(null); // allow-null: contrat des refs de React
-  const rings = useRef<(SVGGElement | null)[]>([]); // allow-null: contrat des refs de React
 
   // Sur un écran étroit l'éventail déborde : on part du centre, les deux côtés à portée.
   useLayoutEffect(() => {
@@ -36,16 +35,14 @@ export function FanChart({
   useLayoutEffect(
     () =>
       animateFanEntry(
-        rings.current.filter((ring): ring is SVGGElement => ring instanceof SVGGElement),
+        [...(scroller.current?.querySelectorAll('[data-ring]') ?? [])].filter(
+          (ring): ring is SVGGElement => ring instanceof SVGGElement,
+        ),
         `${layout.cx} ${layout.cy}`,
       ),
     [layout.cx, layout.cy],
   );
 
-  const ringRef = (key: number) => (el: SVGGElement | null) => {
-    // allow-null: contrat des refs de React
-    rings.current[key] = el;
-  };
   const viewBox = `0 0 ${layout.width} ${layout.height}`;
   const origin = `translate(${layout.cx} ${layout.cy})`;
 
@@ -57,8 +54,8 @@ export function FanChart({
         <svg viewBox={viewBox} className="block w-full">
           <title>{`Éventail des ancêtres, ${fan.generations.length} générations`}</title>
           <g transform={origin}>
-            {fan.generations.map((ring, g) => (
-              <g key={ring[0]?.generation} ref={ringRef(g)}>
+            {fan.generations.map((ring) => (
+              <g key={ring[0]?.generation} data-ring="">
                 {ring.map((slot) => (
                   <Sector
                     key={slotKey(slot)}
@@ -79,8 +76,8 @@ export function FanChart({
           className="pointer-events-none absolute inset-0 block w-full select-none"
         >
           <g transform={origin}>
-            {fan.generations.map((ring, g) => (
-              <g key={ring[0]?.generation} ref={ringRef(fan.generations.length + g)}>
+            {fan.generations.map((ring) => (
+              <g key={ring[0]?.generation} data-ring="">
                 {ring.map((slot) => (
                   <SectorText
                     key={slotKey(slot)}
@@ -120,7 +117,7 @@ function Sector({
       ? `${isDeceased(person) ? 'fill-bubble-past' : 'fill-bubble'} stroke-canvas stroke-[1.5]`
       : 'fill-surface stroke-ink-4 stroke-[1.5] [stroke-dasharray:4_5]';
   const state = pickable
-    ? 'cursor-pointer hover:stroke-accent focus-visible:stroke-accent'
+    ? 'cursor-pointer hover:stroke-accent focus-visible:stroke-ink focus-visible:[stroke-dasharray:none] focus-visible:[stroke-width:3.5]'
     : 'pointer-events-none opacity-40';
   const pick = () => onSelect(slot);
   const onKeyDown = (event: KeyboardEvent) => {
