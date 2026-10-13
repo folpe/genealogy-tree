@@ -4,7 +4,7 @@
 import { Command } from 'cmdk';
 import { useRouter } from 'next/navigation';
 import { Dialog } from 'radix-ui';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { searchDirectoryAction } from '@/actions/family.actions';
 import type { SearchDirectory } from '@/server/family/family.service';
 import { isDeceased, personInitials } from '../family/person.helper';
@@ -38,12 +38,9 @@ type Load =
   | { state: 'idle' | 'loading' | 'error' }
   | { state: 'ready'; directory: SearchDirectory };
 
-export function CommandPalette() {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
+/** L'annuaire : chargé à la première ouverture, une seule tentative par ouverture. */
+function useDirectory(open: boolean) {
   const [load, setLoad] = useState<Load>({ state: 'idle' });
-
   const fetchDirectory = useCallback(async () => {
     setLoad({ state: 'loading' });
     try {
@@ -52,19 +49,49 @@ export function CommandPalette() {
       setLoad({ state: 'error' });
     }
   }, []);
+  // Après une erreur, « Réessayer » ou une nouvelle ouverture relancent, jamais une boucle.
+  useEffect(() => {
+    if (open && load.state === 'idle') void fetchDirectory();
+  }, [open, load.state, fetchDirectory]);
+  const resetAfterError = useCallback(
+    () => setLoad((l) => (l.state === 'error' ? { state: 'idle' } : l)),
+    [],
+  );
+  return { load, retry: fetchDirectory, resetAfterError };
+}
 
+/** ⌘K ou Ctrl+K, branché une fois ; `toggle` est relu à chaque appui. */
+function useShortcut(toggle: () => void) {
+  const latest = useRef(toggle);
+  useEffect(() => {
+    latest.current = toggle;
+  });
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== 'k' || !(event.metaKey || event.ctrlKey)) return;
       event.preventDefault();
-      setOpen((wasOpen) => !wasOpen);
+      latest.current();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-  useEffect(() => {
-    if (open && (load.state === 'idle' || load.state === 'error')) void fetchDirectory();
-  }, [open, load.state, fetchDirectory]);
+}
+
+export function CommandPalette() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [recent, setRecent] = useState<string[]>([]);
+  const { load, retry, resetAfterError } = useDirectory(open);
+
+  function toggle(next: boolean) {
+    if (next) {
+      resetAfterError();
+      setRecent(readRecent());
+    }
+    setOpen(next);
+  }
+  useShortcut(() => toggle(!open));
 
   function choose(id: string) {
     writeRecent(pushRecent(readRecent(), id));
@@ -74,16 +101,8 @@ export function CommandPalette() {
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger
-        aria-label="Trouver quelqu’un"
-        aria-keyshortcuts="Meta+K Control+K"
-        className="flex size-11 items-center justify-center gap-2.5 rounded-full border border-line bg-surface text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink lg:h-[46px] lg:w-auto lg:min-w-[220px] lg:justify-start lg:px-4"
-      >
-        <SearchIcon />
-        <span className="hidden flex-1 text-left text-[15px] lg:inline">Trouver quelqu’un</span>
-        <kbd className="hidden font-sans text-xs text-ink-2 lg:inline">⌘K</kbd>
-      </Dialog.Trigger>
+    <Dialog.Root open={open} onOpenChange={toggle}>
+      <PaletteTrigger />
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/30" />
         <Dialog.Content className="fixed inset-x-3 top-3 z-50 mx-auto max-w-xl overflow-hidden rounded-[var(--radius-card)] bg-card text-ink shadow-float focus-visible:outline-none md:top-[12vh]">
@@ -102,7 +121,13 @@ export function CommandPalette() {
               />
             </div>
             <Command.List className="max-h-[min(60dvh,440px)] overflow-y-auto p-2">
-              <Results load={load} query={query} onChoose={choose} onRetry={fetchDirectory} />
+              <Results
+                load={load}
+                query={query}
+                recentIds={recent}
+                onChoose={choose}
+                onRetry={retry}
+              />
             </Command.List>
           </Command>
         </Dialog.Content>
@@ -111,14 +136,31 @@ export function CommandPalette() {
   );
 }
 
+function PaletteTrigger() {
+  return (
+    <Dialog.Trigger
+      aria-label="Trouver quelqu’un"
+      aria-keyshortcuts="Meta+K Control+K"
+      className="flex size-11 items-center justify-center gap-2.5 rounded-full border border-line bg-surface text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink lg:h-[46px] lg:w-auto lg:min-w-[220px] lg:justify-start lg:px-4"
+    >
+      <SearchIcon />
+      <span className="hidden flex-1 text-left text-[15px] lg:inline">Trouver quelqu’un</span>
+      <kbd className="hidden font-sans text-xs text-ink-2 lg:inline">⌘K</kbd>
+    </Dialog.Trigger>
+  );
+}
+
 function Results({
   load,
   query,
+  recentIds,
   onChoose,
   onRetry,
 }: {
   load: Load;
   query: string;
+  /** Récents lus à l'ouverture, pas à chaque frappe. */
+  recentIds: string[];
   onChoose: (id: string) => void;
   onRetry: () => void;
 }) {
@@ -136,7 +178,7 @@ function Results({
   if (load.state !== 'ready')
     return <Command.Loading className={note}>Chargement…</Command.Loading>;
   if (query.trim() === '') {
-    const recent = recentItems(load.directory, readRecent());
+    const recent = recentItems(load.directory, recentIds);
     if (recent.length === 0) {
       return <p className={note}>Tape un prénom, un nom ou un nom de naissance.</p>;
     }
