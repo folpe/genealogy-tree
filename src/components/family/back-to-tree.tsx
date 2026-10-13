@@ -19,6 +19,15 @@ export function useTreeHref(): string {
   return href;
 }
 
+/** Segment d'URL décodé ; un échappement abîmé est gardé tel quel. */
+function decoded(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
 /**
  * Depuis une fiche : l'arbre revient centré sur sa bulle, cerclée, zoom et plis
  * gardés (`?focus=`), sans rouvrir la fiche : sur mobile, elle cacherait la lignée
@@ -32,6 +41,6 @@ export function BackToTree() {
   const [path = '/tree', search = ''] = href.split('?');
   const query = new URLSearchParams(search);
   query.delete('fiche');
-  query.set('focus', decodeURIComponent(personId));
+  query.set('focus', decoded(personId));
   return <Link href={`${path}?${query.toString()}`}>Retour à l’arbre</Link>;
 }

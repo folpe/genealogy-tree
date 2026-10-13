@@ -54,6 +54,8 @@ function useWide(): boolean | undefined {
  */
 function showFiche(id: string | undefined) {
   const url = new URL(window.location.href);
+  // Ouvrir une autre fiche : l'anneau du retour (`focus`) suit la dernière bulle touchée.
+  if (id) url.searchParams.delete('focus');
   if (id) url.searchParams.set('fiche', id);
   else url.searchParams.delete('fiche');
   const next = `${url.pathname}${url.search}`;
