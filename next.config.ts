@@ -9,9 +9,9 @@ const config: NextConfig = {
     ignoreBuildErrors: true,
   },
   experimental: {
-    // Une photo réduite dans le navigateur pèse moins d'1 Mo ; marge sous les 4,5 Mo
-    // qu'accepte une fonction Vercel.
-    serverActions: { bodySizeLimit: '4mb' },
+    // Une photo réduite dans le navigateur pèse moins d'1 Mo. Un peu au-dessus du plafond
+    // du service (4 Mo) : c'est lui qui refuse, avec son message.
+    serverActions: { bodySizeLimit: '5mb' },
   },
   images: {
     remotePatterns: [{ protocol: 'https', hostname: '*.public.blob.vercel-storage.com' }],

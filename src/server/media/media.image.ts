@@ -18,6 +18,25 @@ const isFormat = (format: string | undefined): format is Format =>
 
 const BLUR_WIDTH = 16;
 
+/**
+ * Plafond de pixels d'une image reçue : décoder coûte 4 octets par pixel, et un
+ * fichier de quelques Mo peut annoncer des dimensions immenses. 50 Mpx couvrent les
+ * photos de téléphone (48 Mpx).
+ */
+const MAX_INPUT_PIXELS = 50_000_000;
+/** Côté maximal de l'original rangé : au-delà, rien ne s'affiche mieux. */
+const MAX_SIDE = 4096;
+
+/** Image refusée pour ses dimensions, avant tout décodage. */
+export class ImageTooLargeError extends Error {
+  constructor(width: number, height: number) {
+    super(`Image trop grande : ${width} x ${height}`);
+    this.name = 'ImageTooLargeError';
+  }
+}
+
+const decode = (input: Buffer) => sharp(input, { limitInputPixels: MAX_INPUT_PIXELS });
+
 export type NormalizedImage = {
   original: {
     bytes: Buffer;
@@ -32,10 +51,14 @@ export type NormalizedImage = {
 };
 
 export async function normalizeImage(input: Buffer): Promise<NormalizedImage> {
-  const { format } = await sharp(input).metadata();
+  // Les dimensions se lisent dans l'en-tête, sans décoder : on refuse avant.
+  const { format, width = 0, height = 0 } = await sharp(input).metadata();
   if (!isFormat(format)) throw new Error(`Image non prise en charge : ${format ?? 'inconnue'}`);
+  if (width * height > MAX_INPUT_PIXELS) throw new ImageTooLargeError(width, height);
 
-  const upright = sharp(input).rotate();
+  const upright = decode(input)
+    .rotate()
+    .resize({ width: MAX_SIDE, height: MAX_SIDE, fit: 'inside', withoutEnlargement: true });
   const encoded =
     format === 'jpeg'
       ? upright.jpeg({ quality: 90, mozjpeg: true })
@@ -44,16 +67,16 @@ export async function normalizeImage(input: Buffer): Promise<NormalizedImage> {
         : upright.webp({ quality: 90 });
   const { data, info } = await encoded.toBuffer({ resolveWithObject: true });
 
-  const variants = await Promise.all(
-    MEDIA_WIDTHS.map(async (width) => {
-      const variant = await sharp(data)
-        .resize({ width, withoutEnlargement: true })
-        .webp({ quality: 80 })
-        .toBuffer({ resolveWithObject: true });
-      return { width, actualWidth: variant.info.width, bytes: variant.data };
-    }),
-  );
-  const blur = await sharp(data).resize({ width: BLUR_WIDTH }).webp({ quality: 40 }).toBuffer();
+  // Une dérivée après l'autre : une seule image décodée en mémoire à la fois.
+  const variants: NormalizedImage['variants'] = [];
+  for (const target of MEDIA_WIDTHS) {
+    const variant = await decode(data)
+      .resize({ width: target, withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer({ resolveWithObject: true });
+    variants.push({ width: target, actualWidth: variant.info.width, bytes: variant.data });
+  }
+  const blur = await decode(data).resize({ width: BLUR_WIDTH }).webp({ quality: 40 }).toBuffer();
 
   return {
     original: { bytes: data, ...FORMATS[format], width: info.width, height: info.height },

@@ -52,6 +52,20 @@ describe.skipIf(!db)('person-photo.service (intégration)', () => {
     expect(blob.puts).toEqual([]);
   });
 
+  it('refuse une image aux dimensions immenses, même dans un petit fichier', async () => {
+    const blob = memoryBlobStore();
+    const huge = await sharp({
+      create: { width: 8000, height: 7000, channels: 3, background: { r: 0, g: 0, b: 0 } },
+    })
+      .png({ compressionLevel: 9 })
+      .toBuffer();
+    expect(huge.length).toBeLessThan(4 * 1024 * 1024);
+    await expect(
+      changePhoto({ db: client, blob: blob.store }, 'u-hugo', 'luc', huge),
+    ).rejects.toMatchObject({ code: 'MEDIA_TOO_LARGE' });
+    expect(blob.puts).toEqual([]);
+  });
+
   it('refuse un fichier qui n’est pas une image, ou trop lourd', async () => {
     const blob = memoryBlobStore();
     const deps = { db: client, blob: blob.store };

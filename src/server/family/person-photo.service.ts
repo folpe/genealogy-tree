@@ -1,5 +1,6 @@
 import { AppError } from '../_shared/errors';
 import { buildAccessContext, canEdit } from '../access/access.policy';
+import { ImageTooLargeError } from '../media/media.image';
 import { type MediaDeps, setProfilePhoto, storeImage } from '../media/media.service';
 import { loadAccessMembers } from '../members/members.repository';
 import { buildFamilyIndex } from './family.helper';
@@ -53,6 +54,14 @@ export async function changePhoto(
   try {
     ({ mediaId } = await storeImage(deps, { personId, bytes }));
   } catch (error) {
+    if (error instanceof ImageTooLargeError) {
+      throw new AppError({
+        message: 'Photo trop grande : choisis-en une plus petite.',
+        code: 'MEDIA_TOO_LARGE',
+        status: 413,
+        cause: error,
+      });
+    }
     // Octets qui ne sont pas une image, ou format refusé : sharp ou le normaliseur.
     if (error instanceof Error && UNREADABLE.test(error.message)) {
       throw new AppError({

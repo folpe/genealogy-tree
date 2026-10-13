@@ -20,7 +20,13 @@ async function shrink(file: File): Promise<Blob> {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-  canvas.getContext('2d')?.drawImage(bitmap, 0, 0, width, height);
+  const context = canvas.getContext('2d');
+  // Sans contexte (mémoire du téléphone épuisée), on n'envoie pas une image blanche.
+  if (!context) {
+    bitmap.close();
+    throw new Error(UNREADABLE);
+  }
+  context.drawImage(bitmap, 0, 0, width, height);
   bitmap.close();
   return new Promise((resolve, reject) => {
     canvas.toBlob(
@@ -52,8 +58,12 @@ export function PhotoPicker({ personId, children }: { personId: string; children
       const data = new FormData();
       data.set('personId', personId);
       data.set('photo', photo, 'photo.jpg');
-      const result = await changePhotoAction(data);
-      if (!result.ok) setError(result.error);
+      try {
+        const result = await changePhotoAction(data);
+        if (!result.ok) setError(result.error);
+      } catch {
+        setError('La photo n’a pas pu être envoyée. Réessaie dans un instant.');
+      }
     });
   }
 
@@ -71,23 +81,7 @@ export function PhotoPicker({ personId, children }: { personId: string; children
               className="size-4 rounded-full border-2 border-on-ink border-t-transparent motion-safe:animate-spin"
             />
           ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.4-2h5l1.4 2h1.6A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinejoin="round"
-              />
-              <circle
-                cx="12"
-                cy="12.5"
-                r="3.2"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              />
-            </svg>
+            <CameraIcon />
           )}
           <input
             id={id}
@@ -110,5 +104,20 @@ export function PhotoPicker({ personId, children }: { personId: string; children
         </p>
       ) : undefined}
     </div>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.4-2h5l1.4 2h1.6A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12.5" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
   );
 }

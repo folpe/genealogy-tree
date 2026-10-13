@@ -1,6 +1,7 @@
+import zlib from 'node:zlib';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { normalizeImage } from './media.image';
+import { ImageTooLargeError, normalizeImage } from './media.image';
 
 // Images de synthèse : aucune photo réelle dans les tests.
 async function aJpeg(options: {
@@ -98,5 +99,34 @@ describe('normalizeImage', () => {
       .gif()
       .toBuffer();
     await expect(normalizeImage(gif)).rejects.toThrow(/non prise en charge/);
+  });
+});
+
+describe('image immense annoncée par un petit fichier', () => {
+  /** PNG minimal aux dimensions annoncées : quelques octets, rien de réel à décoder. */
+  function pngAnnouncing(width: number, height: number): Buffer {
+    const chunk = (type: string, data: Buffer) => {
+      const length = Buffer.alloc(4);
+      length.writeUInt32BE(data.length, 0);
+      const crc = Buffer.alloc(4);
+      crc.writeUInt32BE(zlib.crc32(Buffer.concat([Buffer.from(type), data])) >>> 0, 0);
+      return Buffer.concat([length, Buffer.from(type), data, crc]);
+    };
+    const ihdr = Buffer.alloc(13);
+    ihdr.writeUInt32BE(width, 0);
+    ihdr.writeUInt32BE(height, 4);
+    ihdr.set([8, 2, 0, 0, 0], 8);
+    return Buffer.concat([
+      Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+      chunk('IHDR', ihdr),
+      chunk('IDAT', zlib.deflateSync(Buffer.alloc(0))),
+      chunk('IEND', Buffer.alloc(0)),
+    ]);
+  }
+
+  it('est refusée sur ses dimensions, avant tout décodage', async () => {
+    await expect(normalizeImage(pngAnnouncing(16_000, 16_000))).rejects.toBeInstanceOf(
+      ImageTooLargeError,
+    );
   });
 });
