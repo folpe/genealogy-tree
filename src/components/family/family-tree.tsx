@@ -39,7 +39,8 @@ import { useTreeCamera } from './use-tree-camera';
 const FAR_HIDDEN = 'group-data-[detail=far]/canvas:hidden';
 const NEAR_HIDDEN = 'group-data-[detail=near]/canvas:hidden';
 const ONLY_FAR = 'hidden group-data-[detail=far]/canvas:block';
-const ONLY_NEAR = 'hidden group-data-[detail=near]/canvas:block';
+/** Nom complet de près : deux lignes au plus (line-clamp fixe lui-même l'affichage). */
+const ONLY_NEAR_CLAMPED = 'hidden group-data-[detail=near]/canvas:line-clamp-2';
 /** Teintes des générations, vues de loin (globals.css, `--color-gen-*`). */
 const GENERATION_TINTS = 5;
 
@@ -153,7 +154,7 @@ const TreeItem = memo(function TreeItem({
         {node.name}
       </span>
       <span
-        className={`${ONLY_NEAR} mt-1.5 line-clamp-2 max-w-full text-center font-display text-[15px] leading-tight ${tone}`}
+        className={`${ONLY_NEAR_CLAMPED} mt-1.5 max-w-full text-center font-display text-[15px] leading-tight ${tone}`}
       >
         {node.fullName}
       </span>

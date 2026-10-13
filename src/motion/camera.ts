@@ -27,8 +27,11 @@ export type CameraController = {
   get: () => Camera;
   viewport: () => Size;
   limits: () => ScaleLimits;
-  /** Arrête toute animation en cours : le doigt reprend la main. */
-  stop: () => void;
+  /**
+   * Arrête toute animation en cours : le doigt reprend la main. Rend `true` si une
+   * animation a été coupée : la caméra est alors arrêtée en route, à relâcher.
+   */
+  stop: () => boolean;
   /** Pose la caméra ; `elastic` laisse dépasser les bornes avec résistance (geste en cours). */
   set: (camera: Camera, options?: { elastic?: boolean }) => void;
   /** Lâcher d'un geste : inertie (px/s), puis retour élastique dans les bornes. */
@@ -92,8 +95,10 @@ export function createCamera({
     onSettle({ ...state });
   };
   const stop = () => {
+    const interrupted = tween !== undefined || moving;
     tween?.kill();
     tween = undefined;
+    return interrupted;
   };
   /** Sans animation quand l'utilisateur la refuse (DESIGN.md, section 10). */
   const instant = (to: Camera) => {
@@ -174,6 +179,8 @@ export function createCamera({
     },
     dispose() {
       stop();
+      // Le calque survit à la caméra (remontée sur un nouveau placement).
+      layer.style.willChange = 'auto';
       listeners.clear();
     },
   };
