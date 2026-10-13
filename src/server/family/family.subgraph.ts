@@ -5,11 +5,13 @@ import type { FamilyGraph } from './family.types';
 // qui se dessine (`selectDisplayedGraph`) :
 // - descendants : la racine, sa descendance et les conjoints de chacun ;
 // - sablier : les ancêtres de la personne centrale au-dessus, sa descendance et les
-//   conjoints en dessous, sans fratrie ni collatéraux.
+//   conjoints en dessous, sans fratrie ni collatéraux ;
+// - notre famille : le sablier des deux partenaires de l'union en cours, leurs deux
+//   lignées côte à côte au-dessus ; sans union en cours, le sablier de la personne.
 // « A élevé » n'ouvre pas de descendance : le lien reste, entre personnes gardées.
 
 export type SubgraphOptions = {
-  view: 'descendants' | 'hourglass';
+  view: 'descendants' | 'hourglass' | 'couple';
   rootId: string;
   /** Générations au plus de chaque côté ; sans limite par défaut. */
   depth?: number;
@@ -24,11 +26,19 @@ export function selectSubgraph(
 
   const within = (generations: Map<string, number>) =>
     [...generations].filter(([, generation]) => generation <= depth).map(([id]) => id);
-  const descendants = within(descendantsOf(index, rootId));
-  const ancestors = view === 'hourglass' ? within(ancestorsOf(index, rootId)) : [];
+  const partner =
+    view === 'couple'
+      ? partnersOf(index, rootId, { ongoingOnly: true }).find(
+          (p): p is typeof p & { partnerId: string } => typeof p.partnerId === 'string',
+        )?.partnerId
+      : undefined;
+  const centers = partner ? [rootId, partner] : [rootId];
+  const descendants = centers.flatMap((id) => within(descendantsOf(index, id)));
+  const ancestors =
+    view === 'descendants' ? [] : centers.flatMap((id) => within(ancestorsOf(index, id)));
 
-  const kept = new Set([rootId, ...descendants, ...ancestors]);
-  for (const id of [rootId, ...descendants]) {
+  const kept = new Set([...centers, ...descendants, ...ancestors]);
+  for (const id of [...centers, ...descendants]) {
     for (const { partnerId } of partnersOf(index, id)) {
       if (typeof partnerId === 'string') kept.add(partnerId);
     }

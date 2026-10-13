@@ -9,7 +9,7 @@ import { loadProfilePhotos } from '../media/media.service';
 import { type PersonPhoto, signedPhoto } from '../media/media.url';
 import { loadAccessMembers } from '../members/members.repository';
 import { type DisplayedGraph, selectDisplayedGraph } from './family.display';
-import { buildFamilyIndex, generationLevels } from './family.helper';
+import { buildFamilyIndex, generationLevels, partnersOf } from './family.helper';
 import { loadFamilyGraph } from './family.repository';
 import { selectSubgraph } from './family.subgraph';
 import { todayIn } from './fuzzy-date.helper';
@@ -37,11 +37,21 @@ export type TreeForViewer = Omit<TreeView, 'audited'> & {
   drawn: DisplayedGraph;
   /** Personne au centre de la vue dessinée : celle demandée, sinon le lecteur. */
   centerId: string;
+  /** Vue dessinée : celle demandée, sinon la vue par défaut du lecteur. */
+  shownView: TreeViewKind;
+  /** La personne au centre a une union en cours : « notre famille » a un sens. */
+  centerInCouple: boolean;
 };
+
+export type TreeViewKind = 'all' | 'couple' | 'descendants' | 'hourglass';
 
 /** Ce que l'arbre dessine (plan phase 4, lot 6), lu dans l'URL de `/tree`. */
 export type TreeDisplay = {
-  view: 'all' | 'descendants' | 'hourglass';
+  /**
+   * Absente : la vue du lecteur lui-même, « notre famille » s'il est en couple, sinon
+   * son sablier ; un compte sans fiche voit toute la famille.
+   */
+  view?: TreeViewKind;
   /** Personne au centre des vues descendants et sablier ; par défaut, le lecteur. */
   p?: string;
   /** Unions passées montrées (spec section 8.1 : masquées par défaut). */
@@ -50,12 +60,12 @@ export type TreeDisplay = {
   depth?: number;
 };
 
-const WHOLE_FAMILY: TreeDisplay = { view: 'all', past: false };
+const DEFAULT_DISPLAY: TreeDisplay = { past: false };
 
 export async function getTreeForViewer(
   deps: FamilyDeps,
   viewerUserId: string,
-  display: TreeDisplay = WHOLE_FAMILY,
+  display: TreeDisplay = DEFAULT_DISPLAY,
 ): Promise<TreeForViewer> {
   const members = await loadAccessMembers(deps.db);
   const viewer = members.find((m) => m.userId === viewerUserId);
@@ -98,11 +108,17 @@ export async function getTreeForViewer(
   // il n'en garde qu'une partie, et `drawn` ne porte que des ids et la forme des
   // liens, que la vue filtrée par la policy expose déjà tous.
   const centerId = display.p && index.persons.has(display.p) ? display.p : focusId;
+  const centerInCouple = partnersOf(index, centerId, { ongoingOnly: true }).some(
+    (p) => typeof p.partnerId === 'string',
+  );
+  // Sans union en cours, « notre famille » est le sablier : on le nomme comme tel.
+  const asked: TreeViewKind = display.view ?? (viewer.personId ? 'couple' : 'all');
+  const shownView = asked === 'couple' && !centerInCouple ? 'hourglass' : asked;
   const shown =
-    display.view === 'all'
+    shownView === 'all'
       ? graph
       : selectSubgraph(graph, {
-          view: display.view,
+          view: shownView,
           rootId: centerId,
           ...(display.depth ? { depth: display.depth } : {}),
         });
@@ -113,5 +129,7 @@ export async function getTreeForViewer(
     photos,
     drawn: selectDisplayedGraph(shown, { focusId: centerId, showPastUnions: display.past }),
     centerId,
+    shownView,
+    centerInCouple,
   };
 }

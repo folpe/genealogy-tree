@@ -307,6 +307,40 @@ export async function getViewerAccount(deps: Pick<MembersDeps, 'db'>, viewerUser
   };
 }
 
+/**
+ * « C'est moi » : un admin sans fiche (le propriétaire à l'amorçage) se relie à la
+ * sienne. Réservé à ce cas : un membre a toujours sa fiche (contrainte en base) et
+ * n'en change pas ainsi ; une fiche déjà reliée à un autre compte reste à lui.
+ */
+export async function claimOwnPerson(
+  deps: Pick<MembersDeps, 'db'>,
+  viewerUserId: string,
+  personId: string,
+) {
+  const [viewer] = await deps.db
+    .select({ id: memberships.id, isAdmin: memberships.isAdmin, personId: memberships.personId })
+    .from(memberships)
+    .where(eq(memberships.userId, viewerUserId));
+  if (!viewer?.isAdmin || viewer.personId !== null) throw forbidden(); // allow-null: colonne nullable de la base
+  const [person] = await deps.db
+    .select({ id: persons.id })
+    .from(persons)
+    .where(eq(persons.id, personId));
+  if (!person) {
+    throw new AppError({ message: 'Fiche introuvable', code: 'MEMBERS_NOT_FOUND', status: 404 });
+  }
+  try {
+    await deps.db.update(memberships).set({ personId }).where(eq(memberships.id, viewer.id));
+  } catch (error) {
+    if (!isUniqueViolation(error)) throw error;
+    throw new AppError({
+      message: 'Cette fiche est déjà reliée à un autre compte.',
+      code: 'MEMBERS_PERSON_TAKEN',
+      status: 409,
+    });
+  }
+}
+
 /** Page Membres : les comptes, et les fiches que je peux inviter. */
 export async function listMembers(deps: MembersDeps, viewerUserId: string) {
   const members = await loadMembers(deps.db);

@@ -170,3 +170,35 @@ describe('selectSubgraph, racine inconnue', () => {
     });
   });
 });
+
+describe('selectSubgraph, notre famille (couple)', () => {
+  const couple = selectSubgraph(marchandFamily, { view: 'couple', rootId: 'luc' });
+  const hourglass = selectSubgraph(marchandFamily, { view: 'hourglass', rootId: 'luc' });
+
+  it('les deux lignées au-dessus du couple en cours, ses enfants en dessous', () => {
+    expect(ids(couple)).toEqual(
+      expect.arrayContaining(['luc', 'sophie', 'paul', 'bernard', 'odette']),
+    );
+    expect(ids(couple)).toEqual(expect.arrayContaining(['hugo', 'lea', 'jade']));
+    // Le sablier de Luc seul ne monte pas chez les parents de Sophie.
+    expect(ids(hourglass)).not.toContain('bernard');
+  });
+
+  it('laisse de côté fratrie et collatéraux des deux côtés', () => {
+    expect(ids(couple)).not.toContain('anne');
+    expect(ids(couple)).not.toContain('tom');
+  });
+
+  it('sans union en cours, c’est le sablier de la personne', () => {
+    expect(selectSubgraph(marchandFamily, { view: 'couple', rootId: 'hugo' })).toEqual(
+      selectSubgraph(marchandFamily, { view: 'hourglass', rootId: 'hugo' }),
+    );
+  });
+
+  it('la profondeur vaut des deux côtés', () => {
+    const near = selectSubgraph(marchandFamily, { view: 'couple', rootId: 'luc', depth: 1 });
+    expect(ids(near)).toEqual(expect.arrayContaining(['paul', 'bernard', 'hugo']));
+    expect(ids(near)).not.toContain('henri');
+    expect(ids(near)).not.toContain('jade');
+  });
+});

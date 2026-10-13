@@ -23,5 +23,7 @@ export function treeForViewer(memberId: string): TreeForViewer {
     photos: {},
     drawn: selectDisplayedGraph(marchandFamily, { focusId: viewer.personId ?? 'henri' }),
     centerId: viewer.personId ?? 'henri',
+    shownView: 'all',
+    centerInCouple: false,
   };
 }

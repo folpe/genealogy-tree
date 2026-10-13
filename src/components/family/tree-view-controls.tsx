@@ -6,15 +6,17 @@ import { useRouter } from 'next/navigation';
 import { Switch } from 'radix-ui';
 import { useId } from 'react';
 import { type TreeParams, treeHref } from '@/lib/tree/tree.params';
+import type { TreeViewKind } from '@/server/family/family.service';
 
 // Réglages d'affichage de l'arbre (plan phase 4, lot 6) : la vue, la personne au
 // centre et les unions passées. Tout passe par l'URL : le serveur redessine, et le
 // retour du navigateur revient à la vue précédente.
 
-const VIEWS: { view: TreeParams['view']; label: string }[] = [
-  { view: 'all', label: 'Toute la famille' },
-  { view: 'descendants', label: 'Descendants' },
+const VIEWS: { view: TreeViewKind; label: string }[] = [
+  { view: 'couple', label: 'Notre famille' },
   { view: 'hourglass', label: 'Sablier' },
+  { view: 'descendants', label: 'Descendants' },
+  { view: 'all', label: 'Toute la famille' },
 ];
 
 /** Même vue, centrée sur le lecteur : sans `p`, le serveur y revient de lui-même. */
@@ -24,10 +26,16 @@ function withoutCenter({ p: _, ...rest }: TreeParams): TreeParams {
 
 export function TreeViewControls({
   params,
+  shownView,
+  centerInCouple,
   centerName,
   canReturn,
 }: {
   params: TreeParams;
+  /** Vue réellement dessinée (la vue par défaut se résout côté serveur). */
+  shownView: TreeViewKind;
+  /** « Notre famille » n'a de sens que si la personne au centre est en couple. */
+  centerInCouple: boolean;
   /** Nom de la personne au centre des vues descendants et sablier. */
   centerName: string | undefined;
   /**
@@ -44,8 +52,8 @@ export function TreeViewControls({
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <nav aria-label="Vue de l’arbre" className="-mx-1 flex gap-1 overflow-x-auto px-1">
-        {VIEWS.map(({ view, label }) => {
-          const current = params.view === view;
+        {VIEWS.filter(({ view }) => view !== 'couple' || centerInCouple).map(({ view, label }) => {
+          const current = shownView === view;
           return (
             <Link
               key={view}
@@ -58,7 +66,7 @@ export function TreeViewControls({
           );
         })}
       </nav>
-      {params.view !== 'all' && centerName ? (
+      {shownView !== 'all' && centerName ? (
         <p className="flex items-center gap-2 text-sm text-ink-2">
           Centré sur <strong className="font-medium text-ink">{centerName}</strong>
           {canReturn ? (

@@ -10,6 +10,8 @@ import { signIn } from './outbox';
 async function openTree(page: Page) {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await signIn(page, E2E_ISABELLE_EMAIL);
+  // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
+  await page.goto('/tree?view=all');
   await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
   return page.getByRole('region', { name: 'Canevas de l’arbre' });
 }
@@ -38,7 +40,7 @@ test('glisser déplace l’arbre, et un glissé sur une bulle n’ouvre pas sa f
   const after = await settled(page);
   expect(after.x).toBeLessThan(before.x - 60);
   expect(after.y).toBeLessThan(before.y - 40);
-  await expect(page).toHaveURL(/\/tree$/);
+  await expect(page).toHaveURL(/\/tree\?view=all$/);
 });
 
 test('zoomer et dézoomer avec les boutons, dans les limites', async ({ page }) => {
@@ -225,7 +227,7 @@ test('un tap pendant un vol arrête la caméra et finit le mouvement', async ({ 
     throw new Error('aucun point vide dans le canevas');
   });
   await canvas.click({ position: empty });
-  await expect(page).toHaveURL(/\/tree$/);
+  await expect(page).toHaveURL(/\/tree\?view=all$/);
   await settled(page);
   await expect(layer).toHaveCSS('will-change', 'auto');
 });

@@ -198,3 +198,29 @@ export function AccessRequestCard({
     </form>
   );
 }
+
+/** « C'est moi » : relie le compte d'un admin sans fiche à celle qu'il regarde. */
+export function ClaimPersonForm({
+  action,
+  personId,
+  label,
+}: {
+  action: Action;
+  personId: string;
+  label: string;
+}) {
+  const [state, submit, pending] = useActionState(action, undefined);
+  return (
+    <form action={submit} className="flex flex-col items-start gap-2">
+      <input type="hidden" name="personId" value={personId} />
+      <p className="text-sm text-ink-2">
+        Ton compte n’est relié à aucune fiche. Si {label}, c’est toi, relie-la : l’arbre partira de
+        toi.
+      </p>
+      <button type="submit" disabled={pending || state?.ok === true} className={secondary}>
+        C’est moi
+      </button>
+      <Feedback state={state} />
+    </form>
+  );
+}

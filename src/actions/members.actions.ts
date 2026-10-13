@@ -5,6 +5,7 @@ import { isAppError, ValidationError } from '@/server/_shared/errors';
 import { requireSession } from '@/server/auth/session';
 import { getMembersDeps } from '@/server/members/members.instance';
 import {
+  claimOwnPerson,
   decideAccessRequest,
   inviteMember,
   requestAccess,
@@ -93,4 +94,20 @@ export async function setAdminAction(
   }
   revalidatePath('/members');
   return { ok: true };
+}
+
+/** « C'est moi » : relie le compte de la session à sa fiche (admin sans fiche). */
+export async function claimPersonAction(
+  _: ActionResult | undefined,
+  data: FormData,
+): Promise<ActionResult> {
+  const { user } = await requireSession();
+  try {
+    await claimOwnPerson(getMembersDeps(), user.id, field(data, 'personId'));
+  } catch (error) {
+    return toResult(error);
+  }
+  // L'avatar, le menu et la vue par défaut de l'arbre dépendent de la fiche reliée.
+  revalidatePath('/', 'layout');
+  return { ok: true, message: 'C’est noté : l’arbre part maintenant de toi.' };
 }
