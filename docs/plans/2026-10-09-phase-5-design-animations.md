@@ -50,11 +50,12 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 
 ### Lot 4 : fiche personne
 
-- [ ] `components/PersonSheet/` : panneau latéral desktop (420 px max) et bottom sheet mobile (vaul, poignée, coins 28 px), conforme aux maquettes Arbre et MobileAlbum.
+- [x] `components/PersonSheet/` : panneau latéral desktop (420 px max) et bottom sheet mobile (vaul, poignée, coins 28 px), conforme aux maquettes Arbre et MobileAlbum.
 - [ ] Contenu : avatar 120 px, kicker de lien de parenté relatif à l'utilisateur ("Ton demi-frère"), nom, nom de naissance, dates selon la visibilité, badge "Sourcé", lignes à filets (lieu, parents, frères et sœurs dont demi-, conjoint, enfants, "A aussi été élevé par"), note.
+  - [x] Avatar, kicker de lien, nom, dates selon la visibilité, parents, unions, enfants ; raccourcis (fiche complète, ancêtres, centrer) et ajout de proches. Reste : frères et sœurs, « A aussi été élevé par », badge « Sourcé », note.
 - [ ] Encart de droits : "Dans ta lignée : tu modifies directement", "Ancêtre commun...", "Fiche ouverte...", "Hors de ta lignée : ta suggestion ira à X" ; texte fourni par le serveur à partir de la policy.
 - [ ] Ouverture : l'avatar du nœud devient la photo de la fiche (Flip), contenu en cascade.
-- [ ] Deep link `/people/[id]` et `?p=<id>` (nuqs), le retour navigateur ferme la fiche.
+- [x] Deep link `/people/[id]` et `?fiche=<id>` sur l'arbre (`?p` est déjà la personne au centre ; `history.pushState` suivi par Next plutôt que nuqs), le retour navigateur ferme la fiche.
 
 ### Lot 5 : recherche ⌘K
 

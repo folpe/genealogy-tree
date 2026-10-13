@@ -147,7 +147,7 @@ test('après un glissé au doigt, le premier tap sur une bulle ouvre sa fiche', 
   await settled(page);
   const me = page.getByRole('treeitem', { name: /c’est toi$/ });
   await me.tap();
-  await expect(page).toHaveURL(/\/people\/[\w-]+$/);
+  await expect(page).toHaveURL(/[?&]fiche=[\w-]+/);
 });
 
 test('glisser depuis une bulle ne lance pas le glisser-déposer du navigateur', async ({ page }) => {

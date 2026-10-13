@@ -9,7 +9,7 @@ import { loadProfilePhotos } from '../media/media.service';
 import { type PersonPhoto, signedPhoto } from '../media/media.url';
 import { loadAccessMembers } from '../members/members.repository';
 import { type DisplayedGraph, selectDisplayedGraph } from './family.display';
-import { buildFamilyIndex, generationLevels, partnersOf } from './family.helper';
+import { buildFamilyIndex, type FamilyIndex, generationLevels, partnersOf } from './family.helper';
 import { loadFamilyGraph } from './family.repository';
 import { selectSubgraph } from './family.subgraph';
 import { todayIn } from './fuzzy-date.helper';
@@ -45,6 +45,8 @@ export type TreeForViewer = Omit<TreeView, 'audited'> & {
   centerInCouple: boolean;
   /** Fiches où le lecteur ajoute directement un proche ; ailleurs, il faudra suggérer. */
   editableIds: string[];
+  /** « ton grand-père » : le lien de chaque fiche avec le lecteur (kicker de la fiche). */
+  relations: Record<string, string>;
 };
 
 export type TreeViewKind = 'all' | 'couple' | 'descendants' | 'hourglass';
@@ -146,6 +148,11 @@ export async function getTreeForViewer(
     shownView,
     centerInCouple,
     editableIds: editableIds(ctx, viewer),
+    relations: relationsFrom(
+      index,
+      viewer.personId,
+      view.persons.map((p) => p.id),
+    ).relations,
   };
 }
 
@@ -173,21 +180,26 @@ export type SearchDirectory = {
   proximity: Record<string, number>;
 };
 
+/** Lien de chaque fiche avec le lecteur, et sa distance ; vide pour un compte sans fiche. */
+function relationsFrom(index: FamilyIndex, from: string | null, ids: string[]) {
+  const relations: Record<string, string> = {};
+  const proximity: Record<string, number> = {};
+  if (from) {
+    for (const id of ids) {
+      const r = relationship(index, from, id);
+      if (r.type === 'none') continue;
+      relations[id] = describeRelationship(index, r, id);
+      proximity[id] = distanceOf(r);
+    }
+  }
+  return { relations, proximity };
+}
+
 export async function getSearchDirectory(
   deps: FamilyDeps,
   viewerUserId: string,
 ): Promise<SearchDirectory> {
   const { index, viewer, view } = await readAsViewer(deps, viewerUserId);
-  const from = viewer.personId;
-  const relations: Record<string, string> = {};
-  const proximity: Record<string, number> = {};
-  if (from) {
-    for (const person of view.persons) {
-      const r = relationship(index, from, person.id);
-      if (r.type === 'none') continue;
-      relations[person.id] = describeRelationship(index, r, person.id);
-      proximity[person.id] = distanceOf(r);
-    }
-  }
-  return { persons: view.persons, relations, proximity };
+  const ids = view.persons.map((p) => p.id);
+  return { persons: view.persons, ...relationsFrom(index, viewer.personId, ids) };
 }

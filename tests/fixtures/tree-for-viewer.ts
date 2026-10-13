@@ -23,5 +23,6 @@ export function treeForViewer(memberId: string): TreeForViewer {
     shownView: 'all',
     centerInCouple: false,
     editableIds: editableIds(ctx, viewer),
+    relations: {},
   };
 }

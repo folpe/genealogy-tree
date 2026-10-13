@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { MouseEvent } from 'react';
 import type { RedactedPerson } from '@/server/access/access.redact';
 import type { TreeForViewer } from '@/server/family/family.service';
 import type { FuzzyDate, Union } from '@/server/family/family.types';
@@ -36,7 +37,41 @@ function lifeEvent(
   return parts.length > 0 ? parts.join(', ') : undefined;
 }
 
-function PersonLinks({ label, persons }: { label: string; persons: RedactedPerson[] }) {
+/**
+ * Lien vers une autre fiche. Sur l'arbre, la fiche s'ouvre dans le panneau
+ * (`onPick`) ; l'adresse reste celle de la fiche, pour un nouvel onglet.
+ */
+type PickPerson = ((id: string) => void) | undefined;
+
+function PersonLink({ person, onPick }: { person: RedactedPerson; onPick: PickPerson }) {
+  // Rendue côté serveur (page de la fiche), elle ne passe aucun gestionnaire à Link.
+  const onClick = onPick
+    ? (event: MouseEvent<HTMLAnchorElement>) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+        event.preventDefault();
+        onPick(person.id);
+      }
+    : undefined;
+  return (
+    <Link
+      href={`/people/${person.id}`}
+      {...(onClick ? { onClick } : {})}
+      className="text-[15px] underline underline-offset-4"
+    >
+      {personLabel(person)}
+    </Link>
+  );
+}
+
+function PersonLinks({
+  label,
+  persons,
+  onPick,
+}: {
+  label: string;
+  persons: RedactedPerson[];
+  onPick: PickPerson;
+}) {
   if (persons.length === 0) return undefined;
   return (
     <div>
@@ -44,9 +79,7 @@ function PersonLinks({ label, persons }: { label: string; persons: RedactedPerso
       <ul aria-label={label} className="mt-2 flex flex-col gap-1">
         {persons.map((p) => (
           <li key={p.id}>
-            <Link href={`/people/${p.id}`} className="text-[15px] underline underline-offset-4">
-              {personLabel(p)}
-            </Link>
+            <PersonLink person={p} onPick={onPick} />
           </li>
         ))}
       </ul>
@@ -63,7 +96,23 @@ function unionSummary(union: Union): string {
   return `${kind}${start}, ${how}${end}`;
 }
 
-export function PersonSheet({ tree, personId }: { tree: TreeForViewer; personId: string }) {
+export function PersonSheet({
+  tree,
+  personId,
+  heading = 'h1',
+  bare = false,
+  onPick,
+}: {
+  tree: TreeForViewer;
+  personId: string;
+  /** `h2` dans le panneau de l'arbre, sous le titre de la page. */
+  heading?: 'h1' | 'h2';
+  /** Sans carte : le panneau qui la contient en est déjà une. */
+  bare?: boolean;
+  /** Ouvre une autre fiche sur place (panneau de l'arbre). */
+  onPick?: (id: string) => void;
+}) {
+  const Heading = heading;
   const byId = new Map(tree.persons.map((p) => [p.id, p]));
   const person = byId.get(personId);
   if (!person) return undefined;
@@ -84,7 +133,9 @@ export function PersonSheet({ tree, personId }: { tree: TreeForViewer; personId:
   const notice = NOTICES[person.level];
 
   return (
-    <article className="flex flex-col gap-6 rounded-[var(--radius-card)] bg-card p-6 shadow-card md:p-8">
+    <article
+      className={`flex flex-col gap-6 ${bare ? '' : 'rounded-[var(--radius-card)] bg-card p-6 shadow-card md:p-8'}`}
+    >
       <header className="flex flex-col items-start gap-4">
         <PersonBubble
           initials={personInitials(person)}
@@ -94,7 +145,9 @@ export function PersonSheet({ tree, personId }: { tree: TreeForViewer; personId:
           name={personLabel(person)}
         />
         <div>
-          <h1 className="font-display text-[32px] leading-tight">{personLabel(person)}</h1>
+          <Heading className="font-display text-[32px] leading-tight">
+            {personLabel(person)}
+          </Heading>
           {person.level !== 'minor' && person.nickname ? (
             <p className="text-[15px] text-ink-2">Surnom : {person.nickname}</p>
           ) : undefined}
@@ -116,7 +169,7 @@ export function PersonSheet({ tree, personId }: { tree: TreeForViewer; personId:
           )}
         </dl>
       ) : undefined}
-      <PersonLinks label="Parents" persons={parents} />
+      <PersonLinks label="Parents" persons={parents} onPick={onPick} />
       {unions.length > 0 ? (
         <div>
           <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-2">Unions</h2>
@@ -126,13 +179,7 @@ export function PersonSheet({ tree, personId }: { tree: TreeForViewer; personId:
               const partner = partnerId ? byId.get(partnerId) : undefined;
               return (
                 <li key={u.id}>
-                  {partner ? (
-                    <Link href={`/people/${partner.id}`} className="underline underline-offset-4">
-                      {personLabel(partner)}
-                    </Link>
-                  ) : (
-                    'Partenaire inconnu'
-                  )}
+                  {partner ? <PersonLink person={partner} onPick={onPick} /> : 'Partenaire inconnu'}
                   <span className="text-ink-2"> : {unionSummary(u)}</span>
                 </li>
               );
@@ -140,7 +187,7 @@ export function PersonSheet({ tree, personId }: { tree: TreeForViewer; personId:
           </ul>
         </div>
       ) : undefined}
-      <PersonLinks label="Enfants" persons={children} />
+      <PersonLinks label="Enfants" persons={children} onPick={onPick} />
     </article>
   );
 }

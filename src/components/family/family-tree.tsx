@@ -125,6 +125,8 @@ function PendingRing() {
 const TreeItem = memo(function TreeItem({
   node,
   active,
+  selected,
+  onOpen,
   expanded,
   register,
   onFocus,
@@ -132,6 +134,8 @@ const TreeItem = memo(function TreeItem({
 }: {
   node: TreeNode;
   active: boolean;
+  selected: boolean;
+  onOpen: ((id: string) => void) | undefined;
   /** Branche dépliée ou pliée ; absent si la bulle n'a pas d'enfant. */
   expanded: boolean | undefined;
   register: (id: string, element: HTMLElement | undefined) => void;
@@ -148,15 +152,26 @@ const TreeItem = memo(function TreeItem({
       aria-level={node.row + 1}
       aria-label={node.label}
       aria-expanded={expanded}
+      aria-selected={selected}
       tabIndex={active ? 0 : -1}
       draggable={false}
       onFocus={() => onFocus(node.id)}
       onKeyDown={(event) => onKeyDown(node.id, event)}
+      onClick={(event) => {
+        // Nouvel onglet (⌘, Ctrl, Maj, clic du milieu) : la page de la fiche, comme un lien.
+        if (!onOpen || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) {
+          return;
+        }
+        event.preventDefault();
+        onOpen(node.id);
+      }}
       className="group absolute flex w-[120px] flex-col items-center outline-none"
       style={{ left: node.x - NODE_HALF_WIDTH, top: node.y - BUBBLE_RADIUS }}
     >
       <PendingRing />
-      <span className="rounded-full outline-offset-2 group-hover:motion-safe:scale-[1.03] group-focus-visible:outline-2 group-focus-visible:outline-ink motion-safe:transition-transform">
+      <span
+        className={`rounded-full outline-offset-2 group-hover:motion-safe:scale-[1.03] group-focus-visible:outline-2 group-focus-visible:outline-ink motion-safe:transition-transform ${selected ? 'shadow-bubble-selected' : ''}`}
+      >
         <span className={FAR_HIDDEN}>
           <PersonBubble
             initials={node.initials}
@@ -343,6 +358,8 @@ export function FamilyTree({
   focusId,
   centerId,
   viewKey = '/tree',
+  selectedId,
+  onOpen,
 }: {
   /** Premier dessin, calculé au rendu serveur. */
   drawing: TreeDrawing;
@@ -354,6 +371,10 @@ export function FamilyTree({
   centerId?: string | undefined;
   /** URL de la vue : la position retenue ne revient que dans la même vue. */
   viewKey?: string;
+  /** Fiche ouverte à côté de l'arbre : sa bulle est cerclée d'accent. */
+  selectedId?: string | undefined;
+  /** Ouvre la fiche sans quitter l'arbre ; sans lui, la bulle mène à la page de la fiche. */
+  onOpen?: ((id: string) => void) | undefined;
 }) {
   const fold = useFoldedTree(initial, graph);
   const { nodes, width, height } = fold.drawing;
@@ -555,6 +576,8 @@ export function FamilyTree({
                 key={node.id}
                 node={node}
                 active={node.id === activeId}
+                selected={node.id === selectedId}
+                onOpen={onOpen}
                 expanded={expandedOf(node.id)}
                 register={register}
                 onFocus={onFocus}
