@@ -1,8 +1,11 @@
 // @vitest-environment jsdom
 import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { TreeForViewer } from '@/server/family/family.service';
 import { treeForViewer } from '../../../tests/fixtures/tree-for-viewer';
+
+vi.mock('@/actions/family.actions', () => ({ editPersonAction: vi.fn() }));
+
 import { PersonSheet } from './family-views';
 
 const hugo = treeForViewer('m-hugo');
@@ -20,9 +23,12 @@ describe('PersonSheet', () => {
   it('fiche entière : dates, lieux, résidence et proches', () => {
     render(<PersonSheet tree={hugo} personId="luc" />);
     expect(screen.getByRole('heading', { name: 'Luc Marchand' })).toBeVisible();
-    expect(screen.getByText('Surnom : Lulu')).toBeVisible();
-    expect(screen.getByText('21 août 1963, Toulouse')).toBeVisible();
-    expect(screen.getByText('Toulouse', { selector: 'dd' })).toBeVisible();
+    // Hugo peut modifier la fiche de son père : chaque fait est une ligne à toucher.
+    expect(screen.getByRole('button', { name: 'Surnom : Lulu, modifier' })).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: 'Naissance : 21 août 1963, Toulouse, modifier' }),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Réside à : Toulouse, modifier' })).toBeVisible();
     const parents = screen.getByRole('list', { name: 'Parents' });
     expect(within(parents).getByRole('link', { name: 'Paul Marchand' })).toBeVisible();
     const children = screen.getByRole('list', { name: 'Enfants' });
@@ -80,5 +86,20 @@ describe('PersonSheet', () => {
     expect(screen.getByRole('heading', { name: 'Jade M.' })).toBeVisible();
     expect(screen.queryByText(/Paris/)).toBeNull();
     expect(screen.getByText(/mineure/)).toBeVisible();
+  });
+
+  it('dans sa lignée : les faits et le nom se touchent pour se modifier', () => {
+    render(<PersonSheet tree={hugo} personId="luc" />);
+    const title = screen.getByRole('heading', { name: 'Luc Marchand' });
+    expect(within(title).getByRole('button')).toHaveAccessibleDescription(
+      'Touche pour modifier le prénom et le nom',
+    );
+    expect(screen.getByRole('button', { name: 'Réside à : Toulouse, modifier' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Surnom : Lulu, modifier' })).toBeVisible();
+  });
+
+  it('hors de sa lignée : la fiche se lit, rien ne se touche', () => {
+    render(<PersonSheet tree={hugo} personId="anne" />);
+    expect(screen.queryByRole('button', { name: /modifier/i })).toBeNull();
   });
 });

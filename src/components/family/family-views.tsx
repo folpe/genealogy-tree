@@ -5,6 +5,7 @@ import type { TreeForViewer } from '@/server/family/family.service';
 import type { FuzzyDate, Union } from '@/server/family/family.types';
 import { formatFuzzyDate } from '@/server/family/fuzzy-date.helper';
 import { relativesOf } from './fiche.helper';
+import { EditableName, EditableRow } from './fiche-edit';
 import { isDeceased, lifeYears, personInitials, personLabel } from './person.helper';
 import { PersonBubble } from './person-bubble';
 
@@ -170,13 +171,18 @@ function SheetHeader({
   person,
   relation,
   heading,
+  editable,
 }: {
   tree: TreeForViewer;
   person: RedactedPerson;
   relation: string | undefined;
   heading: 'h1' | 'h2';
+  /** Le nom se modifie en touchant le titre ; surnom et nom de naissance ont leur ligne. */
+  editable: boolean;
 }) {
   const Heading = heading;
+  const titleClass =
+    'mt-3 font-display text-[30px] leading-[1.1] tracking-[-0.01em] [text-wrap:balance] md:text-[32px]';
   const feminine = person.gender === 'femme';
   const birthName =
     person.level !== 'minor' && person.birthName && person.birthName !== person.lastName
@@ -192,18 +198,28 @@ function SheetHeader({
         size="sheet"
         name={personLabel(person)}
       />
-      <Heading className="mt-3 font-display text-[30px] leading-[1.1] tracking-[-0.01em] [text-wrap:balance] md:text-[32px]">
-        {personLabel(person)}
-      </Heading>
+      {editable && person.level === 'full' ? (
+        <EditableName
+          personId={person.id}
+          firstName={person.firstName}
+          lastName={person.lastName}
+          heading={heading}
+          className={titleClass}
+        >
+          {personLabel(person)}
+        </EditableName>
+      ) : (
+        <Heading className={titleClass}>{personLabel(person)}</Heading>
+      )}
       {relation ? (
         <p className="text-[15px] text-accent">
           {relation.charAt(0).toUpperCase() + relation.slice(1)}
         </p>
       ) : undefined}
-      {person.level !== 'minor' && person.nickname ? (
+      {!editable && person.level !== 'minor' && person.nickname ? (
         <p className="text-sm text-ink-2">Surnom : {person.nickname}</p>
       ) : undefined}
-      {birthName ? <p className="text-sm text-ink-2">{birthName}</p> : undefined}
+      {!editable && birthName ? <p className="text-sm text-ink-2">{birthName}</p> : undefined}
       {lifeYears(person) ? (
         <p className="text-sm text-ink-2 tabular-nums">{lifeYears(person)}</p>
       ) : undefined}
@@ -223,6 +239,77 @@ function SheetHeader({
         </span>
       ) : undefined}
     </header>
+  );
+}
+
+const GENDER_LABELS: Record<string, string> = {
+  femme: 'Femme',
+  homme: 'Homme',
+  autre: 'Autre',
+  inconnu: 'Non renseigné',
+};
+
+/** Les faits d'une fiche qu'on peut modifier : chaque ligne se touche pour se changer. */
+function EditableFacts({ person }: { person: Extract<RedactedPerson, { level: 'full' }> }) {
+  const date = (d: FuzzyDate | undefined) => (d ? formatFuzzyDate(d) : undefined);
+  return (
+    <>
+      <EditableRow
+        personId={person.id}
+        field="birth"
+        label="Naissance"
+        display={lifeEvent(person.birth)}
+        spec={{
+          kind: 'event',
+          death: false,
+          deceased: false,
+          date: date(person.birth?.date),
+          place: person.birth?.place,
+        }}
+      />
+      <EditableRow
+        personId={person.id}
+        field="death"
+        label="Décès"
+        // Vivante : « En vie », pas « à compléter », qui laisserait croire à un décès.
+        display={person.death ? (lifeEvent(person.death) ?? 'Date inconnue') : 'En vie'}
+        spec={{
+          kind: 'event',
+          death: true,
+          deceased: person.death !== undefined,
+          date: date(person.death?.date),
+          place: person.death?.place,
+        }}
+      />
+      <EditableRow
+        personId={person.id}
+        field="residence"
+        label="Réside à"
+        display={person.residence}
+        spec={{ kind: 'text', value: person.residence, placeholder: 'Ville' }}
+      />
+      <EditableRow
+        personId={person.id}
+        field="birthName"
+        label="Nom de naissance"
+        display={person.birthName}
+        spec={{ kind: 'text', value: person.birthName }}
+      />
+      <EditableRow
+        personId={person.id}
+        field="nickname"
+        label="Surnom"
+        display={person.nickname}
+        spec={{ kind: 'text', value: person.nickname }}
+      />
+      <EditableRow
+        personId={person.id}
+        field="gender"
+        label="Genre"
+        display={GENDER_LABELS[person.gender]}
+        spec={{ kind: 'gender', value: person.gender }}
+      />
+    </>
   );
 }
 
@@ -249,19 +336,37 @@ export function PersonSheet({
   if (!person) return undefined;
   const r = relativesOf(tree, personId);
   const shows = person.level === 'full' || person.level === 'family';
+  const editable = tree.editableIds.includes(person.id) && person.level === 'full';
   const notice = NOTICES[person.level];
   return (
     <article
       className={`flex flex-col gap-6 ${bare ? '' : 'rounded-[var(--radius-card)] bg-card p-6 shadow-card md:p-8'}`}
     >
-      <SheetHeader tree={tree} person={person} relation={relation} heading={heading} />
+      <SheetHeader
+        tree={tree}
+        person={person}
+        relation={relation}
+        heading={heading}
+        editable={editable}
+      />
       <dl className="flex flex-col [&>div:first-child]:border-t-0">
-        <FactRow label="Naissance" value={shows ? lifeEvent(person.birth) : undefined} />
-        <FactRow
-          label="Décès"
-          value={shows && person.death ? (lifeEvent(person.death) ?? 'Date inconnue') : undefined}
-        />
-        <FactRow label="Réside à" value={person.level === 'full' ? person.residence : undefined} />
+        {editable && person.level === 'full' ? (
+          <EditableFacts person={person} />
+        ) : (
+          <>
+            <FactRow label="Naissance" value={shows ? lifeEvent(person.birth) : undefined} />
+            <FactRow
+              label="Décès"
+              value={
+                shows && person.death ? (lifeEvent(person.death) ?? 'Date inconnue') : undefined
+              }
+            />
+            <FactRow
+              label="Réside à"
+              value={person.level === 'full' ? person.residence : undefined}
+            />
+          </>
+        )}
         <PeopleRow label="Parents" people={r.parents} tree={tree} onPick={onPick} />
         <PeopleRow label="Frères et sœurs" people={r.siblings} tree={tree} onPick={onPick} />
         <PeopleRow
