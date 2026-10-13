@@ -20,7 +20,7 @@ Source de vérité visuelle pour les phases 4 à 9. Toute valeur ci-dessous est 
 |---|---|---|---|---|
 | 01 | Connexion, magic link, passkey, demande d'accès | `Connexion.dc.html` (prop `etape`) | `src/app/(public)/login` | 3 (UI finale 5) |
 | 02 | Arbre, fiche, ⌘K, lien de parenté, périmètre | `Arbre.dc.html` (prop `vue` : hugo / isabelle), `ArbreSombre.dc.html` | `src/app/(app)/tree`, fiche en `?person=` (nuqs) et `src/app/(app)/people/[id]` en accès direct | 4 rendu, 5 design, 6 droits |
-| 03 | Ancêtres en éventail | `Eventail.dc.html` | `src/app/(app)/tree?view=fan` (vue de l'arbre) | 7 |
+| 03 | Ancêtres en éventail | `Eventail.dc.html` | `src/app/(app)/ancestors` (`/ancestors?p=&g=`) | 7 |
 | 04 | Frise | `Frise.dc.html`, `FriseSombre.dc.html` | `src/app/(app)/timeline` | 7 |
 | 05 | Carte des origines | `Carte.dc.html`, `CarteSombre.dc.html` | `src/app/(app)/map` | 7 |
 | 06 | Récits | `Recits.dc.html`, `RecitsSombre.dc.html` | `src/app/(app)/stories` et `stories/[id]` | 8 (lecteur animé 9) |

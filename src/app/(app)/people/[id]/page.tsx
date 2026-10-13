@@ -6,7 +6,9 @@ import { claimPersonAction } from '@/actions/members.actions';
 import { BackToTree } from '@/components/family/back-to-tree';
 import { PersonSheet } from '@/components/family/family-views';
 import { personLabel } from '@/components/family/person.helper';
+import { FAN_GENERATIONS } from '@/components/fan/fan.helper';
 import { ClaimPersonForm } from '@/components/members/members-forms';
+import { fanHref } from '@/lib/fan/fan.params';
 import { treeHref } from '@/lib/tree/tree.params';
 import { requireSession } from '@/server/auth/session';
 import { getFamilyDeps } from '@/server/family/family.instance';
@@ -52,6 +54,12 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
           className="flex h-11 items-center rounded-full bg-card px-4 text-sm font-medium shadow-float focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
           Son sablier
+        </Link>
+        <Link
+          href={fanHref({ p: id, generations: FAN_GENERATIONS.initial })}
+          className="flex h-11 items-center rounded-full bg-card px-4 text-sm font-medium shadow-float focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        >
+          Ses ancêtres
         </Link>
       </nav>
     </main>

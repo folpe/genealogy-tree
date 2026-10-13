@@ -17,7 +17,11 @@ function ordinal(n: number): string {
 }
 
 /** Nom du lien de sang, ou `null` hors de la profondeur maîtrisée. */
-function bloodForms({ up, down, half }: BloodRelationship): Forms | null {
+function bloodForms({
+  up,
+  down,
+  half,
+}: Pick<BloodRelationship, 'up' | 'down' | 'half'>): Forms | null {
   const demi = half ? 'demi-' : '';
   if (down === 0) {
     if (up === 1) return { m: 'père', f: 'mère', n: 'parent' };
@@ -182,6 +186,24 @@ export function describeRelationship(index: FamilyIndex, r: Relationship, toId: 
       return `${definiteFor(relativeForms, gender)} de ${spouse}`;
     }
   }
+}
+
+/** « de Luc », « d’Émile ». */
+function of(name: string): string {
+  return startsWithVowel(name) ? `d’${name}` : `de ${name}`;
+}
+
+/**
+ * Ancêtre à `up` générations (éventail) : « ta grand-mère », ou, vu depuis une autre
+ * personne, « la grand-mère de Luc ».
+ */
+export function describeAncestor(up: number, gender: Gender, ofName?: string): string {
+  const forms = bloodForms({ up, down: 0, half: false });
+  if (!forms) {
+    const generation = `à la ${ordinal(up)} génération`;
+    return ofName ? `l’ancêtre ${of(ofName)} ${generation}` : `ton ancêtre ${generation}`;
+  }
+  return ofName ? `${definiteFor(forms, gender)} ${of(ofName)}` : possessiveFor(forms, gender);
 }
 
 /** « Parenté au 5e degré » (degré civil), « Parenté par alliance ». */
