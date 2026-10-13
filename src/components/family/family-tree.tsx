@@ -399,7 +399,9 @@ export function FamilyTree({
   // Une fiche ouverte au chargement (recherche, retour d'une fiche complète) : la
   // caméra part de sa bulle, plutôt que de la position retenue.
   const [openedAtStart] = useState(selectedId);
-  const startId = openedAtStart ?? centerId ?? focusId;
+  // La première de ces bulles que la vue dessine : une fiche hors de la vue ne fait pas
+  // perdre le centre demandé.
+  const startId = [openedAtStart, centerId, focusId].find((id) => id !== undefined && byId.has(id));
   const start = (startId ? byId.get(startId) : undefined) ?? me ?? nodes[0];
   // Le rendu serveur se cale sur le premier dessin : un pliage ne doit pas le déplacer.
   const first =
