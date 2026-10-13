@@ -1,6 +1,6 @@
 // tdd-cover: e2e src/server/family/family.service.integration.test.ts
 import { AppError } from '../_shared/errors';
-import { buildAccessContext } from '../access/access.policy';
+import { buildAccessContext, editableIds } from '../access/access.policy';
 import { showsProfilePhoto } from '../access/access.redact';
 import { type TreeView, viewTreeAs } from '../access/access.view';
 import { adminRecordViews } from '../db/schema';
@@ -41,6 +41,8 @@ export type TreeForViewer = Omit<TreeView, 'audited'> & {
   shownView: TreeViewKind;
   /** La personne au centre a une union en cours : « notre famille » a un sens. */
   centerInCouple: boolean;
+  /** Fiches où le lecteur ajoute directement un proche ; ailleurs, il faudra suggérer. */
+  editableIds: string[];
 };
 
 export type TreeViewKind = 'all' | 'couple' | 'descendants' | 'hourglass';
@@ -79,7 +81,8 @@ export async function getTreeForViewer(
   const index = buildFamilyIndex(graph);
   const now = deps.now();
   const today = todayIn(now, FAMILY_TIME_ZONE);
-  const { audited, ...view } = viewTreeAs(buildAccessContext(index, members), viewer, today);
+  const ctx = buildAccessContext(index, members);
+  const { audited, ...view } = viewTreeAs(ctx, viewer, today);
 
   if (audited.length > 0 && today.precision === 'exacte') {
     const viewedOn = [today.year, today.month, today.day]
@@ -131,5 +134,6 @@ export async function getTreeForViewer(
     centerId,
     shownView,
     centerInCouple,
+    editableIds: editableIds(ctx, viewer),
   };
 }

@@ -23,11 +23,14 @@ export function AncestorsView({
   fan,
   params,
   rootName,
+  editable,
 }: {
   fan: Fan;
   params: FanParams;
   /** Prénom de la personne au centre ; absent quand c'est le lecteur. */
   rootName: string | undefined;
+  /** Fiches où le lecteur ajoute directement un proche (policy). */
+  editable: string[];
 }) {
   const first = fan.generations[0]?.[0];
   const [selected, setSelected] = useState<FanSlot | undefined>(first);
@@ -49,7 +52,9 @@ export function AncestorsView({
         aria-label="Ancêtre choisi"
         className="flex flex-col lg:flex-[1_1_340px] rounded-[var(--radius-panel)] bg-card shadow-float lg:max-w-[420px]"
       >
-        {selected ? <SlotDetails slot={selected} params={params} rootName={rootName} /> : undefined}
+        {selected ? (
+          <SlotDetails slot={selected} params={params} rootName={rootName} editable={editable} />
+        ) : undefined}
         <Roots fan={fan} rootName={rootName} />
       </aside>
     </div>
@@ -96,10 +101,12 @@ function SlotDetails({
   slot,
   params,
   rootName,
+  editable,
 }: {
   slot: FanSlot;
   params: FanParams;
   rootName: string | undefined;
+  editable: string[];
 }) {
   const { person, child } = slot;
   const pills = [
@@ -146,6 +153,18 @@ function SlotDetails({
               className={secondary}
             >
               Dans l’arbre
+            </Link>
+          </>
+        ) : child && editable.includes(child.id) ? (
+          <>
+            <Link
+              href={`/people/${child.id}?ajouter=${slot.role === 'father' ? 'pere' : 'mere'}`}
+              className={primary}
+            >
+              Ajouter
+            </Link>
+            <Link href={`/people/${child.id}`} className={secondary}>
+              Fiche de {child.firstName}
             </Link>
           </>
         ) : child ? (

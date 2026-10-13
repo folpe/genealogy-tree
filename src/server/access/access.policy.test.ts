@@ -8,6 +8,7 @@ import {
   canEdit,
   closeCircle,
   ESCALATION_DELAY_DAYS,
+  editableIds,
   escalationDue,
   guardiansOf,
   isOpenRecord,
@@ -428,5 +429,17 @@ describe('durcissement (mutation testing)', () => {
     const DAY = 24 * 60 * 60 * 1000;
     expect(escalationDue({ createdAt: 10 * DAY }, 20 * DAY)).toBe(false);
     expect(escalationDue({ createdAt: 10 * DAY }, 24 * DAY)).toBe(true);
+  });
+});
+
+describe('editableIds (ajout d’un proche)', () => {
+  it('suit la modification directe : sa lignée oui, la branche d’une cousine non', () => {
+    expect(editableIds(ctx, hugo)).toEqual(expect.arrayContaining(['hugo', 'bernard', 'henri']));
+    expect(editableIds(ctx, hugo)).not.toContain('isabelle');
+    expect(editableIds(ctx, isabelle)).not.toContain('bernard');
+  });
+
+  it('un admin ajoute partout', () => {
+    expect(sorted(editableIds(ctx, folpe))).toEqual(sorted(ctx.index.persons.keys()));
   });
 });

@@ -2,7 +2,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { addRelativeAction } from '@/actions/family.actions';
 import { claimPersonAction } from '@/actions/members.actions';
+import { AddRelative } from '@/components/family/add-relative';
+import { parseAddIntent, relativeOptions } from '@/components/family/add-relative.helper';
 import { BackToTree } from '@/components/family/back-to-tree';
 import { PersonSheet } from '@/components/family/family-views';
 import { personLabel } from '@/components/family/person.helper';
@@ -18,8 +21,14 @@ import { getViewerAccount } from '@/server/members/members.service';
 
 export const metadata: Metadata = { title: 'Fiche' };
 
-export default async function PersonPage({ params }: { params: Promise<{ id: string }> }) {
-  const [{ user }, { id }] = await Promise.all([requireSession(), params]);
+export default async function PersonPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ user }, { id }, query] = await Promise.all([requireSession(), params, searchParams]);
   const [tree, account] = await Promise.all([
     getTreeForViewer(getFamilyDeps(), user.id),
     getViewerAccount(getMembersDeps(), user.id),
@@ -33,6 +42,15 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
         <BackToTree />
       </nav>
       <PersonSheet tree={tree} personId={id} />
+      {person.level === 'minor' ? undefined : (
+        <AddRelative
+          key={id}
+          anchor={{ id, firstName: person.firstName, lastName: person.lastName }}
+          options={relativeOptions(tree, id)}
+          intent={parseAddIntent(query['ajouter'])}
+          action={addRelativeAction}
+        />
+      )}
       {account.isAdmin && !account.personId ? (
         <ClaimPersonForm action={claimPersonAction} personId={id} label={personLabel(person)} />
       ) : undefined}

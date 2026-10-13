@@ -36,6 +36,8 @@ Sortie : un membre crée, modifie et supprime des fiches dans son périmètre ; 
 
 ### Lot 2 : éditeur intégré
 
+- [x] Version minimale avancée (2026-10-13) : « + Parent », « + Enfant », « + Conjoint » sur la fiche, dans le périmètre seulement (policy `editableIds`, revérifiée à l'écriture), invariants du graphe, dates en saisie libre, lieu réutilisé, verrou contre un troisième parent. Pas encore : modification, suppression, recherche anti doublon, photos, ligne `activity` (lot 4, migration à valider).
+
 - [ ] Actions rapides sur le nœud (survol desktop, appui long mobile) : "+ Parent", "+ Enfant", "+ Conjoint", "Modifier" ou "Suggérer" selon la policy (maquette Arbre).
 - [ ] `components/EditDrawer/` : tiroir desktop, bottom sheet mobile, react-hook-form + Zod, raison affichée ("Ta lignée directe", "Fiche ouverte") ou destinataire de la suggestion.
 - [ ] Recherche d'une personne existante avant création (anti doublon), fusion de doublons réservée aux admins.

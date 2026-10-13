@@ -34,3 +34,10 @@ export class SelfUnionError extends FamilyRuleError {
     this.name = 'SelfUnionError';
   }
 }
+
+export class ParentsFullError extends FamilyRuleError {
+  constructor(name?: string) {
+    super('FAMILY_PARENTS_FULL', `${name ?? 'Cette personne'} a déjà ses deux parents`);
+    this.name = 'ParentsFullError';
+  }
+}
