@@ -3,7 +3,7 @@
 
 import { type PointerEvent, useEffect, useRef } from 'react';
 import { cameraOn, visibleWorld } from '@/lib/tree/tree.camera';
-import type { Point } from '@/lib/tree/tree.layout';
+import type { Point } from '@/lib/tree/tree.metrics';
 import type { CameraController } from '@/motion/camera';
 
 // Mini-carte (plan phase 4, lot 4) : l'arbre en points, et le cadre de l'écran qu'on

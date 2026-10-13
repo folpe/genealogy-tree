@@ -1,4 +1,5 @@
-import { computeTreeLayout, type ElkLike, type Point } from '@/lib/tree/tree.layout';
+import { computeTreeLayout, type ElkLike } from '@/lib/tree/tree.layout';
+import type { Point } from '@/lib/tree/tree.metrics';
 import { type TreeNeighbors, treeNeighbors } from '@/lib/tree/tree.navigation';
 import { routeLinks, type TreeLink } from '@/lib/tree/tree.routes';
 import type { TreeForViewer } from '@/server/family/family.service';
@@ -13,6 +14,8 @@ export type TreeNode = TreeNeighbors &
     id: string;
     /** Sous la bulle : le prénom, ou « Toi » pour le lecteur (DESIGN.md, section 7). */
     name: string;
+    /** Vu de près : prénom et nom, comme sur la fiche. */
+    fullName: string;
     /** Nom accessible (DESIGN.md, section 11). */
     label: string;
     years?: string;
@@ -20,6 +23,8 @@ export type TreeNode = TreeNeighbors &
     deceased: boolean;
     me: boolean;
     photo?: PersonPhoto;
+    /** Une branche de parent seul part sous l'étiquette : vue de loin, un trait l'y relie. */
+    branchesBelow: boolean;
   };
 
 export type TreeDrawing = {
@@ -36,6 +41,8 @@ export async function drawTree(tree: TreeForViewer, elk: ElkLike): Promise<TreeD
   const layout = await computeTreeLayout(tree.drawn, elk);
   const neighbors = treeNeighbors(tree.drawn, layout);
   const byId = new Map(tree.persons.map((p) => [p.id, p]));
+  const links = routeLinks(tree.drawn, layout);
+  const branching = new Set(links.flatMap((l) => (l.parentId ? [l.parentId] : [])));
 
   const nodes = tree.drawn.personIds.flatMap((id): TreeNode[] => {
     const person = byId.get(id);
@@ -51,6 +58,7 @@ export async function drawTree(tree: TreeForViewer, elk: ElkLike): Promise<TreeD
         ...point,
         ...around,
         name: me ? 'Toi' : person.firstName,
+        fullName: personLabel(person),
         label: [personLabel(person), years, me ? 'c’est toi' : undefined]
           .filter(Boolean)
           .join(', '),
@@ -59,6 +67,7 @@ export async function drawTree(tree: TreeForViewer, elk: ElkLike): Promise<TreeD
         deceased: isDeceased(person),
         me,
         ...(photo ? { photo } : {}),
+        branchesBelow: branching.has(id),
       },
     ];
   });
@@ -66,7 +75,7 @@ export async function drawTree(tree: TreeForViewer, elk: ElkLike): Promise<TreeD
 
   return {
     nodes,
-    links: routeLinks(tree.drawn, layout),
+    links,
     unknownPartners: Object.entries(layout.unknownPartners).map(([id, point]) => ({
       id,
       ...point,

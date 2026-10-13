@@ -1,6 +1,7 @@
 import type { DisplayedEdge, DisplayedGraph } from '../../server/family/family.display';
 import type { ParentChildKind } from '../../server/family/family.types';
-import { DEFAULT_METRICS, type LayoutMetrics, type Point, type TreeLayout } from './tree.layout';
+import type { TreeLayout } from './tree.layout';
+import { DEFAULT_METRICS, type LayoutMetrics, type Point } from './tree.metrics';
 
 // Tracé des liens (DESIGN.md, section 7) : une union est un simple trait horizontal
 // entre deux bulles ; un enfant part du milieu de ce trait ; un enfant d'une union
@@ -13,6 +14,8 @@ export type TreeLink = {
   /** Chemin SVG. */
   d: string;
   filiation?: ParentChildKind;
+  /** Branche d'un parent seul : la personne d'où elle part, sous son étiquette. */
+  parentId?: string;
 };
 
 /** Bézier aux poignées verticales, de `from` (point courant du tracé) à `to`. */
@@ -62,6 +65,7 @@ export function routeLinks(
       kind: 'parent',
       d: curve({ x: parent.x, y: parent.y + below }, { x: child.x, y: child.y - r }),
       ...(filiation ? { filiation } : {}),
+      parentId: from,
     });
   };
 

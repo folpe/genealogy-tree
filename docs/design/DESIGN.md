@@ -61,6 +61,8 @@ Ombres : base `rgba(31, 28, 25, a)` en clair, `rgba(8, 6, 18, min(a x 2.5, 0.7))
 
 Usage de l'accent, exclusivement : personne sélectionnée, "Toi", chemin du lien de parenté, libellés en petites capitales, badges de compteur, curseurs actifs (frise, carte). Jamais en fond de grande surface. Pas de vert ni de rouge : accepté, refusé et annulé se disent par le texte et la forme.
 
+Teintes de génération (`--color-gen-0` à `--color-gen-4`, `globals.css`) : seulement l'arbre vu de loin (zoom sémantique, `k < 0,45`), une pastille par personne teintée selon sa génération à l'écran, en boucle sur cinq teintes sourdes de la palette (terre cuite, ocre, sauge, ardoise, prune), éclaircies en sombre. Elles ne disent aucun statut ; "Toi" garde l'accent.
+
 ### 3.1 Bloc `@theme` (Tailwind 4)
 
 ```css

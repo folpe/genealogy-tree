@@ -1,5 +1,5 @@
 import { interpolateZoom } from 'd3-interpolate';
-import type { Point } from './tree.layout';
+import type { Point } from './tree.metrics';
 
 // Géométrie de la caméra du canevas (plan phase 4, lot 4), sans DOM ni animation.
 // Un point du monde (le placement) apparaît à l'écran en `monde * k + (x, y)`, à
@@ -19,6 +19,23 @@ const FIT_PADDING = 48;
 const ELASTIC_SPAN = 120;
 const FLIGHT_S_MIN = 0.35;
 const FLIGHT_S_MAX = 1.2;
+/** Sous cette échelle, l'arbre se lit de loin : des points, sans texte (plan, lot 5). */
+export const DETAIL_FAR_BELOW = 0.45;
+/** À partir de cette échelle, on lit tout : nom complet et années. */
+export const DETAIL_NEAR_FROM = 1.4;
+
+export type DetailLevel = 'far' | 'mid' | 'near';
+
+/**
+ * Zoom sémantique : ce que montre une bulle selon l'échelle. Les échelles de départ
+ * (0,75 et 1) restent au niveau moyen, celui que rend le serveur.
+ */
+export function detailLevel(k: number): DetailLevel {
+  if (k < DETAIL_FAR_BELOW) return 'far';
+  if (k >= DETAIL_NEAR_FROM) return 'near';
+  return 'mid';
+}
+
 /** Au-delà, seules les bulles proches de l'écran sont rendues (plan, lot 3). */
 export const VIRTUALIZE_ABOVE = 300;
 

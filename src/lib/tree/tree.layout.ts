@@ -1,6 +1,7 @@
 import type { ElkExtendedEdge, ElkNode, ElkPort } from 'elkjs/lib/elk-api';
 import { z } from 'zod';
 import type { DisplayedGraph } from '../../server/family/family.display';
+import { DEFAULT_METRICS, type LayoutMetrics, type Point } from './tree.metrics';
 
 // Placement de l'arbre (plan phase 4, lot 2). ELK (algorithme `layered`) ne connaît
 // pas les couples : laissé seul, il éloigne des partenaires et ajoute une couche par
@@ -8,31 +9,6 @@ import type { DisplayedGraph } from '../../server/family/family.display';
 // partent d'un port posé au milieu du trait d'union. ELK range les blocs ; ce module
 // en déduit la position de chaque bulle. Prototype sur la famille réelle le
 // 2026-10-12 : couples tous soudés, générations en lignes, 94 ms pour 103 fiches.
-
-export type Point = { x: number; y: number };
-
-export type LayoutMetrics = {
-  /** Diamètre de la bulle (DESIGN.md : 76 px en desktop). */
-  bubble: number;
-  /** Emprise d'une personne : bulle, prénom et années dessous. */
-  nodeWidth: number;
-  nodeHeight: number;
-  /** Écart entre deux partenaires d'un même bloc. */
-  gap: number;
-  /** Écart entre deux blocs d'une même génération. */
-  blockGap: number;
-  /** Écart vertical entre deux générations. */
-  layerGap: number;
-};
-
-export const DEFAULT_METRICS: LayoutMetrics = {
-  bubble: 76,
-  nodeWidth: 120,
-  nodeHeight: 132,
-  gap: 16,
-  blockGap: 40,
-  layerGap: 72,
-};
 
 export type TreeLayout = {
   /** Centre de la bulle de chaque personne. */

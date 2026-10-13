@@ -12,7 +12,7 @@ import {
   scaleLimits,
   zoomAt,
 } from '@/lib/tree/tree.camera';
-import type { Point } from '@/lib/tree/tree.layout';
+import type { Point } from '@/lib/tree/tree.metrics';
 
 gsap.registerPlugin(InertiaPlugin);
 
@@ -61,8 +61,9 @@ export function createCamera({
   const state: Camera = { ...initial };
   const listeners = new Set<(camera: Camera) => void>();
   let tween: gsap.core.Tween | undefined;
+  let moving = false;
 
-  const apply = () => {
+  const paint = () => {
     layer.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.k})`;
     // Trame (spec 12) : ses points restent fixés au monde, au pas de 46 px.
     viewportElement.style.setProperty('--cam-x', `${size.width / 2 + state.x}px`);
@@ -70,13 +71,26 @@ export function createCamera({
     viewportElement.style.setProperty('--cam-k', String(state.k));
     for (const listener of listeners) listener(state);
   };
+  // `will-change` le temps du mouvement seulement : gardé, le navigateur figerait le
+  // calque à son échelle de départ, et les noms deviendraient flous de près.
+  const apply = () => {
+    if (!moving) {
+      moving = true;
+      layer.style.willChange = 'transform';
+    }
+    paint();
+  };
   const assign = (camera: Camera) => {
     state.x = camera.x;
     state.y = camera.y;
     state.k = camera.k;
     apply();
   };
-  const settle = () => onSettle({ ...state });
+  const settle = () => {
+    moving = false;
+    layer.style.willChange = 'auto';
+    onSettle({ ...state });
+  };
   const stop = () => {
     tween?.kill();
     tween = undefined;
@@ -163,6 +177,6 @@ export function createCamera({
       listeners.clear();
     },
   };
-  apply();
+  paint();
   return controller;
 }

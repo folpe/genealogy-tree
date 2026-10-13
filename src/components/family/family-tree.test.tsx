@@ -87,10 +87,12 @@ describe('FamilyTree', () => {
       ...(i > 0 ? { left: `p${i - 1}` } : {}),
       ...(i < 301 ? { right: `p${i + 1}` } : {}),
       name: `P${i}`,
+      fullName: `P${i} Q`,
       label: `Personne ${i}`,
       initials: 'PP',
       deceased: false,
       me: false,
+      branchesBelow: false,
     }));
     const wide = { nodes: row, links: [], unknownPartners: [], width: 302 * 136, height: 132 };
     render(<FamilyTree drawing={wide} focusId="p0" />);
@@ -99,6 +101,17 @@ describe('FamilyTree', () => {
     first.focus();
     fireEvent.keyDown(first, { key: 'End' });
     expect(document.activeElement).toBe(screen.getByRole('treeitem', { name: 'Personne 301' }));
+  });
+
+  it('zoom sémantique : niveau moyen au départ, nom complet prêt pour la vue de près', () => {
+    render(<FamilyTree drawing={drawing} focusId="hugo" />);
+    expect(screen.getByRole('region', { name: 'Canevas de l’arbre' })).toHaveAttribute(
+      'data-detail',
+      'mid',
+    );
+    const hugo = item(/c’est toi$/);
+    expect(within(hugo).getByText('Toi')).toBeInTheDocument();
+    expect(within(hugo).getByText('Hugo Marchand')).toBeInTheDocument();
   });
 
   it('laisse passer les autres touches, Entrée comprise', () => {

@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { aChildOf, anUnion, aPerson } from '../../../tests/fixtures/builders';
 import { marchandFamily } from '../../../tests/fixtures/marchand-family';
 import { selectDisplayedGraph } from '../../server/family/family.display';
-import { computeTreeLayout, DEFAULT_METRICS, type ElkLike } from './tree.layout';
+import { computeTreeLayout, type ElkLike } from './tree.layout';
+import { DEFAULT_METRICS } from './tree.metrics';
 
 // ELK tourne ici dans le thread de test (version « bundled ») ; dans l'app, il tourne
 // dans un Web Worker. Le module ne voit que l'interface `ElkLike`.

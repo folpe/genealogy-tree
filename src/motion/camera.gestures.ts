@@ -1,6 +1,6 @@
 // tdd-cover: e2e tests/e2e/tree-camera.spec.ts
 import { type Camera, zoomAt } from '@/lib/tree/tree.camera';
-import type { Point } from '@/lib/tree/tree.layout';
+import type { Point } from '@/lib/tree/tree.metrics';
 import type { CameraController } from './camera';
 
 // Gestes du canevas, en Pointer Events unifiés (souris, stylet, doigts) : un pointeur

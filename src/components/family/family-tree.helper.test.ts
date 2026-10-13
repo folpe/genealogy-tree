@@ -23,6 +23,7 @@ describe('drawTree', () => {
     const henri = nodes.find((n) => n.id === 'henri');
     expect(henri).toMatchObject({
       name: 'Henri',
+      fullName: 'Henri Marchand',
       label: 'Henri Marchand, 1902 - 1979',
       years: '1902 - 1979',
       initials: 'HM',
@@ -35,6 +36,7 @@ describe('drawTree', () => {
     const { nodes } = await drawTree(hugo, elk);
     expect(nodes.find((n) => n.id === 'hugo')).toMatchObject({
       name: 'Toi',
+      fullName: 'Hugo Marchand',
       me: true,
       label: expect.stringMatching(/^Hugo Marchand, .*c’est toi$/),
     });
@@ -43,7 +45,7 @@ describe('drawTree', () => {
   it('un mineur hors du cercle proche : prénom et initiale, sans années', async () => {
     const { nodes } = await drawTree(hugo, elk);
     const jade = nodes.find((n) => n.id === 'jade');
-    expect(jade).toMatchObject({ name: 'Jade', label: 'Jade M.' });
+    expect(jade).toMatchObject({ name: 'Jade', fullName: 'Jade M.', label: 'Jade M.' });
     expect(jade?.years).toBeUndefined();
   });
 
@@ -58,6 +60,13 @@ describe('drawTree', () => {
     const { nodes, links } = await drawTree(hugo, elk);
     expect(links.some((l) => l.kind === 'union')).toBe(true);
     expect(nodes.find((n) => n.id === 'hugo')?.up).toMatch(/^(luc|sophie)$/);
+  });
+
+  it('signale les bulles d’où part la branche d’un parent seul', async () => {
+    const { nodes, links } = await drawTree(hugo, elk);
+    const from = new Set(links.flatMap((l) => (l.parentId ? [l.parentId] : [])));
+    expect(from.size).toBeGreaterThan(0);
+    for (const node of nodes) expect(node.branchesBelow).toBe(from.has(node.id));
   });
 
   it('arbre vide : rien à dessiner', async () => {

@@ -2,8 +2,8 @@
 'use client';
 
 import { type RefObject, useEffect, useState } from 'react';
-import { type Camera, cameraOn, type Size } from '@/lib/tree/tree.camera';
-import type { Point } from '@/lib/tree/tree.layout';
+import { type Camera, cameraOn, detailLevel, type Size } from '@/lib/tree/tree.camera';
+import type { Point } from '@/lib/tree/tree.metrics';
 import { type CameraController, createCamera } from '@/motion/camera';
 import { bindCameraGestures } from '@/motion/camera.gestures';
 
@@ -15,7 +15,8 @@ function initialScale(viewport: HTMLElement): number {
 
 /**
  * Monte la caméra sur le canevas une fois le DOM prêt : gestes, suivi de la taille,
- * et `data-camera-ready` sur le calque quand elle a la main.
+ * niveau de détail (`data-detail`) sur le canevas, et `data-camera-ready` sur le
+ * calque quand elle a la main.
  */
 export function useTreeCamera({
   viewport,
@@ -46,6 +47,11 @@ export function useTreeCamera({
       onSettle: (state) => onSettle(state, camera.viewport()),
     });
     const unbind = bindCameraGestures(viewportElement, camera);
+    // Zoom sémantique : une écriture du DOM au changement de niveau, aucune entre deux.
+    const unfollow = camera.subscribe((state) => {
+      const level = detailLevel(state.k);
+      if (viewportElement.dataset['detail'] !== level) viewportElement.dataset['detail'] = level;
+    });
     const resize = new ResizeObserver(([entry]) => {
       if (entry)
         camera.resize({ width: entry.contentRect.width, height: entry.contentRect.height });
@@ -56,6 +62,7 @@ export function useTreeCamera({
     onSettle(camera.get(), camera.viewport());
     return () => {
       resize.disconnect();
+      unfollow();
       unbind();
       camera.dispose();
       delete layerElement.dataset['cameraReady'];

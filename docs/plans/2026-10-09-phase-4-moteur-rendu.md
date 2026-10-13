@@ -71,10 +71,10 @@ Prototype sur la famille réelle (branche `notion-import`, 103 fiches) le 2026-1
 
 ### Lot 5 : zoom sémantique et transitions de layout
 
-- [ ] Trois niveaux de détail selon `k` : loin (points et lignées colorées par génération, pas de texte), moyen (bulles + prénoms), proche (photo, nom complet, années, actions rapides).
-- [ ] Changement de niveau sans re-layout, par bascule CSS et rendu conditionnel mémoïsé.
+- [x] Trois niveaux de détail selon `k` : loin (points et lignées colorées par génération, pas de texte), moyen (bulles + prénoms), proche (photo, nom complet, années, actions rapides). Seuils `k < 0,45` et `k >= 1,4` (`detailLevel`, `tree.camera.ts`) ; de loin, pastilles teintées par génération (`--color-gen-*`) et traits à épaisseur constante à l'écran ; le niveau moyen garde les années (rendu actuel) ; les actions rapides arrivent avec l'édition (phase 6).
+- [x] Changement de niveau sans re-layout, par bascule CSS et rendu conditionnel mémoïsé. La caméra pose `data-detail` sur le canevas au changement de niveau seulement ; chaque bulle porte ses trois rendus, le CSS montre le bon, sans re-rendu React. `will-change` n'est posé que pendant un mouvement, pour que le texte reste net de près.
 - [ ] Plier / déplier une branche, changer de racine ou de vue : nouveau layout, puis interpolation par id des positions (GSAP, nœuds entrants en fondu + échelle, sortants en fondu), liens redessinés.
-- [ ] Respect de `prefers-reduced-motion` : vols remplacés par un fondu court, pas d'inertie.
+- [x] Respect de `prefers-reduced-motion` : vols remplacés par un fondu court, pas d'inertie. Caméra en saut direct, sans fondu (DESIGN.md, section 10) ; prouvé en e2e sur « Me retrouver ».
 
 ### Lot 6 : vues descendants et sablier
 
