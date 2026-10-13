@@ -9,6 +9,12 @@ const BUBBLES = {
 } as const;
 
 /**
+ * `ink-2` sur une bulle ne se lit qu'en grand (contraste, globals.test.ts) : les petites
+ * bulles d'une personne décédée gardent l'encre.
+ */
+const LARGE = new Set<keyof typeof BUBBLES>(['tree', 'sheet']);
+
+/**
  * Bulle de la maquette (DESIGN.md) : la photo si le service en a signé une, sinon
  * les initiales. L'aperçu flou occupe la bulle pendant le chargement. `name` vide :
  * la photo est décorative, le nom suit déjà dans le même élément.
@@ -29,7 +35,7 @@ export function PersonBubble({
   const { box, sizes } = BUBBLES[size];
   return (
     <span
-      className={`relative inline-grid shrink-0 place-items-center overflow-hidden rounded-full border-card bg-cover bg-center font-display shadow-bubble ${box} ${deceased ? 'bg-bubble-past text-ink-2' : 'bg-bubble'}`}
+      className={`relative inline-grid shrink-0 place-items-center overflow-hidden rounded-full border-card bg-cover bg-center font-display shadow-bubble ${box} ${deceased ? `bg-bubble-past ${LARGE.has(size) ? 'text-ink-2' : 'text-ink'}` : 'bg-bubble'}`}
       style={photo?.blurDataUrl ? { backgroundImage: `url("${photo.blurDataUrl}")` } : undefined}
     >
       {photo ? (

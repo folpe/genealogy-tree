@@ -26,14 +26,30 @@ describe('PersonSheet', () => {
     const parents = screen.getByRole('list', { name: 'Parents' });
     expect(within(parents).getByRole('link', { name: 'Paul Marchand' })).toBeVisible();
     const children = screen.getByRole('list', { name: 'Enfants' });
+    // Pastilles : le prénom à l'écran, le nom complet pour les lecteurs d'écran.
     expect(
       within(children)
         .getAllByRole('link')
-        .map((l) => l.textContent),
-    ).toEqual(['Maxime Marchand', 'Léa Marchand', 'Hugo Marchand']);
+        .map((l) => l.getAttribute('aria-label')),
+    ).toEqual(['Maxime Marchand', 'Léa Marchand', 'Hugo Marchand, toi']);
     const unions = screen.getByRole('list', { name: 'Unions' });
-    expect(unions).toHaveTextContent('Claire Dumont : Union libre (1985), séparation (1989)');
-    expect(unions).toHaveTextContent('Sophie Marchand : Mariage depuis 1990');
+    const [current, past] = within(unions).getAllByRole('listitem');
+    expect(within(current as HTMLElement).getByRole('link')).toHaveAccessibleName(
+      'Sophie Marchand',
+    );
+    expect(current).toHaveTextContent('Mariage depuis 1990');
+    expect(within(past as HTMLElement).getByRole('link')).toHaveAccessibleName('Claire Dumont');
+    expect(past).toHaveTextContent('Union libre (1985), séparation (1989)');
+  });
+
+  it('frères et sœurs, demi- à part, et qui l’a élevé', () => {
+    render(<PersonSheet tree={hugo} personId="maxime" />);
+    expect(
+      within(screen.getByRole('list', { name: 'Demi-frères et sœurs' })).getAllByRole('link'),
+    ).toHaveLength(2);
+    expect(
+      within(screen.getByRole('list', { name: 'A aussi été élevé par' })).getByRole('link'),
+    ).toHaveAccessibleName('Sophie Marchand');
   });
 
   it('photo de la fiche, nommée, avec son aperçu flou en attendant', () => {
@@ -48,7 +64,8 @@ describe('PersonSheet', () => {
   it('sans photo : les initiales dans la bulle', () => {
     render(<PersonSheet tree={hugo} personId="luc" />);
     expect(screen.queryByRole('img')).toBeNull();
-    expect(screen.getByText('LM')).toHaveAttribute('aria-hidden', 'true');
+    const header = screen.getByRole('banner');
+    expect(within(header).getByText('LM')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('vivant hors de mon périmètre : année et ville de naissance, et pourquoi', () => {

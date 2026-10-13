@@ -41,7 +41,7 @@ export default async function PersonPage({
       <nav className="text-sm font-medium text-ink-2">
         <BackToTree />
       </nav>
-      <PersonSheet tree={tree} personId={id} />
+      <PersonSheet tree={tree} personId={id} relation={tree.relations[id]} />
       {person.level === 'minor' ? undefined : (
         <AddRelative
           key={id}

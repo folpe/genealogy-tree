@@ -176,8 +176,9 @@ export function TreeWithSheet({
   );
 }
 
-const action =
-  'flex h-11 items-center rounded-full border border-line bg-card px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
+/** Liens discrets du pied de fiche : aller ailleurs, sans concurrencer les actions. */
+const quiet =
+  'flex min-h-11 items-center text-sm text-ink-2 underline decoration-line underline-offset-4 transition-colors hover:text-ink hover:decoration-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
 
 function PersonPanel({
   tree,
@@ -197,46 +198,46 @@ function PersonPanel({
 }) {
   const person = tree.persons.find((p) => p.id === personId);
   if (!person) return undefined;
-  const relation = tree.relations[personId];
   const name = personLabel(person);
+  const rights =
+    person.id === tree.viewerPersonId
+      ? 'C’est ta fiche.'
+      : tree.editableIds.includes(person.id)
+        ? 'Dans ta lignée : tu la complètes directement.'
+        : 'Hors de ta lignée : les suggestions à la famille arrivent bientôt.';
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-start justify-between gap-3">
-        <span className="pt-3 text-xs font-semibold tracking-[0.14em] text-accent uppercase">
-          {relation ? relation.charAt(0).toUpperCase() + relation.slice(1) : 'Fiche'}
-        </span>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Fermer la fiche"
-          className="flex size-11 shrink-0 items-center justify-center rounded-full border border-line text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M6 6l12 12M18 6L6 18"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
-      </div>
-      <PersonSheet tree={tree} personId={personId} heading="h2" bare onPick={onPick} />
+    <div className="relative flex flex-col gap-6">
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Fermer la fiche"
+        className="absolute -top-2 -right-2 flex size-11 items-center justify-center rounded-full text-ink-2 transition-colors hover:bg-paper hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M6 6l12 12M18 6L6 18"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+      <PersonSheet
+        tree={tree}
+        personId={personId}
+        heading="h2"
+        bare
+        relation={tree.relations[personId]}
+        onPick={onPick}
+      />
+      <p className="flex items-start gap-2.5 rounded-2xl bg-paper px-4 py-3 text-[13px] leading-relaxed text-ink-2">
+        <span
+          aria-hidden="true"
+          className={`mt-1.5 size-2 shrink-0 rounded-full ${tree.editableIds.includes(person.id) ? 'bg-ink' : 'bg-accent'}`}
+        />
+        {rights}
+      </p>
       {onLink ? <LinkButton key={personId} personId={personId} onLink={onLink} /> : undefined}
-      <nav aria-label={`Autour de ${name}`} className="flex flex-wrap gap-2">
-        <Link href={`/people/${personId}`} className={action}>
-          Fiche complète
-        </Link>
-        <Link
-          href={fanHref({ p: personId, generations: FAN_GENERATIONS.initial })}
-          className={action}
-        >
-          Ses ancêtres
-        </Link>
-        <Link href={treeHref({ view: 'couple', p: personId, past: false })} className={action}>
-          Centrer l’arbre ici
-        </Link>
-      </nav>
       {person.level === 'minor' ? undefined : (
         <AddRelative
           key={personId}
@@ -246,6 +247,23 @@ function PersonPanel({
           action={addAction}
         />
       )}
+      <nav
+        aria-label={`Autour de ${name}`}
+        className="flex flex-wrap justify-center gap-x-5 gap-y-1 border-t border-rule pt-4"
+      >
+        <Link href={`/people/${personId}`} className={quiet}>
+          Fiche complète
+        </Link>
+        <Link
+          href={fanHref({ p: personId, generations: FAN_GENERATIONS.initial })}
+          className={quiet}
+        >
+          Ses ancêtres
+        </Link>
+        <Link href={treeHref({ view: 'couple', p: personId, past: false })} className={quiet}>
+          Centrer l’arbre ici
+        </Link>
+      </nav>
     </div>
   );
 }
