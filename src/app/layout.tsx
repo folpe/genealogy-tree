@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { Figtree, Fraunces } from 'next/font/google';
+import { cookies } from 'next/headers';
 import { connection } from 'next/server';
 import type { ReactNode } from 'react';
+import { parseTheme, THEME_COOKIE, themeAttribute, themeColor } from '@/lib/theme/theme';
 import './globals.css';
 
 const fraunces = Fraunces({
@@ -33,24 +35,29 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: 'Ances-Tree', statusBarStyle: 'default' },
 };
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  // ADR 07 : l'arbre gère lui-même le pincement.
-  userScalable: false,
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#F6F2EA' },
-    { media: '(prefers-color-scheme: dark)', color: '#1D1A2B' },
-  ],
-};
+const readTheme = async () => parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+
+export async function generateViewport(): Promise<Viewport> {
+  return {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    // ADR 07 : l'arbre gère lui-même le pincement.
+    userScalable: false,
+    themeColor: themeColor(await readTheme()),
+  };
+}
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   // Rendu à la requête : Next ne pose le nonce de la CSP que sur une page rendue
   // dynamiquement (voir docs/decisions-log, CSP à nonce sans cacheComponents).
   await connection();
   return (
-    <html lang="fr" className={`${fraunces.variable} ${figtree.variable}`}>
+    <html
+      lang="fr"
+      data-theme={themeAttribute(await readTheme())}
+      className={`${fraunces.variable} ${figtree.variable}`}
+    >
       <body>{children}</body>
     </html>
   );
