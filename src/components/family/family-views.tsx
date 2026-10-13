@@ -137,6 +137,34 @@ function PeopleRow({
   );
 }
 
+function UnionsRow({
+  unions,
+  tree,
+  onPick,
+}: {
+  unions: ReturnType<typeof relativesOf>['unions'];
+  tree: TreeForViewer;
+  onPick: PickPerson;
+}) {
+  if (unions.length === 0) return undefined;
+  return (
+    <Row label={unions.length > 1 ? 'Unions' : 'Union'}>
+      <ul aria-label="Unions" className="flex flex-col items-end gap-2">
+        {unions.map(({ union, partner }) => (
+          <li key={union.id} className="flex flex-col items-end gap-1">
+            {partner ? (
+              <PersonChip person={partner} tree={tree} onPick={onPick} />
+            ) : (
+              <span className="text-[15px]">Partenaire inconnu</span>
+            )}
+            <span className="text-[13px] text-ink-2">{unionSummary(union)}</span>
+          </li>
+        ))}
+      </ul>
+    </Row>
+  );
+}
+
 function SheetHeader({
   tree,
   person,
@@ -242,22 +270,7 @@ export function PersonSheet({
           tree={tree}
           onPick={onPick}
         />
-        {r.unions.length > 0 ? (
-          <Row label={r.unions.length > 1 ? 'Unions' : 'Union'}>
-            <ul aria-label="Unions" className="flex flex-col items-end gap-2">
-              {r.unions.map(({ union, partner }) => (
-                <li key={union.id} className="flex flex-col items-end gap-1">
-                  {partner ? (
-                    <PersonChip person={partner} tree={tree} onPick={onPick} />
-                  ) : (
-                    <span className="text-[15px]">Partenaire inconnu</span>
-                  )}
-                  <span className="text-[13px] text-ink-2">{unionSummary(union)}</span>
-                </li>
-              ))}
-            </ul>
-          </Row>
-        ) : undefined}
+        <UnionsRow unions={r.unions} tree={tree} onPick={onPick} />
         <PeopleRow label="Enfants" people={r.children} tree={tree} onPick={onPick} />
         <PeopleRow label="A aussi été élevé par" people={r.raisedBy} tree={tree} onPick={onPick} />
         <PeopleRow label="A élevé" people={r.raised} tree={tree} onPick={onPick} />

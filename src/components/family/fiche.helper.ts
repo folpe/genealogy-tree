@@ -31,9 +31,12 @@ export function relativesOf(tree: TreeForViewer, personId: string): Relatives {
 
   const parentIds = parentsOf(personId);
   const siblingIds = [...new Set(parentIds.flatMap(childrenOf))].filter((id) => id !== personId);
-  const full = (id: string) => {
+  // Demi- seulement quand chacun a un parent connu que l'autre n'a pas : un parent
+  // simplement non renseigné ne fait pas un autre parent (et la règle est symétrique,
+  // la même vue des deux fiches).
+  const half = (id: string) => {
     const theirs = parentsOf(id);
-    return parentIds.length > 0 && parentIds.every((p) => theirs.includes(p));
+    return parentIds.some((p) => !theirs.includes(p)) && theirs.some((p) => !parentIds.includes(p));
   };
   const unions = tree.unions
     .filter((u) => u.partnerIds.includes(personId))
@@ -45,8 +48,8 @@ export function relativesOf(tree: TreeForViewer, personId: string): Relatives {
   const raisedLinks = links.filter((l) => l.kind === 'a_eleve');
   return {
     parents: pick(parentIds),
-    siblings: pick(siblingIds.filter(full)),
-    halfSiblings: pick(siblingIds.filter((id) => !full(id))),
+    siblings: pick(siblingIds.filter((id) => !half(id))),
+    halfSiblings: pick(siblingIds.filter(half)),
     unions,
     children: pick(childrenOf(personId)),
     raisedBy: pick(raisedLinks.filter((l) => l.childId === personId).map((l) => l.parentId)),

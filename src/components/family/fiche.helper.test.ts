@@ -24,6 +24,20 @@ describe('relativesOf', () => {
     expect(ids(relativesOf(hugo, 'sophie').raised)).toEqual(['maxime']);
   });
 
+  it('un parent non renseigné ne fait pas un demi-frère, des deux côtés', () => {
+    const base = treeForViewer('m-folpe');
+    // Anne n'a plus que Paul : Jeanne n'est pas renseignée, ce n'est pas un autre parent.
+    const tree = {
+      ...base,
+      parentChildren: base.parentChildren.filter(
+        (l) => !(l.childId === 'anne' && l.parentId === 'jeanne'),
+      ),
+    };
+    expect(ids(relativesOf(tree, 'luc').siblings)).toContain('anne');
+    expect(ids(relativesOf(tree, 'anne').siblings)).toContain('luc');
+    expect(relativesOf(tree, 'luc').halfSiblings).toEqual([]);
+  });
+
   it('une fiche inconnue n’a aucun proche', () => {
     expect(relativesOf(hugo, 'personne').parents).toEqual([]);
   });
