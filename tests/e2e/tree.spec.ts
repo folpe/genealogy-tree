@@ -70,3 +70,28 @@ test('un tap montre aussitôt que la fiche arrive, et le retour montre l’arbre
   await expect(page.getByRole('status').filter({ hasText: 'L’arbre se dessine' })).toBeVisible();
   await expect(page.getByRole('tree')).toBeVisible();
 });
+
+test('au retour d’une fiche, l’arbre revient là où on l’avait laissé, plis compris', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await signIn(page, E2E_ISABELLE_EMAIL);
+  await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+  await page.getByRole('treeitem', { name: /^Luc Marchand/ }).focus();
+  await page.keyboard.press('-');
+  await expect(page.getByRole('treeitem', { name: /^Hugo Marchand/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Zoomer', exact: true }).click();
+  await settled(page);
+  // Retour sur Luc (la caméra peut le recadrer), puis Entrée ouvre sa fiche.
+  await page.getByRole('treeitem', { name: /^Luc Marchand/ }).focus();
+  const left = await settled(page);
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/people\/luc$/);
+  await page.getByRole('link', { name: 'Retour à l’arbre' }).click();
+  await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+  await expect(page.getByRole('treeitem', { name: /^Hugo Marchand/ })).toHaveCount(0);
+  const back = await settled(page);
+  expect(back.k).toBeCloseTo(left.k, 3);
+  expect(Math.abs(back.x - left.x)).toBeLessThan(2);
+  expect(Math.abs(back.y - left.y)).toBeLessThan(2);
+});

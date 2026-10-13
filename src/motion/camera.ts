@@ -66,7 +66,11 @@ export function createCamera({
   let size: Size = { width: viewportElement.clientWidth, height: viewportElement.clientHeight };
   let content = initialContent;
   let limits = scaleLimits(content, size);
-  const state: Camera = { ...initial };
+  // Une caméra retrouvée a pu être prise sur un autre écran : bornée comme les autres.
+  const state: Camera = clampCamera(
+    { ...initial, k: Math.min(limits.kMax, Math.max(limits.kMin, initial.k)) },
+    content,
+  );
   const listeners = new Set<(camera: Camera) => void>();
   let tween: gsap.core.Tween | undefined;
   let moving = false;

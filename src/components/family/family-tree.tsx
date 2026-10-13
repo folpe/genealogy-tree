@@ -6,6 +6,7 @@ import {
   memo,
   type Ref,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -20,12 +21,14 @@ import {
   VIRTUALIZE_ABOVE,
   visibleWorld,
 } from '@/lib/tree/tree.camera';
+import { recallCamera, rememberCamera, type TreeMemory } from '@/lib/tree/tree.memory';
 import { DEFAULT_METRICS } from '@/lib/tree/tree.metrics';
 import type { TreeLink } from '@/lib/tree/tree.routes';
 import type { CameraController } from '@/motion/camera';
 import type { DisplayedGraph } from '@/server/family/family.display';
 import { PersonBubble } from './person-bubble';
 import type { BranchHandle, TreeDrawing, TreeNode } from './tree-drawing';
+import { readTreeMemory, writeTreeMemory } from './tree-memory.storage';
 import { TreeMinimap } from './tree-minimap';
 import { useFoldedTree } from './use-folded-tree';
 import { useRelayout } from './use-relayout';
@@ -366,14 +369,22 @@ export function FamilyTree({
   const pendingFocus = useRef<string | undefined>(undefined);
   const content = useMemo<Size>(() => ({ width, height }), [width, height]);
   const [view, setView] = useState<Rect>();
+  // Retour d'une fiche : l'arbre revient là où on l'avait laissé, plis compris.
+  const memory = useRef<TreeMemory | undefined>(undefined);
+  const restore = useCallback(() => {
+    memory.current = readTreeMemory();
+    return memory.current ? recallCamera(memory.current, nodes) : undefined;
+  }, [nodes]);
   const onSettle = useCallback(
     (state: Camera, size: Size) => {
       if (nodes.length > VIRTUALIZE_ABOVE) setView(visibleWorld(state, size));
       else setView(undefined);
+      const remembered = rememberCamera(state, nodes, [...fold.folded]);
+      if (remembered) writeTreeMemory(remembered);
     },
-    [nodes.length],
+    [nodes, fold.folded],
   );
-  const camera = useTreeCamera({ viewport, layer, content, start, onSettle });
+  const camera = useTreeCamera({ viewport, layer, content, start, restore, onSettle });
   const leaving = useRelayout({
     drawing: fold.drawing,
     anchorId: fold.anchorId,
@@ -434,6 +445,17 @@ export function FamilyTree({
     },
     [byId, rows, branchesOf, isRequested, setFolded],
   );
+
+  // Les plis retenus reviennent une fois la caméra en place, autour de la bulle repère.
+  const foldsRestored = useRef(false);
+  useEffect(() => {
+    if (!camera || foldsRestored.current) return;
+    foldsRestored.current = true;
+    const remembered = memory.current;
+    if (remembered && remembered.folded.length > 0) {
+      setFolded(remembered.folded, true, remembered.anchorId);
+    }
+  }, [camera, setFolded]);
 
   const toggleBranch = useCallback(
     (branch: BranchHandle) => setFolded([branch.id], !isRequested(branch.id), branch.anchorId),
