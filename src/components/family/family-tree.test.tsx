@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import ELK from 'elkjs/lib/elk.bundled.js';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { treeForViewer } from '../../../tests/fixtures/tree-for-viewer';
 import { FamilyTree } from './family-tree';
 import { drawTree } from './family-tree.helper';
@@ -23,6 +23,11 @@ beforeAll(async () => {
 });
 
 const item = (name: RegExp) => screen.getByRole('treeitem', { name });
+
+// Le canevas retient position et plis pour l'onglet : chaque test part d'un onglet neuf.
+beforeEach(() => {
+  window.sessionStorage.clear();
+});
 
 describe('FamilyTree', () => {
   it('un arbre nommé, une entrée par bulle, chacune menant à sa fiche', () => {
