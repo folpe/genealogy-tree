@@ -80,6 +80,13 @@ export function TreeWithSheet({
   const close = useCallback(() => showFiche(undefined), []);
   const [link, setLink] = useState<{ view: RelationshipView; highlight: PathHighlight }>();
   const [cardHeight, setCardHeight] = useState(0);
+  // Une autre vue de l'arbre (recentrage, profondeur) : le lien éclairé ne vaut plus.
+  const [linkView, setLinkView] = useState(viewKey);
+  if (linkView !== viewKey) {
+    setLinkView(viewKey);
+    setLink(undefined);
+    setCardHeight(0);
+  }
   /** « Notre lien » : sur mobile, la feuille s'efface pour laisser voir le chemin. */
   const showLink = useCallback(
     (view: RelationshipView) => {
@@ -104,8 +111,13 @@ export function TreeWithSheet({
       <div className="relative min-w-0 flex-1">
         {link ? (
           <RelationshipCard
+            // Un autre lien : une autre carte, mesurée à nouveau.
+            key={link.view.path.join('>')}
             view={link.view}
-            onClose={() => setLink(undefined)}
+            onClose={() => {
+              setLink(undefined);
+              setCardHeight(0);
+            }}
             onHeight={setCardHeight}
           />
         ) : undefined}
@@ -198,7 +210,7 @@ function PersonPanel({
         </button>
       </div>
       <PersonSheet tree={tree} personId={personId} heading="h2" bare onPick={onPick} />
-      {onLink ? <LinkButton personId={personId} onLink={onLink} /> : undefined}
+      {onLink ? <LinkButton key={personId} personId={personId} onLink={onLink} /> : undefined}
       <nav aria-label={`Autour de ${name}`} className="flex flex-wrap gap-2">
         <Link href={`/people/${personId}`} className={action}>
           Fiche complète
@@ -314,7 +326,9 @@ function RelationshipCard({
           </svg>
         </button>
       </div>
-      <p className="font-display text-[19px] leading-snug md:text-[26px]">{view.sentence}</p>
+      <p aria-live="polite" className="font-display text-[19px] leading-snug md:text-[26px]">
+        {view.sentence}
+      </p>
       {view.steps.length > 1 ? (
         <ol className="flex flex-wrap items-center gap-1.5">
           {view.steps.map((step, i) => (

@@ -243,7 +243,9 @@ export async function getRelationship(
       : r.type === 'none' && !r.connected
         ? `Aucun lien connu entre toi et ${target.firstName}.`
         : `${target.firstName} est ${label}.`;
-  const path = findRelationshipPath(index, from, targetId);
+  // Le chemin ne cite que ce que la vue du lecteur montre déjà (fiches et unions).
+  const shown = new Set([...visible.keys(), ...view.unions.map((u) => u.id)]);
+  const path = findRelationshipPath(index, from, targetId).filter((id) => shown.has(id));
   const { relations } = relationsFrom(index, from, path);
   const steps = path.flatMap((id) => {
     const person = visible.get(id);
