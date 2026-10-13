@@ -8,6 +8,8 @@ import { signIn } from './outbox';
 
 test('l’arbre s’ouvre sur ma bulle, et les flèches suivent les liens', async ({ page }) => {
   await signIn(page, E2E_ISABELLE_EMAIL);
+  // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
+  await page.goto('/tree?view=all');
   const tree = page.getByRole('tree', { name: 'Arbre de la famille' });
   await expect(tree).toBeVisible();
   const me = tree.getByRole('treeitem', { name: /c’est toi$/ });
@@ -27,6 +29,8 @@ test('l’arbre s’ouvre sur ma bulle, et les flèches suivent les liens', asyn
 
 test('un clic sur une bulle ouvre sa fiche', async ({ page }) => {
   await signIn(page, E2E_ISABELLE_EMAIL);
+  // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
+  await page.goto('/tree?view=all');
   const henri = page.getByRole('treeitem', { name: /^Henri Marchand/ });
   // Henri est loin de ma bulle : on dézoome jusqu'à le voir, comme on le ferait.
   const zoomOut = page.getByRole('button', { name: 'Dézoomer', exact: true });
@@ -45,6 +49,8 @@ test('un clic sur une bulle ouvre sa fiche', async ({ page }) => {
 
 test('les liens sont tracés sous les bulles', async ({ page }) => {
   await signIn(page, E2E_ISABELLE_EMAIL);
+  // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
+  await page.goto('/tree?view=all');
   await expect(page.getByRole('tree')).toBeVisible();
   const paths = page.locator('svg[aria-hidden="true"] path');
   expect(await paths.count()).toBeGreaterThan(10);
@@ -54,6 +60,8 @@ test('un tap montre aussitôt que la fiche arrive, et le retour montre l’arbre
   page,
 }) => {
   await signIn(page, E2E_ISABELLE_EMAIL);
+  // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
+  await page.goto('/tree?view=all');
   // Réseau lent : chaque navigation (pas les préchargements) attend une seconde.
   await page.route('**/*', async (route) => {
     const headers = route.request().headers();
@@ -76,6 +84,8 @@ test('au retour d’une fiche, l’arbre revient là où on l’avait laissé, p
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await signIn(page, E2E_ISABELLE_EMAIL);
+  // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
+  await page.goto('/tree?view=all');
   await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
   await page.getByRole('treeitem', { name: /^Luc Marchand/ }).focus();
   await page.keyboard.press('-');
@@ -101,6 +111,8 @@ test('un pli fait sans bouger l’arbre tient sur deux allers-retours vers une f
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await signIn(page, E2E_ISABELLE_EMAIL);
+  // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
+  await page.goto('/tree?view=all');
   await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
   const luc = page.getByRole('treeitem', { name: /^Luc Marchand/ });
   await luc.focus();

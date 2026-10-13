@@ -72,14 +72,25 @@ describe.skipIf(!db)('family.service (intégration)', () => {
     expect(tree.viewerPersonId).toBe('hugo');
   });
 
-  it('dessine l’arbre depuis le lecteur : l’union passée de son père reste masquée', async () => {
+  it('par défaut, la famille du lecteur : notre famille en couple, sinon son sablier', async () => {
+    const luc = await getTreeForViewer(deps(), 'u-luc');
+    expect(luc.shownView).toBe('couple');
+    expect(luc.drawn.personIds).toEqual(expect.arrayContaining(['sophie', 'bernard', 'paul']));
     const hugo = await getTreeForViewer(deps(), 'u-hugo');
+    expect(hugo.shownView).toBe('hourglass');
+    expect(hugo.centerInCouple).toBe(false);
+    const owner = await getTreeForViewer(deps(), 'u-owner');
+    expect(owner.shownView).toBe('all');
+  });
+
+  it('dessine l’arbre depuis le lecteur : l’union passée de son père reste masquée', async () => {
+    const hugo = await getTreeForViewer(deps(), 'u-hugo', { view: 'all', past: false });
     expect(hugo.drawn.unions.map((u) => u.id)).toContain('u-luc-sophie');
     expect(hugo.drawn.unions.map((u) => u.id)).not.toContain('u-luc-claire');
     expect(hugo.drawn.edges).toContainEqual({ kind: 'parent', from: 'luc', to: 'maxime' });
 
     await addMember('u-maxime', 'maxime');
-    const maxime = await getTreeForViewer(deps(), 'u-maxime');
+    const maxime = await getTreeForViewer(deps(), 'u-maxime', { view: 'all', past: false });
     expect(maxime.drawn.unions.map((u) => u.id)).toContain('u-luc-claire');
   });
 

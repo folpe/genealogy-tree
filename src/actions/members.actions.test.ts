@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   requestAccess: vi.fn(),
   decideAccessRequest: vi.fn(),
   setAdmin: vi.fn(),
+  claimOwnPerson: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 vi.mock('server-only', () => ({}));
@@ -18,9 +19,11 @@ vi.mock('@/server/members/members.service', () => ({
   requestAccess: mocks.requestAccess,
   decideAccessRequest: mocks.decideAccessRequest,
   setAdmin: mocks.setAdmin,
+  claimOwnPerson: mocks.claimOwnPerson,
 }));
 
 import {
+  claimPersonAction,
   decideAccessRequestAction,
   inviteAction,
   requestAccessAction,
@@ -111,5 +114,29 @@ describe('members.actions', () => {
     expect(mocks.setAdmin).toHaveBeenCalledWith({ deps: true }, 'u-hugo', 'm1', true);
     await setAdminAction(undefined, form({ membershipId: 'm1', makeAdmin: 'false' }));
     expect(mocks.setAdmin).toHaveBeenLastCalledWith({ deps: true }, 'u-hugo', 'm1', false);
+  });
+
+  it('« C’est moi » relie le compte de la session, puis rafraîchit l’app', async () => {
+    mocks.requireSession.mockResolvedValue({ user: { id: 'u-owner' } });
+    const result = await claimPersonAction(
+      undefined,
+      form({ personId: 'paul', userId: 'u-pirate' }),
+    );
+    expect(mocks.claimOwnPerson).toHaveBeenCalledWith({ deps: true }, 'u-owner', 'paul');
+    expect(result).toEqual({ ok: true, message: 'C’est noté : l’arbre part maintenant de toi.' });
+    expect(mocks.revalidatePath).toHaveBeenCalledWith('/', 'layout');
+  });
+
+  it('« C’est moi » refusé : le message du service, rien de rafraîchi', async () => {
+    mocks.claimOwnPerson.mockRejectedValue(
+      new AppError({
+        message: 'Cette fiche est déjà reliée à un autre compte.',
+        code: 'X',
+        status: 409,
+      }),
+    );
+    const result = await claimPersonAction(undefined, form({ personId: 'hugo' }));
+    expect(result).toEqual({ ok: false, error: 'Cette fiche est déjà reliée à un autre compte.' });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 });

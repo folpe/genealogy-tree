@@ -1,5 +1,5 @@
 // tdd-cover: e2e tests/e2e/tree.spec.ts
-import Link from 'next/link';
+import { BackToTree } from '@/components/family/back-to-tree';
 
 // Fiche en chargement : affichée dès le tap, pendant que le serveur lit la fiche.
 // Même gabarit que PersonSheet, pour que la page ne saute pas à l'arrivée.
@@ -10,7 +10,7 @@ export default function PersonLoading() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-4 md:p-8">
       <nav className="text-sm font-medium text-ink-2">
-        <Link href="/tree">Retour à l’arbre</Link>
+        <BackToTree />
       </nav>
       <article
         aria-busy="true"

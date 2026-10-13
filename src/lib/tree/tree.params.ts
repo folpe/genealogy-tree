@@ -17,7 +17,7 @@ const fallback = <T extends z.ZodType>(schema: T) =>
 
 const schema = z.object({
   p: fallback(z.string().min(1).max(64)),
-  view: fallback(z.enum(['all', 'descendants', 'hourglass'])),
+  view: fallback(z.enum(['all', 'couple', 'descendants', 'hourglass'])),
   past: fallback(z.enum(['0', '1'])),
   depth: fallback(z.coerce.number().int().min(1).max(DEPTH_MAX)),
 });
@@ -27,7 +27,7 @@ export function parseTreeParams(
 ): TreeParams {
   const { p, view, past, depth } = schema.parse(searchParams);
   return {
-    view: view ?? 'all',
+    ...(view ? { view } : {}),
     ...(p ? { p } : {}),
     past: past === '1',
     ...(depth ? { depth } : {}),
@@ -37,10 +37,10 @@ export function parseTreeParams(
 export function treeHref({ view, p, past, depth }: TreeParams): string {
   const query = new URLSearchParams();
   if (p) query.set('p', p);
-  if (view !== 'all') query.set('view', view);
+  if (view) query.set('view', view);
   if (past) query.set('past', '1');
-  // La profondeur ne vaut que pour les vues descendants et sablier.
-  if (depth && view !== 'all') query.set('depth', String(depth));
+  // La profondeur ne vaut que pour les vues centrées sur une personne.
+  if (depth && view && view !== 'all') query.set('depth', String(depth));
   const search = query.toString();
   return search ? `/tree?${search}` : '/tree';
 }

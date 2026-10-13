@@ -7,23 +7,36 @@ import { signIn } from './outbox';
 
 const HUGO = 'hugo@famille.test';
 
-test('le sablier ne garde que la lignée, et le retour du navigateur revient à la famille', async ({
+test('Hugo s’ouvre sur son sablier ; toute la famille et le retour du navigateur', async ({
   page,
 }) => {
   await signIn(page, HUGO);
   const tom = page.getByRole('treeitem', { name: /^Tom/ });
-  await expect(tom).toHaveCount(1);
-
-  await page.getByRole('link', { name: 'Sablier' }).click();
-  await expect(page).toHaveURL(/\/tree\?view=hourglass$/);
+  // Par défaut, sa famille : Hugo n'est pas en couple, c'est son sablier.
   await expect(page.getByRole('link', { name: 'Sablier' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('link', { name: 'Notre famille' })).toHaveCount(0);
   await expect(page.getByText('Centré sur')).toContainText('Hugo Marchand');
   await expect(tom).toHaveCount(0);
   await expect(page.getByRole('treeitem', { name: /^Henri Marchand/ })).toHaveCount(1);
 
+  await page.getByRole('link', { name: 'Toute la famille' }).click();
+  await expect(page).toHaveURL(/\/tree\?view=all$/);
+  await expect(tom).toHaveCount(1);
+
   await page.goBack();
   await expect(page).toHaveURL(/\/tree$/);
-  await expect(tom).toHaveCount(1);
+  await expect(tom).toHaveCount(0);
+});
+
+test('Luc, en couple, s’ouvre sur notre famille : les deux lignées', async ({ page }) => {
+  await signIn(page, 'luc@famille.test');
+  await expect(page.getByRole('link', { name: 'Notre famille' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(page.getByRole('treeitem', { name: /^Bernard/ })).toHaveCount(1);
+  await expect(page.getByRole('treeitem', { name: /^Paul Marchand/ })).toHaveCount(1);
+  await expect(page.getByRole('treeitem', { name: /^Tom/ })).toHaveCount(0);
 });
 
 test('depuis une fiche, ses descendants ; puis revenir à moi', async ({ page }) => {
@@ -45,17 +58,18 @@ test('depuis une fiche, ses descendants ; puis revenir à moi', async ({ page })
 
 test('l’interrupteur montre puis masque les unions passées', async ({ page }) => {
   await signIn(page, HUGO);
+  await page.goto('/tree?view=all');
   const claire = page.getByRole('treeitem', { name: /^Claire/ });
   await expect(claire).toHaveCount(0);
   const past = page.getByRole('switch', { name: 'Unions passées' });
   await expect(past).toHaveAttribute('aria-checked', 'false');
 
   await past.click();
-  await expect(page).toHaveURL(/\/tree\?past=1$/);
+  await expect(page).toHaveURL(/\/tree\?view=all&past=1$/);
   await expect(claire).toHaveCount(1);
   await expect(past).toHaveAttribute('aria-checked', 'true');
 
   await past.click();
-  await expect(page).toHaveURL(/\/tree$/);
+  await expect(page).toHaveURL(/\/tree\?view=all$/);
   await expect(claire).toHaveCount(0);
 });

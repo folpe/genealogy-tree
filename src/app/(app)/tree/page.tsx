@@ -30,8 +30,16 @@ export default async function TreePage({
       <h1 className="font-display text-[28px] leading-tight md:text-[32px]">
         L’arbre de la famille
       </h1>
+      {tree.viewerPersonId ? undefined : (
+        <p role="note" className="text-sm text-ink-2">
+          Ton compte n’est relié à aucune fiche : l’arbre ne sait pas d’où partir. Ouvre ta fiche et
+          choisis « C’est moi ».
+        </p>
+      )}
       <TreeViewControls
         params={params}
+        shownView={tree.shownView}
+        centerInCouple={tree.centerInCouple}
         centerName={center ? personLabel(center) : undefined}
         canReturn={tree.viewerPersonId !== undefined && tree.centerId !== tree.viewerPersonId}
       />

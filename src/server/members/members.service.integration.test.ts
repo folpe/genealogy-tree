@@ -2,11 +2,13 @@ import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { marchandFamily } from '../../../tests/fixtures/marchand-family';
 import { testDb } from '../../../tests/integration/test-db';
+import { ValidationError } from '../_shared/errors';
 import { accessRequests, invitations, memberships, users } from '../db/schema';
 import { insertFamilyGraph } from '../family/family.repository';
 import type { EmailMessage } from '../notifications/email';
 import {
   ACCESS_REQUESTS_PER_HOUR,
+  claimOwnPerson,
   decideAccessRequest,
   getInvitationPreview,
   getViewerAccount,
@@ -168,6 +170,51 @@ describe.skipIf(!db)('members.service (intégration)', () => {
       await client.insert(users).values({ id: 'u-x', email: 'x@exemple.fr', name: '' });
       await expect(getViewerAccount(deps(), 'u-x')).rejects.toMatchObject({
         code: 'MEMBERS_FORBIDDEN',
+      });
+    });
+  });
+
+  describe('claimOwnPerson (« C’est moi »)', () => {
+    it('un admin sans fiche se relie à une fiche libre', async () => {
+      await claimOwnPerson(deps(), 'u-owner', 'paul');
+      expect((await getViewerAccount(deps(), 'u-owner')).personId).toBe('paul');
+    });
+
+    it('une fiche déjà reliée à un autre compte est refusée', async () => {
+      await expect(claimOwnPerson(deps(), 'u-owner', 'hugo')).rejects.toMatchObject({
+        code: 'MEMBERS_PERSON_TAKEN',
+      });
+    });
+
+    it('un compte déjà relié ne change pas de fiche ainsi', async () => {
+      await claimOwnPerson(deps(), 'u-owner', 'paul');
+      await expect(claimOwnPerson(deps(), 'u-owner', 'jeanne')).rejects.toMatchObject({
+        code: 'MEMBERS_FORBIDDEN',
+      });
+    });
+
+    it('un membre (toujours relié à sa fiche, contrainte en base) ne change pas de fiche', async () => {
+      await expect(claimOwnPerson(deps(), 'u-hugo', 'paul')).rejects.toMatchObject({
+        code: 'MEMBERS_FORBIDDEN',
+      });
+    });
+
+    it('une fiche promise par une invitation en attente est refusée', async () => {
+      await inviteMember(deps(), 'u-hugo', { personId: 'lea', email: 'lea@exemple.fr' });
+      await expect(claimOwnPerson(deps(), 'u-owner', 'lea')).rejects.toMatchObject({
+        code: 'MEMBERS_INVITATION_PENDING',
+      });
+    });
+
+    it('un identifiant hors format est refusé avant la base', async () => {
+      await expect(claimOwnPerson(deps(), 'u-owner', 'x'.repeat(65))).rejects.toBeInstanceOf(
+        ValidationError,
+      );
+    });
+
+    it('une fiche inconnue est refusée', async () => {
+      await expect(claimOwnPerson(deps(), 'u-owner', 'personne')).rejects.toMatchObject({
+        code: 'MEMBERS_NOT_FOUND',
       });
     });
   });

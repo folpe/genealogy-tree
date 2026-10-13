@@ -8,6 +8,8 @@ import { signIn } from './outbox';
 
 test('« - » replie une branche, « + » la rouvre, rien d’autre ne bouge', async ({ page }) => {
   await signIn(page, E2E_ISABELLE_EMAIL);
+  // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
+  await page.goto('/tree?view=all');
   await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
   const items = page.getByRole('treeitem');
   const before = await items.count();
@@ -38,6 +40,8 @@ test('« - » replie une branche, « + » la rouvre, rien d’autre ne bouge', a
 
 test('la poignée sous une bulle plie sa branche au doigt ou à la souris', async ({ page }) => {
   await signIn(page, E2E_ISABELLE_EMAIL);
+  // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
+  await page.goto('/tree?view=all');
   await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
   const toggle = page.getByRole('button', {
     name: 'Replier la branche de Luc Marchand et Sophie Marchand',
@@ -48,5 +52,5 @@ test('la poignée sous une bulle plie sa branche au doigt ou à la souris', asyn
   // Les enfants du couple partent ; Maxime, fils de Luc seul, reste avec sa propre branche.
   await expect(page.getByRole('treeitem', { name: /^Hugo Marchand/ })).toHaveCount(0);
   await expect(page.getByRole('treeitem', { name: /^Maxime Marchand/ })).toHaveCount(1);
-  await expect(page).toHaveURL(/\/tree$/);
+  await expect(page).toHaveURL(/\/tree\?view=all$/);
 });

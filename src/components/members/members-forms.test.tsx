@@ -2,7 +2,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { AccessRequestCard, AdminToggle, InviteForm, RequestAccessForm } from './members-forms';
+import {
+  AccessRequestCard,
+  AdminToggle,
+  ClaimPersonForm,
+  InviteForm,
+  RequestAccessForm,
+} from './members-forms';
 
 function sentFields(action: ReturnType<typeof vi.fn>) {
   const data: unknown = action.mock.calls.at(-1)?.[1];
@@ -111,5 +117,23 @@ describe('AccessRequestCard', () => {
     render(<AccessRequestCard action={action} request={request} persons={persons} />);
     await userEvent.click(screen.getByRole('button', { name: 'Refuser' }));
     expect(sentFields(action)).toMatchObject({ requestId: 'r1', decision: 'refuse' });
+  });
+});
+
+describe('ClaimPersonForm', () => {
+  it('envoie la fiche regardée, puis confirme', async () => {
+    const action = vi.fn().mockResolvedValue({ ok: true, message: 'C’est noté.' });
+    render(<ClaimPersonForm action={action} personId="paul" label="Paul Marchand" />);
+    await userEvent.click(screen.getByRole('button', { name: 'C’est moi' }));
+    expect(sentFields(action)).toEqual({ personId: 'paul' });
+    expect(await screen.findByRole('status')).toHaveTextContent('C’est noté.');
+    expect(screen.getByRole('button', { name: 'C’est moi' })).toBeDisabled();
+  });
+
+  it('dit pourquoi c’est refusé', async () => {
+    const action = vi.fn().mockResolvedValue({ ok: false, error: 'Déjà reliée.' });
+    render(<ClaimPersonForm action={action} personId="hugo" label="Hugo Marchand" />);
+    await userEvent.click(screen.getByRole('button', { name: 'C’est moi' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Déjà reliée.');
   });
 });

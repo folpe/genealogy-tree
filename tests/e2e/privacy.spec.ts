@@ -24,9 +24,11 @@ test('hors périmètre : ni résidence ni date exacte d’un vivant, ni sur l’
   await signIn(page, E2E_ISABELLE_EMAIL);
   // L'arbre graphique reçoit ses bulles côté navigateur : son payload est contrôlé
   // comme la fiche.
-  for (const path of ['/tree', '/people/anne']) {
+  // L'arbre entier dessine Anne ; la vue par défaut d'Isabelle ne la dessine peut-être
+  // pas, mais ne doit pas plus laisser passer ses données.
+  for (const path of ['/tree', '/tree?view=all', '/people/anne']) {
     const document = await served(page, path);
-    expect(document).toContain('Anne');
+    if (path !== '/tree') expect(document).toContain('Anne');
     expect(document).not.toContain(ANNE_RESIDENCE);
     expect(document).not.toMatch(ANNE_EXACT_BIRTH);
   }
