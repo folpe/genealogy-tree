@@ -15,6 +15,7 @@ import { AddRelative } from './add-relative';
 import { relativeOptions } from './add-relative.helper';
 import { FamilyTree } from './family-tree';
 import { PersonSheet } from './family-views';
+import { useOpenFicheRequests } from './open-fiche';
 import { personLabel } from './person.helper';
 import type { TreeDrawing } from './tree-drawing';
 
@@ -78,6 +79,11 @@ export function TreeWithSheet({
   const wide = useWide();
   const open = useCallback((id: string) => showFiche(id), []);
   const close = useCallback(() => showFiche(undefined), []);
+  useOpenFicheRequests((id) => {
+    if (!tree.drawn.personIds.includes(id)) return false;
+    showFiche(id);
+    return true;
+  });
   const [link, setLink] = useState<{ view: RelationshipView; highlight: PathHighlight }>();
   const [cardHeight, setCardHeight] = useState(0);
   // Une autre vue de l'arbre (recentrage, profondeur) : le lien éclairé ne vaut plus.

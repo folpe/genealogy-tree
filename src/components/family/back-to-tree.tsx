@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { readTreeMemory } from './tree-memory.storage';
 
@@ -18,6 +19,16 @@ export function useTreeHref(): string {
   return href;
 }
 
+/**
+ * Depuis une fiche : l'arbre revient avec elle ouverte, centré sur sa bulle. La fiche
+ * se lit dans l'URL : le lien vaut aussi sur l'écran de chargement.
+ */
 export function BackToTree() {
-  return <Link href={useTreeHref()}>Retour à l’arbre</Link>;
+  const href = useTreeHref();
+  const personId = usePathname().match(/^\/people\/([^/]+)$/)?.[1];
+  if (!personId) return <Link href={href}>Retour à l’arbre</Link>;
+  const [path = '/tree', search = ''] = href.split('?');
+  const query = new URLSearchParams(search);
+  query.set('fiche', personId);
+  return <Link href={`${path}?${query.toString()}`}>Retour à l’arbre</Link>;
 }

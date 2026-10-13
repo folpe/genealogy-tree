@@ -396,7 +396,10 @@ export function FamilyTree({
   const byId = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const rows = useRows(nodes);
   const me = focusId ? byId.get(focusId) : undefined;
-  const startId = centerId ?? focusId;
+  // Une fiche ouverte au chargement (recherche, retour d'une fiche complète) : la
+  // caméra part de sa bulle, plutôt que de la position retenue.
+  const [openedAtStart] = useState(selectedId);
+  const startId = openedAtStart ?? centerId ?? focusId;
   const start = (startId ? byId.get(startId) : undefined) ?? me ?? nodes[0];
   // Le rendu serveur se cale sur le premier dessin : un pliage ne doit pas le déplacer.
   const first =
@@ -422,8 +425,9 @@ export function FamilyTree({
   const restore = useCallback(() => {
     if (!memory.current.read) memory.current = { read: true, value: readTreeMemory() };
     const remembered = memory.current.value;
+    if (openedAtStart && byId.has(openedAtStart)) return undefined;
     return remembered?.view === viewKey ? recallCamera(remembered, nodes) : undefined;
-  }, [nodes, viewKey]);
+  }, [nodes, viewKey, openedAtStart, byId]);
   const onSettle = useCallback(
     (state: Camera, size: Size) => {
       if (nodes.length > VIRTUALIZE_ABOVE) setView(visibleWorld(state, size));
@@ -434,10 +438,24 @@ export function FamilyTree({
     [nodes, fold.folded, viewKey],
   );
   const camera = useTreeCamera({ viewport, layer, content, start, restore, onSettle });
-  // Un nouveau lien éclairé : la caméra cadre tout son chemin, et recadre quand la carte
-  // a pris sa hauteur. Un pli ensuite ne la déplace pas : les bulles sont relues ici.
   const nodesById = useRef(byId);
   nodesById.current = byId;
+  // Une fiche ouverte ensuite (recherche) : la caméra va à sa bulle si elle n'est pas
+  // déjà bien à l'écran. Un tap sur une bulle visible ne fait donc rien bouger.
+  useEffect(() => {
+    if (!camera || !selectedId) return;
+    const node = nodesById.current.get(selectedId);
+    if (!node) return;
+    const state = camera.get();
+    const { width: w, height: h } = camera.viewport();
+    const x = node.x * state.k + state.x;
+    const y = node.y * state.k + state.y;
+    const margin = BUBBLE;
+    const inside = Math.abs(x) < w / 2 - margin && Math.abs(y) < h / 2 - margin;
+    if (!inside) camera.flyTo(cameraOn(node, Math.max(state.k, 0.75)));
+  }, [camera, selectedId]);
+  // Un nouveau lien éclairé : la caméra cadre tout son chemin, et recadre quand la carte
+  // a pris sa hauteur. Un pli ensuite ne la déplace pas : les bulles sont relues ici.
   useEffect(() => {
     if (!camera || !highlight) return;
     const onPath = [...highlight.persons].flatMap((id) => nodesById.current.get(id) ?? []);
