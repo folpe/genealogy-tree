@@ -66,6 +66,20 @@ test('l’arbre tient dans l’écran : rien ne défile, le canevas prend la pla
         .height ?? 0,
   }));
   expect(scroll).toBeLessThanOrEqual(viewport);
+  // La zone de page de l'arbre ne déborde pas non plus.
+  const zone = page.locator('[data-page-zone]');
+  expect(await zone.evaluate((el) => el.scrollHeight <= el.clientHeight)).toBe(true);
+  // Une page longue, elle, défile dans sa zone, et la suivante repart du haut.
+  await page.goto('/people/luc');
+  await expect(page.getByRole('link', { name: 'Paul Marchand' })).toBeVisible();
+  const scrolled = await zone.evaluate((el) => {
+    el.scrollTo({ top: 400 });
+    return { top: el.scrollTop, h: el.scrollHeight, c: el.clientHeight };
+  });
+  expect(scrolled.top, JSON.stringify(scrolled)).toBeGreaterThan(0);
+  await page.getByRole('link', { name: 'Paul Marchand' }).click();
+  await expect(page).toHaveURL(/\/people\/paul$/);
+  await expect.poll(() => zone.evaluate((el) => el.scrollTop)).toBe(0);
   // Le canevas occupe l'essentiel de l'écran, sur téléphone comme sur ordinateur.
   expect(canvas).toBeGreaterThan(viewport * 0.5);
 });

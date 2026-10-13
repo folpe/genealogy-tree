@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { AccountMenu } from '@/components/app/account-menu';
 import { CommandPalette } from '@/components/app/command-palette';
 import { NavPills } from '@/components/app/nav-pills';
+import { PageZone } from '@/components/app/page-zone';
 import { parseTheme, THEME_COOKIE } from '@/lib/theme/theme';
 import { getAuth } from '@/server/auth/auth.instance';
 import { requireSession } from '@/server/auth/session';
@@ -44,7 +45,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           />
         </div>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
+      <PageZone>{children}</PageZone>
     </div>
   );
 }
