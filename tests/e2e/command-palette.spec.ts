@@ -53,8 +53,9 @@ test('⌘K hors de l’arbre, puis retour de la fiche complète : centré sur la
   await page.getByRole('link', { name: 'Fiche complète' }).click();
   await expect(page).toHaveURL(/\/people\/isabelle$/);
   await page.getByRole('link', { name: 'Retour à l’arbre' }).click();
-  await expect(page).toHaveURL(/[?&]fiche=isabelle/);
+  // Retour : centré sur Isabelle, cerclée, fiche refermée pour voir la lignée.
+  await expect(page).toHaveURL(/[?&]focus=isabelle/);
   await settled(page);
-  if (info.project.name !== 'mobile') await expect(isabelle).toBeInViewport();
-  await expect(page.getByRole('heading', { level: 2, name: /^Isabelle/ }).first()).toBeVisible();
+  await expect(isabelle).toBeInViewport();
+  await expect(isabelle).toHaveAttribute('aria-selected', 'true');
 });

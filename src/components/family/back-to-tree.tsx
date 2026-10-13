@@ -20,8 +20,10 @@ export function useTreeHref(): string {
 }
 
 /**
- * Depuis une fiche : l'arbre revient avec elle ouverte, centré sur sa bulle. La fiche
- * se lit dans l'URL : le lien vaut aussi sur l'écran de chargement.
+ * Depuis une fiche : l'arbre revient centré sur sa bulle, cerclée, zoom et plis
+ * gardés (`?focus=`), sans rouvrir la fiche : sur mobile, elle cacherait la lignée
+ * qu'on vient chercher. La fiche se lit dans l'URL : le lien vaut aussi pendant le
+ * chargement.
  */
 export function BackToTree() {
   const href = useTreeHref();
@@ -29,6 +31,7 @@ export function BackToTree() {
   if (!personId) return <Link href={href}>Retour à l’arbre</Link>;
   const [path = '/tree', search = ''] = href.split('?');
   const query = new URLSearchParams(search);
-  query.set('fiche', personId);
+  query.delete('fiche');
+  query.set('focus', decodeURIComponent(personId));
   return <Link href={`${path}?${query.toString()}`}>Retour à l’arbre</Link>;
 }

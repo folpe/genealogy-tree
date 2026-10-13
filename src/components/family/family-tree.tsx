@@ -371,6 +371,7 @@ export function FamilyTree({
   onOpen,
   highlight,
   coveredTop = 0,
+  focusOn,
 }: {
   /** Premier dessin, calculé au rendu serveur. */
   drawing: TreeDrawing;
@@ -388,6 +389,8 @@ export function FamilyTree({
   onOpen?: ((id: string) => void) | undefined;
   /** Lien de parenté éclairé (« Notre lien ») : la caméra cadre son chemin. */
   highlight?: PathHighlight | undefined;
+  /** Bulle à retrouver au chargement (retour d'une fiche complète) : centrée et cerclée. */
+  focusOn?: string | undefined;
   /** Hauteur couverte en haut du canevas (carte du lien) : le cadrage l'évite. */
   coveredTop?: number;
 }) {
@@ -398,7 +401,7 @@ export function FamilyTree({
   const me = focusId ? byId.get(focusId) : undefined;
   // Une fiche ouverte au chargement (recherche, retour d'une fiche complète) : la
   // caméra part de sa bulle, plutôt que de la position retenue.
-  const [openedAtStart] = useState(selectedId);
+  const [openedAtStart] = useState(selectedId ?? focusOn);
   // La première de ces bulles que la vue dessine : une fiche hors de la vue ne fait pas
   // perdre le centre demandé.
   const startId = [openedAtStart, centerId, focusId].find((id) => id !== undefined && byId.has(id));
@@ -427,8 +430,11 @@ export function FamilyTree({
   const restore = useCallback(() => {
     if (!memory.current.read) memory.current = { read: true, value: readTreeMemory() };
     const remembered = memory.current.value;
-    if (openedAtStart && byId.has(openedAtStart)) return undefined;
-    return remembered?.view === viewKey ? recallCamera(remembered, nodes) : undefined;
+    const sameView = remembered?.view === viewKey;
+    // Une bulle à retrouver : centrée, au zoom qu'on avait (les plis reviennent aussi).
+    const target = openedAtStart ? byId.get(openedAtStart) : undefined;
+    if (target) return sameView && remembered ? cameraOn(target, remembered.k) : undefined;
+    return sameView && remembered ? recallCamera(remembered, nodes) : undefined;
   }, [nodes, viewKey, openedAtStart, byId]);
   const onSettle = useCallback(
     (state: Camera, size: Size) => {
@@ -633,7 +639,7 @@ export function FamilyTree({
                 key={node.id}
                 node={node}
                 active={node.id === activeId}
-                selected={node.id === selectedId}
+                selected={node.id === (selectedId ?? focusOn)}
                 onPath={highlight ? highlight.persons.has(node.id) : undefined}
                 onOpen={onOpen}
                 expanded={expandedOf(node.id)}

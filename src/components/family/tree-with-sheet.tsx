@@ -73,7 +73,10 @@ export function TreeWithSheet({
   viewKey: string;
   addAction: AddAction;
 }) {
-  const asked = useSearchParams().get('fiche') ?? undefined;
+  const search = useSearchParams();
+  const asked = search.get('fiche') ?? undefined;
+  /** Retour d'une fiche complète : la bulle de la personne, sans rouvrir sa fiche. */
+  const focusOn = search.get('focus') ?? undefined;
   const person = asked ? tree.persons.find((p) => p.id === asked) : undefined;
   const title = person ? `Fiche de ${personLabel(person)}` : '';
   const wide = useWide();
@@ -134,6 +137,7 @@ export function TreeWithSheet({
           centerId={tree.centerId}
           viewKey={viewKey}
           selectedId={person?.id}
+          focusOn={focusOn}
           onOpen={open}
           highlight={link?.highlight}
           coveredTop={link ? cardHeight : 0}
