@@ -31,21 +31,21 @@ export function createLayoutClient(): LayoutClient {
   let engine: ReturnType<typeof loadEngine> | undefined;
   let disposed = false;
 
-  /** Arrête le worker ; le prochain pliage en relance un neuf. */
-  const stop = () => {
-    const running = engine;
-    engine = undefined;
+  /** Arrête ce moteur ; s'il est le courant, le prochain pliage en relance un neuf. */
+  const stop = (running: typeof engine) => {
+    if (engine === running) engine = undefined;
     running
       ?.then(({ elk }) => elk.terminateWorker())
       .catch(() => {
         // Moteur jamais chargé (import échoué) : rien à arrêter.
       });
   };
-  const withTimeout = <T>(work: Promise<T>) =>
+  const withTimeout = <T>(work: Promise<T>, running: typeof engine) =>
     new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
-        // Un worker bloqué retiendrait les demandes suivantes derrière lui.
-        stop();
+        // Un worker bloqué retiendrait les demandes suivantes derrière lui. Seul le
+        // moteur de cette demande s'arrête, pas un moteur relancé entre-temps.
+        stop(running);
         reject(new Error('Placement trop long'));
       }, LAYOUT_TIMEOUT_MS);
       work.then(
@@ -63,14 +63,16 @@ export function createLayoutClient(): LayoutClient {
   return {
     layout(graph) {
       engine ??= loadEngine();
+      const running = engine;
       return withTimeout(
-        engine.then(({ computeTreeLayout, elk }) => computeTreeLayout(graph, elk)),
+        running.then(({ computeTreeLayout, elk }) => computeTreeLayout(graph, elk)),
+        running,
       );
     },
     dispose() {
       if (disposed) return;
       disposed = true;
-      stop();
+      stop(engine);
     },
   };
 }

@@ -49,3 +49,24 @@ test('les liens sont tracés sous les bulles', async ({ page }) => {
   const paths = page.locator('svg[aria-hidden="true"] path');
   expect(await paths.count()).toBeGreaterThan(10);
 });
+
+test('un tap montre aussitôt que la fiche arrive, et le retour montre l’arbre en chargement', async ({
+  page,
+}) => {
+  await signIn(page, E2E_ISABELLE_EMAIL);
+  // Réseau lent : chaque navigation (pas les préchargements) attend une seconde.
+  await page.route('**/*', async (route) => {
+    const headers = route.request().headers();
+    const navigation = headers['rsc'] === '1' && !headers['next-router-prefetch'];
+    if (navigation) await new Promise((done) => setTimeout(done, 1000));
+    await route.continue();
+  });
+  const me = page.getByRole('treeitem', { name: /c’est toi$/ });
+  await me.click();
+  await expect(me.locator('[data-link-pending]')).toBeVisible();
+  await expect(page).toHaveURL(/\/people\/isabelle$/);
+
+  await page.getByRole('link', { name: 'Retour à l’arbre' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'L’arbre se dessine' })).toBeVisible();
+  await expect(page.getByRole('tree')).toBeVisible();
+});

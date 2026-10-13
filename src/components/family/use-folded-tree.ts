@@ -15,7 +15,10 @@ export type FoldedTree = {
   drawing: TreeDrawing;
   /** Bulle de la dernière branche pliée ou dépliée : la caméra la garde en place. */
   anchorId: string | undefined;
-  /** Branches pliées (clés : union d'un couple, ou parent seul). */
+  /**
+   * Branches pliées, telles que demandées (clés : union d'un couple, ou parent seul).
+   * Les poignées et `aria-expanded` suivent la demande ; le dessin suit au calcul.
+   */
   folded: ReadonlySet<string>;
   /** Branches qui partent de chaque personne. */
   branchesOf: ReadonlyMap<string, string[]>;
@@ -36,6 +39,8 @@ export function useFoldedTree(initial: TreeDrawing, graph: DisplayedGraph): Fold
     initial: TreeDrawing;
     drawing: TreeDrawing;
     folded: ReadonlySet<string>;
+    /** Dernière demande, pour l'affichage ; `requested` en est le miroir synchrone. */
+    asked: ReadonlySet<string>;
     anchorId: string | undefined;
     pending: boolean;
     failed: boolean;
@@ -43,6 +48,7 @@ export function useFoldedTree(initial: TreeDrawing, graph: DisplayedGraph): Fold
     initial,
     drawing: initial,
     folded: new Set(),
+    asked: new Set(),
     anchorId: undefined,
     pending: false,
     failed: false,
@@ -65,6 +71,7 @@ export function useFoldedTree(initial: TreeDrawing, graph: DisplayedGraph): Fold
       initial,
       drawing: initial,
       folded: new Set(),
+      asked: new Set(),
       anchorId: undefined,
       pending: false,
       failed: false,
@@ -98,13 +105,14 @@ export function useFoldedTree(initial: TreeDrawing, graph: DisplayedGraph): Fold
           ...s,
           drawing: cached,
           folded: next,
+          asked: next,
           anchorId: id,
           pending: false,
           failed: false,
         }));
         return;
       }
-      setState((s) => ({ ...s, pending: true, failed: false }));
+      setState((s) => ({ ...s, asked: next, pending: true, failed: false }));
       const shown = foldGraph(graph, next);
       client.current ??= createLayoutClient();
       client.current.layout(shown).then(
@@ -118,7 +126,7 @@ export function useFoldedTree(initial: TreeDrawing, graph: DisplayedGraph): Fold
           if (request !== latest.current) return;
           // La demande a échoué : la suivante repart de ce qui est affiché.
           requested.current = folded;
-          setState((s) => ({ ...s, pending: false, failed: true }));
+          setState((s) => ({ ...s, asked: folded, pending: false, failed: true }));
         },
       );
     },
@@ -135,7 +143,7 @@ export function useFoldedTree(initial: TreeDrawing, graph: DisplayedGraph): Fold
   return {
     drawing: state.drawing,
     anchorId: state.anchorId,
-    folded,
+    folded: state.asked,
     branchesOf: byPerson,
     hiddenBelow,
     pending: state.pending,
