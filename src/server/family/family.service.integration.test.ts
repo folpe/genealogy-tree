@@ -5,7 +5,7 @@ import { testDb } from '../../../tests/integration/test-db';
 import { adminRecordViews, media, memberships, persons, users } from '../db/schema';
 import { mediaUrlKey, verifyMediaUrl } from '../media/media.url';
 import { insertFamilyGraph } from './family.repository';
-import { type FamilyDeps, getTreeForViewer } from './family.service';
+import { type FamilyDeps, getSearchDirectory, getTreeForViewer } from './family.service';
 
 // Spec section 6.4 sur des données en base : ce que le service renvoie est ce qui
 // part vers le client. On cherche donc les fuites dans sa forme sérialisée.
@@ -208,5 +208,21 @@ describe.skipIf(!db)('family.service (intégration)', () => {
   it('refuse un compte sans adhésion', async () => {
     await client.insert(users).values({ id: 'u-inconnu', email: 'x@exemple.fr', name: '' });
     await expect(getTreeForViewer(deps(), 'u-inconnu')).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('annuaire du ⌘K : les liens avec le lecteur, sans rien de plus que l’arbre', async () => {
+    const directory = await getSearchDirectory(deps(), 'u-hugo');
+    expect(directory.relations).toMatchObject({ paul: 'ton grand-père', hugo: 'toi' });
+    expect(directory.proximity['luc']).toBe(1);
+    const tree = await getTreeForViewer(deps(), 'u-hugo');
+    expect(JSON.stringify(directory.persons)).toBe(JSON.stringify(tree.persons));
+    const isabelle = JSON.stringify(await getSearchDirectory(deps(), 'u-isabelle'));
+    expect(isabelle).not.toContain('Bordeaux');
+  });
+
+  it('annuaire d’un admin sans fiche : les fiches, aucun lien', async () => {
+    const directory = await getSearchDirectory(deps(), 'u-owner');
+    expect(directory.persons.length).toBeGreaterThan(10);
+    expect(directory.relations).toEqual({});
   });
 });

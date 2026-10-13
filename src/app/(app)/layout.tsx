@@ -3,6 +3,7 @@ import { cookies, headers } from 'next/headers';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { AccountMenu } from '@/components/app/account-menu';
+import { CommandPalette } from '@/components/app/command-palette';
 import { NavPills } from '@/components/app/nav-pills';
 import { parseTheme, THEME_COOKIE } from '@/lib/theme/theme';
 import { getAuth } from '@/server/auth/auth.instance';
@@ -24,14 +25,16 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <header className="flex items-center justify-between gap-3 px-4 pt-3 md:grid md:grid-cols-[1fr_auto_1fr] md:px-8 md:pt-[18px]">
+        {/* Sous 640 px, l'onglet « Arbre » tient lieu de marque : la place manque. */}
         <Link
           href="/tree"
-          className="font-display text-lg leading-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink md:text-xl"
+          className="hidden font-display text-lg leading-none whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink sm:block md:text-xl"
         >
           Ances-Tree
         </Link>
         <NavPills />
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-2.5">
+          <CommandPalette />
           <AccountMenu
             account={account}
             hasPasskey={passkeys.length > 0}

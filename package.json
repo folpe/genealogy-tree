@@ -36,6 +36,7 @@
     "@t3-oss/env-nextjs": "^0.13.11",
     "@vercel/blob": "2.8.1",
     "better-auth": "~1.6.33",
+    "cmdk": "1.1.1",
     "d3-interpolate": "3.0.1",
     "d3-shape": "3.2.0",
     "drizzle-orm": "^0.45.3",

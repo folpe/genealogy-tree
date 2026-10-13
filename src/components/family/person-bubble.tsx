@@ -3,6 +3,7 @@ import type { PersonPhoto } from '@/server/media/media.url';
 
 const BUBBLES = {
   chip: { box: 'size-[30px] border-2 text-[11px]', sizes: '30px' },
+  result: { box: 'size-[42px] border-2 text-[15px]', sizes: '42px' },
   tree: { box: 'size-[76px] border-4 text-[24px]', sizes: '76px' },
   sheet: { box: 'size-[120px] border-[5px] text-[42px]', sizes: '120px' },
 } as const;

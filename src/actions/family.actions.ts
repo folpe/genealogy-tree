@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { isAppError, ValidationError } from '@/server/_shared/errors';
 import { requireSession } from '@/server/auth/session';
 import { getFamilyDeps } from '@/server/family/family.instance';
+import { getSearchDirectory, type SearchDirectory } from '@/server/family/family.service';
 import { addRelative } from '@/server/family/relatives.service';
 
 // Actions d'édition de l'arbre. L'identité vient toujours de la session ; la policy et
@@ -41,4 +42,10 @@ export async function addRelativeAction(
   // L'arbre, l'éventail et les fiches lisent tous le graphe.
   revalidatePath('/', 'layout');
   return { ok: true, personId, message: `Fiche de ${fields['firstName']?.trim() ?? ''} créée.` };
+}
+
+/** Annuaire du ⌘K, chargé à la première ouverture : les fiches visibles et les liens. */
+export async function searchDirectoryAction(): Promise<SearchDirectory> {
+  const { user } = await requireSession();
+  return getSearchDirectory(getFamilyDeps(), user.id);
 }

@@ -5,15 +5,19 @@ import { AppError, ValidationError } from '@/server/_shared/errors';
 const mocks = vi.hoisted(() => ({
   requireSession: vi.fn(),
   addRelative: vi.fn(),
+  getSearchDirectory: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 vi.mock('server-only', () => ({}));
 vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock('@/server/auth/session', () => ({ requireSession: mocks.requireSession }));
 vi.mock('@/server/family/family.instance', () => ({ getFamilyDeps: () => ({ deps: true }) }));
+vi.mock('@/server/family/family.service', () => ({
+  getSearchDirectory: mocks.getSearchDirectory,
+}));
 vi.mock('@/server/family/relatives.service', () => ({ addRelative: mocks.addRelative }));
 
-import { addRelativeAction } from './family.actions';
+import { addRelativeAction, searchDirectoryAction } from './family.actions';
 
 const form = (fields: Record<string, string>) => {
   const data = new FormData();
@@ -69,5 +73,18 @@ describe('addRelativeAction', () => {
   it('laisse remonter une panne inattendue', async () => {
     mocks.addRelative.mockRejectedValue(new Error('base injoignable'));
     await expect(addRelativeAction(undefined, form({}))).rejects.toThrow('base injoignable');
+  });
+});
+
+describe('searchDirectoryAction', () => {
+  beforeEach(() => {
+    mocks.requireSession.mockReset().mockResolvedValue({ user: { id: 'u-hugo' } });
+    mocks.getSearchDirectory.mockReset();
+  });
+
+  it('lit l’annuaire au nom de la session', async () => {
+    mocks.getSearchDirectory.mockResolvedValue({ persons: [], relations: {}, proximity: {} });
+    expect(await searchDirectoryAction()).toEqual({ persons: [], relations: {}, proximity: {} });
+    expect(mocks.getSearchDirectory).toHaveBeenCalledWith({ deps: true }, 'u-hugo');
   });
 });
