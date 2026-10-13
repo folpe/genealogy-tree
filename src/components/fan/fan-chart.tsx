@@ -167,7 +167,7 @@ function SectorText({
   const size = NAME_SIZE[generation - 1] ?? 10;
   const small = Math.max(9, size - 4);
   const years = person && generation <= 4 ? lifeYears(person) : undefined;
-  const color = selected ? 'fill-accent' : person ? 'fill-ink' : 'fill-ink-3';
+  const color = selected ? 'fill-accent-strong' : person ? 'fill-ink' : 'fill-ink-2';
   const name = person
     ? clip(person.firstName, label.room, size)
     : generation <= 3
@@ -192,7 +192,7 @@ function SectorText({
           y={label.y + gap / 2 + size * 0.75}
           textAnchor="middle"
           fontSize={small}
-          className="fill-ink-2 tabular-nums"
+          className="fill-ink tabular-nums opacity-80"
         >
           {clip(years, label.room, small)}
         </text>

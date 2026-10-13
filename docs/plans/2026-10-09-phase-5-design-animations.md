@@ -3,7 +3,7 @@
 - **Date :** 2026-10-09
 - **Spec :** [refonte Ances-Tree](../specs/2026-10-09-refonte-ances-tree.md), sections 9, 10 (socle et "Quel est notre lien ?"), 12, 14
 - **Visuels :** [DESIGN.md](../design/DESIGN.md) (source de vérité des tokens et composants), maquettes `docs/design/maquettes/` : `Arbre`, `ArbreSombre`, `Connexion`, `MobileAlbum`, `DirAlbum`, `DirVeillee`
-- **Statut :** à faire
+- **Statut :** en cours
 
 ## Objectif et sortie attendue
 
@@ -27,18 +27,19 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 
 ### Lot 1 : tokens et thèmes
 
-- [ ] `src/styles/tokens.css` : tokens OKLCH dans `@theme` (Tailwind 4.3) traduits depuis DESIGN.md : papier, canevas, surface, carte, encre, textes secondaire / tertiaire / discret, bordure, filet, bulle vivant / décédé, trait d'arbre, accent, accent foncé, fond teinté accent, ombres.
-- [ ] Thème sombre Veillée par `[data-theme="dark"]` et `prefers-color-scheme`, mêmes noms de tokens (la correspondance clair -> sombre de DESIGN.md est la référence).
-- [ ] Bascule de thème persistée (cookie lu côté serveur pour éviter le flash), option "Système".
-- [ ] Polices : Fraunces (axes `opsz`, `SOFT` à 100, `WONK` à 0) et Figtree via `next/font`, sous-ensembles latin, `font-variation-settings` global.
-- [ ] Trame de points en utilitaire (`bg-dots`) avec variables de position pilotées par la caméra (phase 4).
-- [ ] Vérification de contraste AA automatisée sur toutes les paires texte / fond des deux thèmes (test Vitest sur les tokens).
+- [x] `src/styles/tokens.css` : tokens OKLCH dans `@theme` (Tailwind 4.3) traduits depuis DESIGN.md : papier, canevas, surface, carte, encre, textes secondaire / tertiaire / discret, bordure, filet, bulle vivant / décédé, trait d'arbre, accent, accent foncé, fond teinté accent, ombres.
+- [x] Thème sombre Veillée par `[data-theme="dark"]` et `prefers-color-scheme`, mêmes noms de tokens (la correspondance clair -> sombre de DESIGN.md est la référence).
+- [x] Bascule de thème persistée (cookie lu côté serveur pour éviter le flash), option "Système" (menu de l'avatar).
+- [x] Polices : Fraunces (axes `opsz`, `SOFT` à 100, `WONK` à 0) et Figtree via `next/font`, sous-ensembles latin, `font-variation-settings` global.
+- [x] Trame de points en utilitaire (`bg-dots`) avec variables de position pilotées par la caméra (phase 4).
+- [x] Vérification de contraste AA automatisée sur toutes les paires texte / fond des deux thèmes (test Vitest sur les tokens).
 
 ### Lot 2 : composants de base
 
-- [ ] `components/ui/` : Button (principal encre, secondaire cerclé, discret), IconButton rond 46 px, Pill / Segmented (nav des vues), Chip personne (bulle 30 px + prénom), Switch, Input, Select, Tabs, Badge, Kicker (petites capitales accent), Card 24-28 px, Sheet (vaul), Dialog (Radix), Toast (sonner), Tooltip.
+- [ ] (Remplacé : composants à la demande, décision du 2026-10-13) `components/ui/` : Button (principal encre, secondaire cerclé, discret), IconButton rond 46 px, Pill / Segmented (nav des vues), Chip personne (bulle 30 px + prénom), Switch, Input, Select, Tabs, Badge, Kicker (petites capitales accent), Card 24-28 px, Sheet (vaul), Dialog (Radix), Toast (sonner), Tooltip.
 - [ ] Variantes avec cva, `cn` (clsx + tailwind-merge), icônes lucide, tout conforme à DESIGN.md.
 - [ ] Header d'app : logo, nav pilule Arbre / Ancêtres / Frise / Carte / Récits, recherche, cloche Activité avec pastille, avatar.
+  - [x] Logo, onglets Arbre et Ancêtres, avatar (les autres vues, la recherche et la cloche arrivent avec leurs lots).
 - [ ] Page de démonstration interne `/dev/ui` (exclue en production) pour la revue visuelle.
 
 ### Lot 3 : système d'animation

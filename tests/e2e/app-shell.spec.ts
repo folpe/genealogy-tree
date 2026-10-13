@@ -28,3 +28,29 @@ test('le menu de l’avatar mène aux membres, puis déconnecte', async ({ page 
   await page.goto('/tree');
   await expect(page).toHaveURL(/\/login$/);
 });
+
+test('les onglets mènent de l’arbre aux ancêtres et marquent la vue ouverte', async ({ page }) => {
+  await signIn(page, 'hugo@famille.test');
+  const nav = page.getByRole('navigation', { name: 'Vues' });
+  await expect(nav.getByRole('link', { name: 'Arbre' })).toHaveAttribute('aria-current', 'page');
+  await nav.getByRole('link', { name: 'Ancêtres' }).click();
+  await expect(page).toHaveURL(/\/ancestors$/);
+  await expect(nav.getByRole('link', { name: 'Ancêtres' })).toHaveAttribute('aria-current', 'page');
+});
+
+test('le thème choisi s’applique tout de suite et tient au rechargement', async ({ page }) => {
+  await signIn(page, 'hugo@famille.test');
+  const html = page.locator('html');
+  await expect(html).not.toHaveAttribute('data-theme');
+  await page.getByRole('button', { name: /^Mon compte/ }).click();
+  const saved = page.waitForResponse((r) => r.request().method() === 'POST');
+  await page.getByRole('menuitemradio', { name: 'Sombre' }).click();
+  await expect(html).toHaveAttribute('data-theme', 'dark');
+  await saved;
+  // Rendu serveur : la page arrive déjà sombre, sans passage par le clair.
+  const response = await page.reload();
+  expect(await response?.text()).toMatch(/<html[^>]*data-theme="dark"/);
+  await page.getByRole('button', { name: /^Mon compte/ }).click();
+  await page.getByRole('menuitemradio', { name: 'Comme l’appareil' }).click();
+  await expect(html).not.toHaveAttribute('data-theme');
+});

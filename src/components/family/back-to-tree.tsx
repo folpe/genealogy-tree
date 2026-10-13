@@ -8,11 +8,16 @@ import { readTreeMemory } from './tree-memory.storage';
 // « Retour à l'arbre » : la vue que l'on quittait (retenue pour l'onglet avec la
 // position), pas la vue par défaut. Sans mémoire, l'arbre s'ouvre sur sa vue par défaut.
 
-export function BackToTree() {
+/** Adresse de l'arbre tel qu'on l'a quitté ; `/tree` avant l'hydratation ou sans mémoire. */
+export function useTreeHref(): string {
   const [href, setHref] = useState('/tree');
   useEffect(() => {
     const view = readTreeMemory()?.view;
     if (view?.startsWith('/tree')) setHref(view);
   }, []);
-  return <Link href={href}>Retour à l’arbre</Link>;
+  return href;
+}
+
+export function BackToTree() {
+  return <Link href={useTreeHref()}>Retour à l’arbre</Link>;
 }

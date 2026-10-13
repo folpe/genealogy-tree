@@ -215,7 +215,7 @@ function Roots({ fan, rootName }: { fan: Fan; rootName: string | undefined }) {
     : undefined;
   return (
     <section aria-label={title} className="flex flex-col px-6 pb-7 md:px-7">
-      <h3 className="border-t border-rule pt-4 pb-1 text-xs font-semibold tracking-[0.14em] text-ink-3 uppercase">
+      <h3 className="border-t border-rule pt-4 pb-1 text-xs font-semibold tracking-[0.14em] text-ink-2 uppercase">
         {title}
       </h3>
       <div className="flex flex-col gap-2.5 py-3">
@@ -258,7 +258,7 @@ function Roots({ fan, rootName }: { fan: Fan; rootName: string | undefined }) {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-ink-3">Aucun lieu de naissance connu pour l’instant.</p>
+          <p className="text-sm text-ink-2">Aucun lieu de naissance connu pour l’instant.</p>
         )}
       </div>
     </section>
