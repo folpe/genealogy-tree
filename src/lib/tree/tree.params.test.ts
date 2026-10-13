@@ -35,5 +35,9 @@ describe('treeHref', () => {
     expect(treeHref({ view: 'descendants', p: 'luc', past: true })).toBe(
       '/tree?p=luc&view=descendants&past=1',
     );
+    expect(treeHref({ view: 'all', past: false, depth: 3 })).toBe('/tree');
+    expect(treeHref({ view: 'hourglass', past: false, depth: 3 })).toBe(
+      '/tree?view=hourglass&depth=3',
+    );
   });
 });

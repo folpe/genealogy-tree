@@ -39,7 +39,8 @@ export function treeHref({ view, p, past, depth }: TreeParams): string {
   if (p) query.set('p', p);
   if (view !== 'all') query.set('view', view);
   if (past) query.set('past', '1');
-  if (depth) query.set('depth', String(depth));
+  // La profondeur ne vaut que pour les vues descendants et sablier.
+  if (depth && view !== 'all') query.set('depth', String(depth));
   const search = query.toString();
   return search ? `/tree?${search}` : '/tree';
 }

@@ -17,16 +17,24 @@ const VIEWS: { view: TreeParams['view']; label: string }[] = [
   { view: 'hourglass', label: 'Sablier' },
 ];
 
+/** Même vue, centrée sur le lecteur : sans `p`, le serveur y revient de lui-même. */
+function withoutCenter({ p: _, ...rest }: TreeParams): TreeParams {
+  return rest;
+}
+
 export function TreeViewControls({
   params,
   centerName,
-  isViewer,
+  canReturn,
 }: {
   params: TreeParams;
   /** Nom de la personne au centre des vues descendants et sablier. */
   centerName: string | undefined;
-  /** La personne au centre est le lecteur lui-même. */
-  isViewer: boolean;
+  /**
+   * « Revenir à moi » est proposé : le lecteur a une fiche, et ce n'est pas elle qui
+   * est au centre.
+   */
+  canReturn: boolean;
 }) {
   const router = useRouter();
   const pastId = useId();
@@ -53,14 +61,14 @@ export function TreeViewControls({
       {params.view !== 'all' && centerName ? (
         <p className="flex items-center gap-2 text-sm text-ink-2">
           Centré sur <strong className="font-medium text-ink">{centerName}</strong>
-          {isViewer ? undefined : (
+          {canReturn ? (
             <Link
-              href={treeHref({ view: params.view, past: params.past })}
-              className="underline underline-offset-2"
+              href={treeHref(withoutCenter(params))}
+              className="inline-flex min-h-11 items-center underline underline-offset-2"
             >
               Revenir à moi
             </Link>
-          )}
+          ) : undefined}
         </p>
       ) : undefined}
       <div className="flex min-h-11 items-center gap-2 text-sm text-ink-2">
@@ -68,7 +76,8 @@ export function TreeViewControls({
           id={pastId}
           checked={params.past}
           onCheckedChange={(past) => router.push(treeHref({ ...params, past }))}
-          className="relative h-6 w-10 shrink-0 rounded-full bg-line data-[state=checked]:bg-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          // Cible tactile de 44 px autour d'un interrupteur de 24 px (pseudo-élément).
+          className="relative h-6 w-10 shrink-0 rounded-full bg-line before:absolute before:-inset-2.5 before:content-[''] data-[state=checked]:bg-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
           <Switch.Thumb className="block size-5 translate-x-0.5 rounded-full bg-card shadow-float data-[state=checked]:translate-x-[18px] motion-safe:transition-transform" />
         </Switch.Root>

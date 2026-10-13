@@ -33,7 +33,7 @@ export default async function TreePage({
       <TreeViewControls
         params={params}
         centerName={center ? personLabel(center) : undefined}
-        isViewer={tree.centerId === tree.viewerPersonId}
+        canReturn={tree.viewerPersonId !== undefined && tree.centerId !== tree.viewerPersonId}
       />
       <FamilyTree
         drawing={drawing}

@@ -94,7 +94,9 @@ export async function getTreeForViewer(
   const focusId =
     viewer.personId ?? graph.persons.find((p) => generations.get(p.id) === 0)?.id ?? '';
   // La personne demandée doit exister ; sinon la vue se centre sur le lecteur. Le
-  // sous-graphe ne fait que retirer des fiches de la vue déjà filtrée par la policy.
+  // sous-graphe se prend sur le graphe complet, comme la vue « toute la famille » :
+  // il n'en garde qu'une partie, et `drawn` ne porte que des ids et la forme des
+  // liens, que la vue filtrée par la policy expose déjà tous.
   const centerId = display.p && index.persons.has(display.p) ? display.p : focusId;
   const shown =
     display.view === 'all'
