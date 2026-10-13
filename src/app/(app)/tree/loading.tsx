@@ -5,10 +5,12 @@
 export default function TreeLoading() {
   return (
     <main className="flex flex-col gap-6 p-4 md:p-8">
-      <h1 className="font-display text-[32px] leading-tight">L’arbre de la famille</h1>
+      <h1 className="font-display text-[28px] leading-tight md:text-[32px]">
+        L’arbre de la famille
+      </h1>
       <div
         aria-busy="true"
-        className="canvas-grid relative grid h-[calc(100dvh-9rem)] min-h-[420px] place-items-center overflow-hidden rounded-[var(--radius-panel)] border border-line"
+        className="canvas-grid relative grid h-[calc(100dvh-15rem)] min-h-[420px] md:h-[calc(100dvh-13rem)] place-items-center overflow-hidden rounded-[var(--radius-panel)] border border-line"
       >
         <p role="status" className="flex flex-col items-center gap-3 text-[15px] text-ink-2">
           <span

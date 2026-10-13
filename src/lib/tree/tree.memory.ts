@@ -14,12 +14,15 @@ export type TreeMemory = {
   k: number;
   /** Branches pliées. */
   folded: string[];
+  /** Vue où la position a été prise (son URL) : elle ne revient que dans cette vue. */
+  view: string;
 };
 
 export function rememberCamera(
   camera: Camera,
   nodes: (Point & { id: string })[],
   folded: string[],
+  view: string,
 ): TreeMemory | undefined {
   const center = worldAt(camera, { x: 0, y: 0 });
   let anchor: (Point & { id: string }) | undefined;
@@ -38,6 +41,7 @@ export function rememberCamera(
     dy: center.y - anchor.y,
     k: camera.k,
     folded,
+    view,
   };
 }
 
@@ -63,12 +67,12 @@ export function parseMemory(raw: string | undefined): TreeMemory | undefined {
     return undefined;
   }
   if (!isRecord(value)) return undefined;
-  const { anchorId, dx, dy, k, folded } = value;
-  if (typeof anchorId !== 'string') return undefined;
+  const { anchorId, dx, dy, k, folded, view } = value;
+  if (typeof anchorId !== 'string' || typeof view !== 'string') return undefined;
   if (![dx, dy, k].every((n) => typeof n === 'number' && Number.isFinite(n))) return undefined;
   if (typeof k !== 'number' || k <= 0 || typeof dx !== 'number' || typeof dy !== 'number') {
     return undefined;
   }
   if (!Array.isArray(folded) || !folded.every((key) => typeof key === 'string')) return undefined;
-  return { anchorId, dx, dy, k, folded };
+  return { anchorId, dx, dy, k, folded, view };
 }
