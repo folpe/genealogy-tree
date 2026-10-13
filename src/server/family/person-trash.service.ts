@@ -4,7 +4,7 @@ import type { Member } from '../access/access.types';
 import type { Db } from '../db/types';
 import { loadAccessMembers } from '../members/members.repository';
 import { buildFamilyIndex, childrenOf } from './family.helper';
-import { loadFamilyGraph, loadTrash, setPersonTrashed } from './family.repository';
+import { loadFamilyGraph, loadTrash, restoreTrashed, trashPersonLocked } from './family.repository';
 
 // Corbeille (choix de Folpe, 2026-10-13) : une fiche mise à la corbeille disparaît de
 // l'arbre sans être effacée, et un admin la restaure. Un membre n'y met qu'une fiche de
@@ -62,7 +62,27 @@ export async function trashPerson(deps: TrashDeps, viewerUserId: string, personI
   }
   const refusal = trashRefusal(buildAccessContext(index, members), viewer, personId);
   if (refusal) throw forbidden(refusal.message, refusal.code);
-  await setPersonTrashed(deps.db, personId, { at: deps.now(), by: viewerUserId });
+  // Revérifié sous verrou : un enfant ou une invitation ajoutés entre-temps comptent.
+  const outcome = await trashPersonLocked(deps.db, personId, {
+    at: deps.now(),
+    by: viewerUserId,
+    childrenAllowed: viewer.isAdmin,
+  });
+  if (outcome === 'not_found') {
+    throw new AppError({ message: 'Fiche introuvable', code: 'FAMILY_NOT_FOUND', status: 404 });
+  }
+  if (outcome === 'linked') {
+    throw forbidden(
+      'Cette fiche est reliée à un compte ou attend une invitation : elle reste dans l’arbre.',
+      'FAMILY_LINKED_ACCOUNT',
+    );
+  }
+  if (outcome === 'has_children') {
+    throw forbidden(
+      'Cette fiche a des enfants : seul un admin peut la mettre à la corbeille.',
+      'FAMILY_HAS_CHILDREN',
+    );
+  }
 }
 
 async function requireAdmin(db: Db, viewerUserId: string) {
@@ -83,7 +103,7 @@ export async function listTrash(deps: TrashDeps, viewerUserId: string) {
 
 export async function restorePerson(deps: TrashDeps, viewerUserId: string, personId: string) {
   await requireAdmin(deps.db, viewerUserId);
-  if (!(await setPersonTrashed(deps.db, personId, undefined))) {
+  if (!(await restoreTrashed(deps.db, personId))) {
     throw new AppError({ message: 'Fiche introuvable', code: 'FAMILY_NOT_FOUND', status: 404 });
   }
 }

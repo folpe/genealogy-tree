@@ -1,9 +1,11 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { marchandFamily } from '../../../tests/fixtures/marchand-family';
 import { testDb } from '../../../tests/integration/test-db';
-import { memberships, users } from '../db/schema';
+import { invitations, memberships, users } from '../db/schema';
 import { insertFamilyGraph, loadFamilyGraph } from './family.repository';
+import { editPerson } from './person-edit.service';
 import { listTrash, restorePerson, trashPerson } from './person-trash.service';
+import { addRelative } from './relatives.service';
 
 // Corbeille (choix de Folpe) : une fiche mise à la corbeille disparaît de l'arbre sans
 // être effacée ; un admin la restaure, liens compris.
@@ -62,6 +64,36 @@ describe.skipIf(!db)('person-trash.service (intégration)', () => {
       code: 'FAMILY_OUTSIDE_PERIMETER',
     });
     expect(await ids()).toContain('paul');
+  });
+
+  it('une fiche à la corbeille ne reçoit plus rien ; restaurer une fiche active : introuvable', async () => {
+    await trashPerson(deps, 'u-anne', 'tom');
+    await expect(
+      addRelative(deps, 'u-anne', {
+        anchorId: 'tom',
+        relation: 'child',
+        firstName: 'X',
+        lastName: 'Y',
+        gender: 'inconnu',
+      }),
+    ).rejects.toMatchObject({ status: 404 });
+    await expect(
+      editPerson(deps, 'u-anne', { personId: 'tom', field: 'firstName', value: 'Z' }),
+    ).rejects.toMatchObject({ status: 404 });
+    await expect(restorePerson(deps, 'u-owner', 'luc')).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('une fiche qui attend une invitation reste dans l’arbre', async () => {
+    await client.insert(invitations).values({
+      email: 'tom@exemple.fr',
+      personId: 'tom',
+      invitedBy: 'u-anne',
+      tokenHash: 'h',
+      expiresAt: new Date('2026-12-01T00:00:00Z'),
+    });
+    await expect(trashPerson(deps, 'u-anne', 'tom')).rejects.toMatchObject({
+      code: 'FAMILY_LINKED_ACCOUNT',
+    });
   });
 
   it('seul un admin voit et vide la corbeille', async () => {

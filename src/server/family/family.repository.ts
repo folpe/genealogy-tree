@@ -4,6 +4,8 @@ import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { AppError } from '../_shared/errors';
 import {
   events,
+  invitations,
+  memberships,
   parentChild,
   persons,
   places,
@@ -52,18 +54,62 @@ export async function loadFamilyGraph(db: Db): Promise<FamilyGraph> {
   });
 }
 
-/** Met une fiche à la corbeille (`at` défini) ou l'en sort (`at` absent). */
-export async function setPersonTrashed(
+export type TrashOutcome = 'trashed' | 'not_found' | 'has_children' | 'linked';
+
+/**
+ * Met une fiche à la corbeille, sous verrou : enfants, compte relié et invitation en
+ * attente sont revérifiés au moment d'écrire, un ajout simultané ne passe pas entre.
+ */
+export async function trashPersonLocked(
   db: Db,
   personId: string,
-  trash: { at: Date; by: string } | undefined,
-): Promise<boolean> {
+  trash: { at: Date; by: string; childrenAllowed: boolean },
+): Promise<TrashOutcome> {
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .select({ id: persons.id })
+      .from(persons)
+      .where(and(eq(persons.id, personId), isNull(persons.deletedAt)))
+      .for('update');
+    if (!row) return 'not_found';
+    const [member] = await tx
+      .select({ id: memberships.id })
+      .from(memberships)
+      .where(eq(memberships.personId, personId));
+    const [invitation] = await tx
+      .select({ id: invitations.id })
+      .from(invitations)
+      .where(
+        and(
+          eq(invitations.personId, personId),
+          isNull(invitations.usedAt),
+          isNull(invitations.revokedAt),
+        ),
+      );
+    if (member || invitation) return 'linked';
+    if (!trash.childrenAllowed) {
+      const [child] = await tx
+        .select({ id: parentChild.childId })
+        .from(parentChild)
+        .where(
+          and(eq(parentChild.parentId, personId), inArray(parentChild.kind, [...FILIATION_KINDS])),
+        );
+      if (child) return 'has_children';
+    }
+    await tx
+      .update(persons)
+      .set({ deletedAt: trash.at, deletedBy: trash.by })
+      .where(eq(persons.id, personId));
+    return 'trashed';
+  });
+}
+
+/** Sort une fiche de la corbeille ; `false` si elle n'y était pas. */
+export async function restoreTrashed(db: Db, personId: string): Promise<boolean> {
   const rows = await db
     .update(persons)
-    .set(
-      trash ? { deletedAt: trash.at, deletedBy: trash.by } : { deletedAt: null, deletedBy: null },
-    ) // allow-null: colonnes vidées
-    .where(eq(persons.id, personId))
+    .set({ deletedAt: null, deletedBy: null }) // allow-null: colonnes vidées
+    .where(and(eq(persons.id, personId), isNotNull(persons.deletedAt)))
     .returning({ id: persons.id });
   return rows.length === 1;
 }
@@ -118,7 +164,8 @@ export async function insertRelative(
     const [anchor] = await tx
       .select({ id: persons.id })
       .from(persons)
-      .where(eq(persons.id, guard.anchorId))
+      // Une fiche à la corbeille ne reçoit plus de lien, même mise là en parallèle.
+      .where(and(eq(persons.id, guard.anchorId), isNull(persons.deletedAt)))
       .for('update');
     // Supprimée entre la lecture et l'écriture : rien ne s'écrit.
     if (!anchor) {
@@ -219,7 +266,7 @@ export async function updatePersonField(
     const [row] = await tx
       .select({ id: persons.id })
       .from(persons)
-      .where(eq(persons.id, person.id))
+      .where(and(eq(persons.id, person.id), isNull(persons.deletedAt)))
       .for('update');
     if (!row) {
       throw new AppError({ message: 'Fiche introuvable', code: 'FAMILY_NOT_FOUND', status: 404 });

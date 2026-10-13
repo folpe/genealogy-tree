@@ -25,6 +25,10 @@ export async function addRelative(
     throw new AppError({ message: 'Accès réservé', code: 'FAMILY_FORBIDDEN', status: 403 });
   }
   const index = buildFamilyIndex(graph);
+  // Fiche absente (ou à la corbeille) : introuvable, avant toute question de droits.
+  if (!index.persons.has(input.anchorId)) {
+    throw new AppError({ message: 'Fiche introuvable', code: 'FAMILY_NOT_FOUND', status: 404 });
+  }
   // L'autre parent voit aussi ses liens changer : la policy vaut pour lui comme pour
   // la fiche de départ (un ancien conjoint, par exemple, reste hors de portée).
   const editable = new Set(editableIds(buildAccessContext(index, members), viewer));
