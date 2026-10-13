@@ -118,8 +118,8 @@ export function TreeWithSheet({
     />
   ) : undefined;
   return (
-    <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-      <div className="relative min-w-0 flex-1">
+    <div className="flex min-h-0 flex-1 flex-col gap-5 lg:flex-row">
+      <div className="relative min-h-0 min-w-0 flex-1">
         {link ? (
           <RelationshipCard
             // Un autre lien : une autre carte, mesurée à nouveau.
@@ -149,7 +149,7 @@ export function TreeWithSheet({
       {panel && wide !== false ? (
         <aside
           aria-label={title}
-          className="hidden max-h-[calc(100dvh-13rem)] w-[420px] shrink-0 overflow-y-auto rounded-[var(--radius-card)] bg-card p-7 shadow-card lg:block"
+          className="hidden w-[420px] shrink-0 overflow-y-auto overscroll-contain rounded-[var(--radius-card)] bg-card p-7 shadow-card lg:block"
         >
           {panel}
         </aside>

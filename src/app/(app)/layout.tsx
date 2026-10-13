@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { AccountMenu } from '@/components/app/account-menu';
 import { CommandPalette } from '@/components/app/command-palette';
 import { NavPills } from '@/components/app/nav-pills';
+import { PageZone } from '@/components/app/page-zone';
 import { parseTheme, THEME_COOKIE } from '@/lib/theme/theme';
 import { getAuth } from '@/server/auth/auth.instance';
 import { requireSession } from '@/server/auth/session';
@@ -22,9 +23,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     cookies(),
   ]);
 
+  // Un écran d'app : l'en-tête reste en place, la page occupe le reste. Rien ne défile
+  // en entier ; une page longue (fiche, membres) défile dans sa zone, l'arbre jamais.
   return (
-    <>
-      <header className="flex items-center justify-between gap-3 px-4 pt-3 md:grid md:grid-cols-[1fr_auto_1fr] md:px-8 md:pt-[18px]">
+    <div className="flex h-dvh flex-col overflow-hidden">
+      <header className="flex shrink-0 items-center justify-between gap-3 px-4 pt-3 pb-1 md:grid md:grid-cols-[1fr_auto_1fr] md:px-8 md:pt-[18px]">
         {/* Sous 640 px, l'onglet « Arbre » tient lieu de marque : la place manque. */}
         <Link
           href="/tree"
@@ -42,7 +45,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           />
         </div>
       </header>
-      {children}
-    </>
+      <PageZone>{children}</PageZone>
+    </div>
   );
 }
