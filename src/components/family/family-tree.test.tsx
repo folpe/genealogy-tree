@@ -197,6 +197,28 @@ describe('FamilyTree', () => {
     FOLD_TIMEOUT.test,
   );
 
+  it(
+    'la poignée suit la demande aussitôt, avant la fin du calcul',
+    async () => {
+      render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'Replier la branche de Luc Marchand et Sophie Marchand',
+        }),
+      );
+      expect(
+        screen.getByRole('button', {
+          name: /^Déplier la branche de Luc Marchand et Sophie Marchand/,
+        }),
+      ).toBeInTheDocument();
+      await waitFor(
+        () => expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull(),
+        FOLD_TIMEOUT.wait,
+      );
+    },
+    FOLD_TIMEOUT.test,
+  );
+
   it('une bulle sans enfant n’a ni poignée ni état plié', () => {
     render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
     expect(item(/^Jade/)).not.toHaveAttribute('aria-expanded');

@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link, { useLinkStatus } from 'next/link';
 import {
   type KeyboardEvent,
   memo,
@@ -102,6 +102,23 @@ const TreeLinks = memo(function TreeLinks({
   );
 });
 
+/**
+ * Bulle touchée, fiche en route : un anneau tourne autour d'elle aussitôt. Les bulles
+ * ne préchargent pas leur fiche (des centaines de liens) : sans lui, rien ne
+ * montrerait que le tap a pris (Next 16, `useLinkStatus`).
+ */
+function PendingRing() {
+  const { pending } = useLinkStatus();
+  if (!pending) return undefined;
+  return (
+    <span
+      aria-hidden="true"
+      data-link-pending
+      className="pointer-events-none absolute -top-1 left-1/2 size-[84px] -translate-x-1/2 rounded-full border-[3px] border-accent border-t-transparent motion-safe:animate-spin"
+    />
+  );
+}
+
 const TreeItem = memo(function TreeItem({
   node,
   active,
@@ -135,6 +152,7 @@ const TreeItem = memo(function TreeItem({
       className="group absolute flex w-[120px] flex-col items-center outline-none"
       style={{ left: node.x - NODE_HALF_WIDTH, top: node.y - BUBBLE_RADIUS }}
     >
+      <PendingRing />
       <span className="rounded-full outline-offset-2 group-hover:motion-safe:scale-[1.03] group-focus-visible:outline-2 group-focus-visible:outline-ink motion-safe:transition-transform">
         <span className={FAR_HIDDEN}>
           <PersonBubble
