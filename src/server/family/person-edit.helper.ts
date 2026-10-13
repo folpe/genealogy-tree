@@ -34,7 +34,11 @@ const schema = z.discriminatedUnion('field', [
   z.object({
     personId: id,
     field: z.literal('death'),
-    deceased: z.preprocess((v) => v === 'on' || v === true, z.boolean()),
+    /** Absente : une date ou un lieu valent décès ; présente, elle fait foi. */
+    deceased: z.preprocess(
+      (v) => (v === undefined ? undefined : v === 'on' || v === true),
+      z.boolean().optional(),
+    ),
     date,
     place: optionalText(120),
   }),
@@ -75,9 +79,10 @@ export function parsePersonEdit(raw: unknown): PersonEdit {
         ...(edit.date ? { date: edit.date } : {}),
         ...(edit.place ? { place: edit.place } : {}),
       };
-      // Une date ou un lieu de décès disent un décès, case cochée ou non : rien ne se perd.
+      // Décès : la case fait foi quand elle est envoyée ; sans elle, une date ou un lieu
+      // disent un décès (l'écran coche la case dès qu'on en saisit un).
       const given = Object.keys(event).length > 0;
-      const known = edit.field === 'death' ? edit.deceased || given : given;
+      const known = edit.field === 'death' ? (edit.deceased ?? given) : given;
       return { personId, field: edit.field, ...(known ? { event } : {}) };
     }
   }

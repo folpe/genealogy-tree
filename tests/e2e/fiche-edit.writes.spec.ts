@@ -57,12 +57,23 @@ test('cocher « décédé » garde le formulaire ouvert, la date suit, puis on a
   await page.goto('/people/tom');
   await page.getByRole('button', { name: /^Décès : En vie/ }).click();
   await page.getByText('Décédé ou décédée').click();
-  // La case cochée ne ferme pas le formulaire : le focus revient à la date.
+  // Toucher la case, à l'intérieur du formulaire, ne le ferme pas.
   const date = page.getByRole('textbox', { name: 'Date du décès' });
-  await expect(date).toBeFocused();
+  await expect(date).toBeVisible();
   await date.fill('2024');
   await date.press('Enter');
   await expect(page.getByRole('button', { name: /^Décès : 2024/ })).toBeVisible();
   await page.getByRole('button', { name: 'Annuler la modification' }).click();
   await expect(page.getByRole('button', { name: /^Décès : En vie/ })).toBeVisible();
+});
+
+test('toucher ailleurs dans la page enregistre, comme quitter le champ', async ({ page }) => {
+  await signIn(page, 'anne@famille.test');
+  await page.goto('/people/anne');
+  await page.getByRole('button', { name: /^Réside à/ }).click();
+  await page.getByRole('textbox', { name: 'Réside à' }).fill('Biarritz');
+  await page.getByRole('heading', { level: 1 }).click();
+  await expect(page.getByRole('button', { name: /^Réside à : Biarritz/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Annuler la modification' }).click();
+  await expect(page.getByRole('button', { name: /^Réside à : Bordeaux/ })).toBeVisible();
 });

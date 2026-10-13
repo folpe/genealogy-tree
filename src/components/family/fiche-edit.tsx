@@ -81,6 +81,20 @@ function useEditing(personId: string, field: string, initial: Values) {
 const input =
   'h-11 w-full min-w-0 rounded-[var(--radius-field)] border border-line bg-surface px-3.5 text-[15px] text-ink outline-none placeholder:text-ink-2 focus-visible:ring-2 focus-visible:ring-ink disabled:opacity-60';
 
+/** Les valeurs du formulaire, cases comprises (« on » ou vide). */
+function values(form: HTMLFormElement): Values {
+  const out: Values = {};
+  for (const element of form.elements) {
+    if (element instanceof HTMLInputElement && element.name) {
+      out[element.name] =
+        element.type === 'checkbox' ? (element.checked ? 'on' : '') : element.value;
+    } else if (element instanceof HTMLSelectElement && element.name) {
+      out[element.name] = element.value;
+    }
+  }
+  return out;
+}
+
 /** Formulaire en ligne : Entrée enregistre, Échap abandonne, quitter le champ enregistre. */
 function InlineForm({
   onSave,
@@ -93,38 +107,29 @@ function InlineForm({
   children: ReactNode;
   className?: string;
 }) {
-  const values = (form: HTMLFormElement): Values => {
-    const out: Values = {};
-    for (const element of form.elements) {
-      if (element instanceof HTMLInputElement && element.name) {
-        out[element.name] =
-          element.type === 'checkbox' ? (element.checked ? 'on' : '') : element.value;
-      } else if (element instanceof HTMLSelectElement && element.name) {
-        out[element.name] = element.value;
-      }
-    }
-    return out;
-  };
   // La ligne touchée devient ce formulaire : le focus va à son premier champ.
   const form = useRef<HTMLFormElement>(null); // allow-null: contrat des refs de React
   useEffect(() => {
     const first = form.current?.querySelector('input:not([type="checkbox"]), select');
     if (first instanceof HTMLElement) first.focus();
   }, []);
-  // Safari ne donne pas le focus à une case qu'on touche : le champ quitté ne doit pas
-  // passer pour la sortie du formulaire tant que le doigt est dedans.
-  const pointing = useRef(false);
+  // Toucher ailleurs dans la page enregistre : ne dépend d'aucun ordre d'événements.
+  const latestSave = useRef(onSave);
+  useEffect(() => {
+    latestSave.current = onSave;
+  });
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      const element = form.current;
+      if (!element || (event.target instanceof Node && element.contains(event.target))) return;
+      latestSave.current(values(element));
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, []);
   return (
     <form
       ref={form}
-      onPointerDown={() => {
-        pointing.current = true;
-      }}
-      onPointerUp={() => {
-        window.setTimeout(() => {
-          pointing.current = false;
-        });
-      }}
       onSubmit={(event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         onSave(values(event.currentTarget));
@@ -136,9 +141,11 @@ function InlineForm({
         onCancel();
       }}
       onBlur={(event: FocusEvent<HTMLFormElement>) => {
+        // Le clavier part vers un autre champ de la page : on enregistre. Sans
+        // destination (Safari, qui ne donne pas le focus à une case touchée), on ne
+        // décide rien ici : c'est le toucher ailleurs qui enregistre.
         const next = event.relatedTarget;
-        if (pointing.current) return;
-        if (next instanceof Node && event.currentTarget.contains(next)) return;
+        if (!(next instanceof Node) || event.currentTarget.contains(next)) return;
         onSave(values(event.currentTarget));
       }}
       className={className}
@@ -243,6 +250,13 @@ function Fields({ spec, label, id }: { spec: FieldKind; label: string; id: strin
     );
   }
   const of = spec.death ? 'du décès' : 'de naissance';
+  // Une date ou un lieu de décès saisis cochent « décédé » : ce qu'on écrit se voit.
+  const marksDeath = spec.death
+    ? (event: FormEvent<HTMLInputElement>) => {
+        const box = event.currentTarget.form?.elements.namedItem('deceased');
+        if (box instanceof HTMLInputElement && event.currentTarget.value) box.checked = true;
+      }
+    : undefined;
   return (
     <div className="flex w-full flex-col gap-2">
       {spec.death ? (
@@ -252,11 +266,6 @@ function Fields({ spec, label, id }: { spec: FieldKind; label: string; id: strin
             type="checkbox"
             name="deceased"
             defaultChecked={spec.deceased}
-            // Le focus revient à la date : quitter le formulaire l'enregistrera.
-            onChange={(event) => {
-              const date = event.currentTarget.form?.elements.namedItem('date');
-              if (date instanceof HTMLInputElement) date.focus();
-            }}
             className="size-5 accent-ink"
           />
           Décédé ou décédée
@@ -265,6 +274,7 @@ function Fields({ spec, label, id }: { spec: FieldKind; label: string; id: strin
       <input
         name="date"
         aria-label={`Date ${of}`}
+        onInput={marksDeath}
         defaultValue={spec.date ?? ''}
         placeholder="1952, mars 1952, vers 1850"
         maxLength={40}
@@ -274,6 +284,7 @@ function Fields({ spec, label, id }: { spec: FieldKind; label: string; id: strin
       <input
         name="place"
         aria-label={`Lieu ${of}`}
+        onInput={marksDeath}
         defaultValue={spec.place ?? ''}
         placeholder="Ville"
         maxLength={120}

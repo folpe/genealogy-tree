@@ -44,10 +44,13 @@ describe('parsePersonEdit', () => {
       field: 'death',
       event: { date: { precision: 'vers', year: 2040 } },
     });
-    // Une date de décès sans la case cochée dit quand même un décès.
+    // Sans la case, une date de décès dit un décès ; décochée, la case fait foi.
     expect(parsePersonEdit({ personId: 'luc', field: 'death', date: '2040' })).toMatchObject({
       event: { date: { precision: 'annee', year: 2040 } },
     });
+    expect(
+      parsePersonEdit({ personId: 'luc', field: 'death', deceased: '', date: '2040' }),
+    ).toEqual({ personId: 'luc', field: 'death' });
     expect(parsePersonEdit({ personId: 'luc', field: 'death' })).toEqual({
       personId: 'luc',
       field: 'death',
