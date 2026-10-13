@@ -1,23 +1,40 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import ELK from 'elkjs/lib/elk.bundled.js';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { computeTreeLayout } from '@/lib/tree/tree.layout';
 import { treeForViewer } from '../../../tests/fixtures/tree-for-viewer';
 import { FamilyTree } from './family-tree';
-import { drawTree, type TreeDrawing } from './family-tree.helper';
 
+// Le worker de placement n'existe pas sous jsdom : même calcul, dans le processus.
+vi.mock('./tree-layout.client', () => ({
+  createLayoutClient: () => {
+    const elk = new ELK();
+    return { layout: (graph: never) => computeTreeLayout(graph, elk), dispose: () => {} };
+  },
+}));
+
+import { drawTree } from './family-tree.helper';
+import type { TreeDrawing } from './tree-drawing';
+
+/**
+ * Un pliage refait le placement avec ELK dans le processus de test : sous la charge
+ * de la suite complète, cela dépasse les délais par défaut (5 s, 1 s pour waitFor).
+ */
+const FOLD_TIMEOUT = { test: 20_000, wait: { timeout: 10_000 } };
+
+const hugoView = treeForViewer('m-hugo');
 let drawing: TreeDrawing;
 beforeAll(async () => {
-  const hugo = treeForViewer('m-hugo');
   const photo = { src: '/media/p-luc/256?e=1&s=x', srcSet: '', width: 256, height: 256 };
-  drawing = await drawTree({ ...hugo, photos: { luc: photo } }, new ELK());
+  drawing = await drawTree({ ...hugoView, photos: { luc: photo } }, new ELK());
 });
 
 const item = (name: RegExp) => screen.getByRole('treeitem', { name });
 
 describe('FamilyTree', () => {
   it('un arbre nommé, une entrée par bulle, chacune menant à sa fiche', () => {
-    render(<FamilyTree drawing={drawing} focusId="hugo" />);
+    render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
     const tree = screen.getByRole('tree', { name: 'Arbre de la famille' });
     expect(within(tree).getAllByRole('treeitem')).toHaveLength(drawing.nodes.length);
     expect(item(/^Henri Marchand, 1902 - 1979$/)).toHaveAttribute('href', '/people/henri');
@@ -25,7 +42,7 @@ describe('FamilyTree', () => {
   });
 
   it('« Toi » sous la bulle du lecteur, seule entrée atteignable par Tab', () => {
-    render(<FamilyTree drawing={drawing} focusId="hugo" />);
+    render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
     const hugo = item(/c’est toi$/);
     expect(within(hugo).getByText('Toi')).toBeVisible();
     const reachable = screen.getAllByRole('treeitem').filter((el) => el.tabIndex === 0);
@@ -33,7 +50,7 @@ describe('FamilyTree', () => {
   });
 
   it('les flèches suivent les liens : parent en haut, voisin à droite, enfant en bas', () => {
-    render(<FamilyTree drawing={drawing} focusId="hugo" />);
+    render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
     const hugo = item(/c’est toi$/);
     hugo.focus();
     fireEvent.keyDown(hugo, { key: 'ArrowUp' });
@@ -55,7 +72,7 @@ describe('FamilyTree', () => {
   });
 
   it('Début et Fin vont aux deux bouts de la génération', () => {
-    render(<FamilyTree drawing={drawing} focusId="hugo" />);
+    render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
     const level = (el: Element | null) => el?.getAttribute('aria-level');
     const row = screen.getAllByRole('treeitem').filter((el) => level(el) === '1');
     const henri = item(/^Henri Marchand/);
@@ -67,13 +84,15 @@ describe('FamilyTree', () => {
   });
 
   it('garde une entrée atteignable par Tab si la bulle active disparaît', () => {
-    const { rerender } = render(<FamilyTree drawing={drawing} focusId="hugo" />);
+    const { rerender } = render(
+      <FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />,
+    );
     const henri = item(/^Henri Marchand/);
     henri.focus();
     fireEvent.keyDown(henri, { key: 'ArrowRight' });
     const gone = (document.activeElement as HTMLElement).getAttribute('href')?.split('/').at(-1);
     const without = { ...drawing, nodes: drawing.nodes.filter((n) => n.id !== gone) };
-    rerender(<FamilyTree drawing={without} focusId="hugo" />);
+    rerender(<FamilyTree drawing={without} graph={hugoView.drawn} focusId="hugo" />);
     const reachable = screen.getAllByRole('treeitem').filter((el) => el.tabIndex === 0);
     expect(reachable).toEqual([item(/c’est toi$/)]);
   });
@@ -94,8 +113,15 @@ describe('FamilyTree', () => {
       me: false,
       branchesBelow: false,
     }));
-    const wide = { nodes: row, links: [], unknownPartners: [], width: 302 * 136, height: 132 };
-    render(<FamilyTree drawing={wide} focusId="p0" />);
+    const wide = {
+      nodes: row,
+      links: [],
+      unknownPartners: [],
+      branches: [],
+      width: 302 * 136,
+      height: 132,
+    };
+    render(<FamilyTree drawing={wide} graph={hugoView.drawn} focusId="p0" />);
     const first = screen.getByRole('treeitem', { name: 'Personne 0' });
     expect(screen.queryByRole('treeitem', { name: 'Personne 301' })).toBeNull();
     first.focus();
@@ -104,7 +130,7 @@ describe('FamilyTree', () => {
   });
 
   it('zoom sémantique : niveau moyen au départ, nom complet prêt pour la vue de près', () => {
-    render(<FamilyTree drawing={drawing} focusId="hugo" />);
+    render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
     expect(screen.getByRole('region', { name: 'Canevas de l’arbre' })).toHaveAttribute(
       'data-detail',
       'mid',
@@ -114,8 +140,71 @@ describe('FamilyTree', () => {
     expect(within(hugo).getByText('Hugo Marchand')).toBeInTheDocument();
   });
 
+  it(
+    '« - » replie la branche de Luc, « + » la rouvre',
+    async () => {
+      render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
+      const luc = item(/^Luc Marchand/);
+      expect(luc).toHaveAttribute('aria-expanded', 'true');
+      luc.focus();
+      fireEvent.keyDown(luc, { key: '-' });
+      await waitFor(
+        () => expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull(),
+        FOLD_TIMEOUT.wait,
+      );
+      expect(item(/^Luc Marchand/)).toHaveAttribute('aria-expanded', 'false');
+      expect(
+        screen.getByRole('button', {
+          name: /^Déplier la branche de Luc Marchand et Sophie Marchand, \d+ personnes$/,
+        }),
+      ).toBeInTheDocument();
+
+      fireEvent.keyDown(item(/^Luc Marchand/), { key: '+' });
+      await waitFor(() => expect(item(/c’est toi$/)).toBeInTheDocument(), FOLD_TIMEOUT.wait);
+      expect(item(/^Luc Marchand/)).toHaveAttribute('aria-expanded', 'true');
+    },
+    FOLD_TIMEOUT.test,
+  );
+
+  it(
+    'deux pliages coup sur coup s’ajoutent, et le canevas n’est plus occupé ensuite',
+    async () => {
+      render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
+      const canvas = screen.getByRole('region', { name: 'Canevas de l’arbre' });
+      // Léa d'abord (sa fille Jade), puis le couple de Luc, sans attendre le premier calcul.
+      fireEvent.keyDown(item(/^Léa Marchand/), { key: '-' });
+      fireEvent.keyDown(item(/^Luc Marchand/), { key: '-' });
+      await waitFor(
+        () => expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull(),
+        FOLD_TIMEOUT.wait,
+      );
+      expect(screen.queryByRole('treeitem', { name: /^Jade/ })).toBeNull();
+      await waitFor(() => expect(canvas).toHaveAttribute('aria-busy', 'false'));
+    },
+    FOLD_TIMEOUT.test,
+  );
+
+  it(
+    'replier puis rouvrir aussitôt : le dessin connu revient, sans rester occupé',
+    async () => {
+      render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
+      const canvas = screen.getByRole('region', { name: 'Canevas de l’arbre' });
+      fireEvent.keyDown(item(/^Luc Marchand/), { key: '-' });
+      fireEvent.keyDown(item(/^Luc Marchand/), { key: '+' });
+      await waitFor(() => expect(canvas).toHaveAttribute('aria-busy', 'false'), FOLD_TIMEOUT.wait);
+      expect(item(/c’est toi$/)).toBeInTheDocument();
+    },
+    FOLD_TIMEOUT.test,
+  );
+
+  it('une bulle sans enfant n’a ni poignée ni état plié', () => {
+    render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
+    expect(item(/^Jade/)).not.toHaveAttribute('aria-expanded');
+    expect(screen.queryByRole('button', { name: /branche de Jade/ })).toBeNull();
+  });
+
   it('laisse passer les autres touches, Entrée comprise', () => {
-    render(<FamilyTree drawing={drawing} focusId="hugo" />);
+    render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
     const hugo = item(/c’est toi$/);
     hugo.focus();
     expect(fireEvent.keyDown(hugo, { key: 'Enter' })).toBe(true);
@@ -123,21 +212,23 @@ describe('FamilyTree', () => {
   });
 
   it('la photo dans la bulle est décorative, sinon les initiales', () => {
-    render(<FamilyTree drawing={drawing} focusId="hugo" />);
+    render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
     expect(item(/^Luc Marchand/).querySelector('img')).toHaveAttribute('alt', '');
     expect(within(item(/^Paul Marchand/)).getByText('PM')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('trace les liens sous les bulles, hors de l’arbre accessible', () => {
-    const { container } = render(<FamilyTree drawing={drawing} focusId="hugo" />);
+    const { container } = render(
+      <FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />,
+    );
     const svg = container.querySelector('svg');
     expect(svg).toHaveAttribute('aria-hidden', 'true');
     expect(svg?.querySelectorAll('path')).toHaveLength(drawing.links.length);
   });
 
   it('invite à patienter quand l’arbre est encore vide', () => {
-    const empty = { nodes: [], links: [], unknownPartners: [], width: 0, height: 0 };
-    render(<FamilyTree drawing={empty} focusId={undefined} />);
+    const empty = { nodes: [], links: [], unknownPartners: [], branches: [], width: 0, height: 0 };
+    render(<FamilyTree drawing={empty} graph={hugoView.drawn} focusId={undefined} />);
     expect(screen.getByText(/L’arbre est encore vide/)).toBeVisible();
     expect(screen.queryByRole('tree')).toBeNull();
   });

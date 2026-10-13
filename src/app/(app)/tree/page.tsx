@@ -17,7 +17,7 @@ export default async function TreePage() {
   return (
     <main className="flex flex-col gap-6 p-4 md:p-8">
       <h1 className="font-display text-[32px] leading-tight">L’arbre de la famille</h1>
-      <FamilyTree drawing={drawing} focusId={tree.viewerPersonId} />
+      <FamilyTree drawing={drawing} graph={tree.drawn} focusId={tree.viewerPersonId} />
     </main>
   );
 }
