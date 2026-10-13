@@ -148,4 +148,14 @@ describe('AccountMenu', () => {
     await userEvent.click(within(menu).getByRole('menuitemradio', { name: 'Comme l’appareil' }));
     expect(document.documentElement.dataset['theme']).toBeUndefined();
   });
+
+  it('un thème qui ne s’enregistre pas revient en arrière et le dit', async () => {
+    setTheme.mockRejectedValueOnce(new Error('réseau'));
+    render(<AccountMenu account={hugo} hasPasskey theme="system" />);
+    const menu = await openMenu();
+    await userEvent.click(within(menu).getByRole('menuitemradio', { name: 'Sombre' }));
+    // Le menu reste ouvert (Radix masque le reste aux lecteurs d'écran) : on lit le texte.
+    expect(await screen.findByText(/Le thème n’a pas pu être enregistré/)).toBeInTheDocument();
+    expect(document.documentElement.dataset['theme']).toBeUndefined();
+  });
 });

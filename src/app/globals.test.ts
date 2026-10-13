@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { themeColor } from '@/lib/theme/theme';
 
 // Contraste WCAG 2.2 AA des tokens tels que l'app les sert (globals.css), dans les
 // deux thèmes (plan phase 5, lot 1). Une valeur qui dérive d'une maquette à l'autre
@@ -92,5 +93,25 @@ describe('contraste des tokens (WCAG AA)', () => {
     if (!ink || !paper) throw new Error('ink ou paper absent');
     expect(contrast(paper.light, ink.light)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(paper.dark, ink.dark)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('la barre du navigateur reprend exactement le fond de page', () => {
+    const paper = palette.get('paper');
+    if (!paper) throw new Error('paper absent');
+    const hex = (rgb: Rgb) => {
+      // Composantes linéaires : on repasse en sRGB encodé avant l'hexadécimal.
+      const encode = (v: number) => (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055);
+      return `#${rgb
+        .map((v) =>
+          Math.round(encode(v) * 255)
+            .toString(16)
+            .padStart(2, '0'),
+        )
+        .join('')}`;
+    };
+    const [light] = themeColor('light');
+    const [dark] = themeColor('dark');
+    expect(light?.color.toLowerCase()).toBe(hex(paper.light));
+    expect(dark?.color.toLowerCase()).toBe(hex(paper.dark));
   });
 });

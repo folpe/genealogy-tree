@@ -5,10 +5,11 @@ import { usePathname } from 'next/navigation';
 import { useTreeHref } from '../family/back-to-tree';
 
 // Onglets des vues (DESIGN.md, `NavPills`) : Arbre et Ancêtres pour l'instant ; Frise,
-// Carte et Récits les rejoindront avec leurs écrans (phases 7 et 8).
+// Carte et Récits les rejoindront avec leurs écrans (phases 7 et 8). La pilule fait
+// 38 px comme la maquette ; sa zone de toucher, 44.
 
 const pill =
-  'flex h-[38px] items-center rounded-full px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink md:px-[18px]';
+  'relative flex h-[38px] items-center rounded-full px-4 after:absolute after:inset-x-0 after:-inset-y-[3px] text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink md:px-[18px]';
 
 export function NavPills() {
   const pathname = usePathname();

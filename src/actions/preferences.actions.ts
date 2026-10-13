@@ -13,7 +13,8 @@ export async function setThemeAction(theme: unknown): Promise<void> {
     maxAge: THEME_MAX_AGE_S,
     sameSite: 'lax',
     httpOnly: true,
-    // Les navigateurs acceptent un cookie sécurisé sur localhost : pas d'exception en dev.
+    // Chromium et Firefox l'acceptent sur http://localhost ; un ancien Safari non : en
+    // local, tester le thème dans Chrome.
     secure: true,
     path: '/',
   });
