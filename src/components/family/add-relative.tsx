@@ -1,4 +1,4 @@
-// tdd-cover: e2e tests/e2e/add-relative.spec.ts
+// tdd-cover: e2e tests/e2e/add-relative.writes.spec.ts
 'use client';
 
 import Link from 'next/link';
