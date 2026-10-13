@@ -96,6 +96,11 @@ describe.skipIf(!db)('person-trash.service (intégration)', () => {
     });
   });
 
+  it('un enfant déjà à la corbeille ne bloque pas son parent', async () => {
+    await trashPerson(deps, 'u-luc', 'jade');
+    await expect(trashPerson(deps, 'u-luc', 'lea')).resolves.toBeUndefined();
+  });
+
   it('seul un admin voit et vide la corbeille', async () => {
     await trashPerson(deps, 'u-anne', 'tom');
     await expect(listTrash(deps, 'u-anne')).rejects.toMatchObject({ status: 403 });

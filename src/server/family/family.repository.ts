@@ -88,11 +88,17 @@ export async function trashPersonLocked(
       );
     if (member || invitation) return 'linked';
     if (!trash.childrenAllowed) {
+      // Un enfant déjà à la corbeille ne compte pas, comme dans l'arbre.
       const [child] = await tx
         .select({ id: parentChild.childId })
         .from(parentChild)
+        .innerJoin(persons, eq(persons.id, parentChild.childId))
         .where(
-          and(eq(parentChild.parentId, personId), inArray(parentChild.kind, [...FILIATION_KINDS])),
+          and(
+            eq(parentChild.parentId, personId),
+            inArray(parentChild.kind, [...FILIATION_KINDS]),
+            isNull(persons.deletedAt),
+          ),
         );
       if (child) return 'has_children';
     }
