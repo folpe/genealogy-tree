@@ -49,3 +49,20 @@ test('un fait sourcé dit pourquoi il ne se change pas ; ailleurs, rien à touch
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Bernard');
   await expect(page.getByRole('button', { name: /^Naissance/ })).toHaveCount(0);
 });
+
+test('cocher « décédé » garde le formulaire ouvert, la date suit, puis on annule', async ({
+  page,
+}) => {
+  await signIn(page, 'anne@famille.test');
+  await page.goto('/people/tom');
+  await page.getByRole('button', { name: /^Décès : En vie/ }).click();
+  await page.getByText('Décédé ou décédée').click();
+  // La case cochée ne ferme pas le formulaire : le focus revient à la date.
+  const date = page.getByRole('textbox', { name: 'Date du décès' });
+  await expect(date).toBeFocused();
+  await date.fill('2024');
+  await date.press('Enter');
+  await expect(page.getByRole('button', { name: /^Décès : 2024/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Annuler la modification' }).click();
+  await expect(page.getByRole('button', { name: /^Décès : En vie/ })).toBeVisible();
+});

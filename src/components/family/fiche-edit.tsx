@@ -44,18 +44,30 @@ function useEditing(personId: string, field: string, initial: Values) {
     const timer = window.setTimeout(() => setUndo(undefined), UNDO_MS);
     return () => window.clearTimeout(timer);
   }, [undo]);
-  const submit = (values: Values) =>
+  const busy = useRef(false);
+  const submit = (values: Values) => {
+    // Entrée puis la sortie du champ : un seul envoi à la fois.
+    if (busy.current) return;
+    busy.current = true;
     start(async () => {
-      const unchanged = Object.keys({ ...initial, ...values }).every(
-        (k) => (values[k] ?? '') === (initial[k] ?? ''),
-      );
-      if (unchanged) return setEditing(false);
-      const failure = await save(personId, field, values);
-      if (failure) return setError(failure);
-      setError(undefined);
-      setEditing(false);
-      setUndo(initial);
+      try {
+        await commit(values);
+      } finally {
+        busy.current = false;
+      }
     });
+  };
+  const commit = async (values: Values) => {
+    const unchanged = Object.keys({ ...initial, ...values }).every(
+      (k) => (values[k] ?? '') === (initial[k] ?? ''),
+    );
+    if (unchanged) return setEditing(false);
+    const failure = await save(personId, field, values);
+    if (failure) return setError(failure);
+    setError(undefined);
+    setEditing(false);
+    setUndo(initial);
+  };
   const revert = () =>
     start(async () => {
       if (!undo) return;
@@ -99,9 +111,20 @@ function InlineForm({
     const first = form.current?.querySelector('input:not([type="checkbox"]), select');
     if (first instanceof HTMLElement) first.focus();
   }, []);
+  // Safari ne donne pas le focus à une case qu'on touche : le champ quitté ne doit pas
+  // passer pour la sortie du formulaire tant que le doigt est dedans.
+  const pointing = useRef(false);
   return (
     <form
       ref={form}
+      onPointerDown={() => {
+        pointing.current = true;
+      }}
+      onPointerUp={() => {
+        window.setTimeout(() => {
+          pointing.current = false;
+        });
+      }}
       onSubmit={(event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         onSave(values(event.currentTarget));
@@ -114,6 +137,7 @@ function InlineForm({
       }}
       onBlur={(event: FocusEvent<HTMLFormElement>) => {
         const next = event.relatedTarget;
+        if (pointing.current) return;
         if (next instanceof Node && event.currentTarget.contains(next)) return;
         onSave(values(event.currentTarget));
       }}
@@ -228,6 +252,11 @@ function Fields({ spec, label, id }: { spec: FieldKind; label: string; id: strin
             type="checkbox"
             name="deceased"
             defaultChecked={spec.deceased}
+            // Le focus revient à la date : quitter le formulaire l'enregistrera.
+            onChange={(event) => {
+              const date = event.currentTarget.form?.elements.namedItem('date');
+              if (date instanceof HTMLInputElement) date.focus();
+            }}
             className="size-5 accent-ink"
           />
           Décédé ou décédée
@@ -334,13 +363,22 @@ export function EditableName({
   const first = useEditing(personId, 'firstName', { value: firstName });
   const last = useEditing(personId, 'lastName', { value: lastName });
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const saveBoth = (values: Values) => {
     // Deux champs, deux écritures : chacune passe la policy et peut s'annuler.
-    if ((values['firstName'] ?? '') !== firstName)
-      first.submit({ value: values['firstName'] ?? '' });
-    if ((values['lastName'] ?? '') !== lastName) last.submit({ value: values['lastName'] ?? '' });
-    setEditing(false);
+    const nextFirst = values['firstName'] ?? '';
+    const nextLast = values['lastName'] ?? '';
+    if (nextFirst === firstName && nextLast === lastName) return setEditing(false);
+    if (nextFirst !== firstName) first.submit({ value: nextFirst });
+    if (nextLast !== lastName) last.submit({ value: nextLast });
+    setSaving(true);
   };
+  // Le formulaire se ferme quand les deux écritures ont abouti ; refusé, il garde la saisie.
+  useEffect(() => {
+    if (!saving || first.pending || last.pending) return;
+    setSaving(false);
+    if (!first.error && !last.error) setEditing(false);
+  }, [saving, first.pending, last.pending, first.error, last.error]);
   const error = first.error ?? last.error;
   return (
     <div className="flex w-full flex-col items-center">

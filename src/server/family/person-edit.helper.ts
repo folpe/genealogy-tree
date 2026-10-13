@@ -75,7 +75,9 @@ export function parsePersonEdit(raw: unknown): PersonEdit {
         ...(edit.date ? { date: edit.date } : {}),
         ...(edit.place ? { place: edit.place } : {}),
       };
-      const known = edit.field === 'death' ? edit.deceased : Object.keys(event).length > 0;
+      // Une date ou un lieu de décès disent un décès, case cochée ou non : rien ne se perd.
+      const given = Object.keys(event).length > 0;
+      const known = edit.field === 'death' ? edit.deceased || given : given;
       return { personId, field: edit.field, ...(known ? { event } : {}) };
     }
   }
