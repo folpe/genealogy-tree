@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { marchandFamily } from '../../../tests/fixtures/marchand-family';
 import { testDb } from '../../../tests/integration/test-db';
+import { ValidationError } from '../_shared/errors';
 import { accessRequests, invitations, memberships, users } from '../db/schema';
 import { insertFamilyGraph } from '../family/family.repository';
 import type { EmailMessage } from '../notifications/email';
@@ -196,6 +197,19 @@ describe.skipIf(!db)('members.service (intégration)', () => {
       await expect(claimOwnPerson(deps(), 'u-hugo', 'paul')).rejects.toMatchObject({
         code: 'MEMBERS_FORBIDDEN',
       });
+    });
+
+    it('une fiche promise par une invitation en attente est refusée', async () => {
+      await inviteMember(deps(), 'u-hugo', { personId: 'lea', email: 'lea@exemple.fr' });
+      await expect(claimOwnPerson(deps(), 'u-owner', 'lea')).rejects.toMatchObject({
+        code: 'MEMBERS_INVITATION_PENDING',
+      });
+    });
+
+    it('un identifiant hors format est refusé avant la base', async () => {
+      await expect(claimOwnPerson(deps(), 'u-owner', 'x'.repeat(65))).rejects.toBeInstanceOf(
+        ValidationError,
+      );
     });
 
     it('une fiche inconnue est refusée', async () => {

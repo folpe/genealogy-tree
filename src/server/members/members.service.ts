@@ -1,8 +1,8 @@
 // tdd-cover: e2e src/server/members/members.service.integration.test.ts
-import { and, count, eq, gt } from 'drizzle-orm';
+import { and, count, eq, gt, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { AppError, ValidationError } from '../_shared/errors';
-import { accessRequests, memberships, persons, users } from '../db/schema';
+import { accessRequests, invitations, memberships, persons, users } from '../db/schema';
 import type { Db } from '../db/types';
 import { buildFamilyIndex } from '../family/family.helper';
 import { loadFamilyGraph } from '../family/family.repository';
@@ -107,6 +107,7 @@ async function sendInvitation(
 }
 
 const inviteSchema = z.object({ personId: z.string().min(1), email: z.email() });
+const claimSchema = z.string().min(1).max(64);
 
 export async function inviteMember(
   deps: MembersDeps,
@@ -317,20 +318,48 @@ export async function claimOwnPerson(
   viewerUserId: string,
   personId: string,
 ) {
-  const [viewer] = await deps.db
-    .select({ id: memberships.id, isAdmin: memberships.isAdmin, personId: memberships.personId })
-    .from(memberships)
-    .where(eq(memberships.userId, viewerUserId));
-  if (!viewer?.isAdmin || viewer.personId !== null) throw forbidden(); // allow-null: colonne nullable de la base
+  const parsed = claimSchema.safeParse(personId);
+  if (!parsed.success) throw new ValidationError('Fiche invalide', parsed.error);
   const [person] = await deps.db
     .select({ id: persons.id })
     .from(persons)
-    .where(eq(persons.id, personId));
+    .where(eq(persons.id, parsed.data));
   if (!person) {
     throw new AppError({ message: 'Fiche introuvable', code: 'MEMBERS_NOT_FOUND', status: 404 });
   }
+  // Une invitation en attente sur cette fiche la promet déjà à quelqu'un d'autre.
+  const [pending] = await deps.db
+    .select({ id: invitations.id })
+    .from(invitations)
+    .where(
+      and(
+        eq(invitations.personId, person.id),
+        isNull(invitations.usedAt),
+        isNull(invitations.revokedAt),
+      ),
+    );
+  if (pending) {
+    throw new AppError({
+      message: 'Une invitation attend déjà quelqu’un sur cette fiche.',
+      code: 'MEMBERS_INVITATION_PENDING',
+      status: 409,
+    });
+  }
+  let updated: { id: string }[];
   try {
-    await deps.db.update(memberships).set({ personId }).where(eq(memberships.id, viewer.id));
+    // Les conditions sont dans l'écriture même : deux réclamations simultanées du
+    // même compte ne peuvent pas le faire changer de fiche.
+    updated = await deps.db
+      .update(memberships)
+      .set({ personId: person.id })
+      .where(
+        and(
+          eq(memberships.userId, viewerUserId),
+          eq(memberships.isAdmin, true),
+          isNull(memberships.personId),
+        ),
+      )
+      .returning({ id: memberships.id });
   } catch (error) {
     if (!isUniqueViolation(error)) throw error;
     throw new AppError({
@@ -339,6 +368,7 @@ export async function claimOwnPerson(
       status: 409,
     });
   }
+  if (updated.length !== 1) throw forbidden();
 }
 
 /** Page Membres : les comptes, et les fiches que je peux inviter. */
