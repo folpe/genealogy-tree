@@ -167,9 +167,10 @@ async function placeOnce(
   const first = await placeBlocks(drawn, blocks, detached, elk, metrics, seed);
   // ELK range les blocs mais ne retourne pas un couple : chaque partenaire passe du
   // côté de sa famille d'origine, puis on replace (retour de Folpe, 2026-10-13).
-  return orientCouples(drawn, blocks, first)
-    ? placeBlocks(drawn, blocks, detached, elk, metrics, seed)
-    : first;
+  if (!orientCouples(drawn, blocks, first)) return first;
+  // Le second passage peut ranger les blocs autrement : on garde le plus lisible.
+  const turned = await placeBlocks(drawn, blocks, detached, elk, metrics, seed);
+  return countCrossings(drawn, turned) <= countCrossings(drawn, first) ? turned : first;
 }
 
 /** Abscisse d'où descend le trait vers une personne : l'union de ses parents, ou son parent. */

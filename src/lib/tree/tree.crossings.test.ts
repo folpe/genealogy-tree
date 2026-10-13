@@ -89,6 +89,31 @@ function twoFamilies(uncles: [number, number], cousins: [number, number]): Famil
   return g;
 }
 
+describe('countCrossings', () => {
+  const at = (x: number, y: number) => ({ x, y });
+  const drawn = {
+    personIds: ['a', 'b', 'c', 'd'],
+    unions: [],
+    edges: [
+      { kind: 'parent' as const, from: 'a', to: 'd' },
+      { kind: 'parent' as const, from: 'b', to: 'c' },
+    ],
+  };
+  const layout = (c: number, d: number) => ({
+    persons: { a: at(0, 0), b: at(100, 0), c: at(c, 200), d: at(d, 200) },
+    unions: {},
+    unknownPartners: {},
+    detachedUnions: [],
+    width: 200,
+    height: 200,
+  });
+
+  it('compte deux traits dont départs et arrivées sont dans l’ordre inverse', () => {
+    expect(countCrossings(drawn, layout(0, 100))).toBe(1);
+    expect(countCrossings(drawn, layout(100, 0))).toBe(0);
+  });
+});
+
 describe('lisibilité du placement', () => {
   // Formes qui croisaient avec le réglage par défaut d'ELK (jusqu'à 8 croisements).
   for (const [uncles, cousins] of [
