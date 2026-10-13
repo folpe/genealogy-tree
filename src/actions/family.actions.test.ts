@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   addRelative: vi.fn(),
   getSearchDirectory: vi.fn(),
   getRelationship: vi.fn(),
+  editPerson: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 vi.mock('server-only', () => ({}));
@@ -18,8 +19,14 @@ vi.mock('@/server/family/family.service', () => ({
   getRelationship: mocks.getRelationship,
 }));
 vi.mock('@/server/family/relatives.service', () => ({ addRelative: mocks.addRelative }));
+vi.mock('@/server/family/person-edit.service', () => ({ editPerson: mocks.editPerson }));
 
-import { addRelativeAction, relationshipAction, searchDirectoryAction } from './family.actions';
+import {
+  addRelativeAction,
+  editPersonAction,
+  relationshipAction,
+  searchDirectoryAction,
+} from './family.actions';
 
 const form = (fields: Record<string, string>) => {
   const data = new FormData();
@@ -114,5 +121,32 @@ describe('relationshipAction', () => {
       new AppError({ message: 'Fiche introuvable', code: 'X', status: 404 }),
     );
     expect(await relationshipAction('x')).toEqual({ ok: false, error: 'Fiche introuvable' });
+  });
+});
+
+describe('editPersonAction', () => {
+  beforeEach(() => {
+    mocks.requireSession.mockReset().mockResolvedValue({ user: { id: 'u-hugo' } });
+    mocks.editPerson.mockReset();
+    mocks.revalidatePath.mockReset();
+  });
+
+  it('modifie au nom de la session et rafraîchit les vues', async () => {
+    const data = form({ personId: 'luc', field: 'residence', value: 'Lyon' });
+    expect(await editPersonAction(data)).toEqual({ ok: true });
+    expect(mocks.editPerson).toHaveBeenCalledWith(
+      { deps: true },
+      'u-hugo',
+      expect.objectContaining({ personId: 'luc', field: 'residence', value: 'Lyon' }),
+    );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith('/', 'layout');
+  });
+
+  it('dit pourquoi un refus, sans rafraîchir', async () => {
+    mocks.editPerson.mockRejectedValue(
+      new AppError({ message: 'Ce fait est sourcé', code: 'FAMILY_SOURCED', status: 403 }),
+    );
+    expect(await editPersonAction(form({}))).toEqual({ ok: false, error: 'Ce fait est sourcé' });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 });

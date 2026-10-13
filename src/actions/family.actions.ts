@@ -11,6 +11,7 @@ import {
   type RelationshipView,
   type SearchDirectory,
 } from '@/server/family/family.service';
+import { editPerson } from '@/server/family/person-edit.service';
 import { addRelative } from '@/server/family/relatives.service';
 
 // Actions d'édition de l'arbre. L'identité vient toujours de la session ; la policy et
@@ -72,4 +73,22 @@ export async function relationshipAction(targetId: unknown): Promise<Relationshi
     if (isAppError(error)) return { ok: false, error: error.message };
     throw error;
   }
+}
+
+export type EditResult = { ok: true } | { ok: false; error: string };
+
+/** Modification sur place d'un champ de fiche ; la policy décide au serveur. */
+export async function editPersonAction(data: FormData): Promise<EditResult> {
+  const { user } = await requireSession();
+  const fields = Object.fromEntries(
+    [...data.entries()].filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+  );
+  try {
+    await editPerson(getFamilyDeps(), user.id, fields);
+  } catch (error) {
+    const result = toResult(error);
+    return result.ok ? { ok: true } : result;
+  }
+  revalidatePath('/', 'layout');
+  return { ok: true };
 }

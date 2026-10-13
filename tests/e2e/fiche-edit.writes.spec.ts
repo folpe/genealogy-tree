@@ -1,0 +1,79 @@
+import { expect, test } from './fixtures';
+import { signIn } from './outbox';
+
+// Modification sur place (retour de Folpe) : on touche une ligne, elle devient un
+// champ, Entrée enregistre, « Annuler » revient en arrière quelques secondes.
+
+test('Anne corrige sa résidence sur place, puis annule', async ({ page }) => {
+  await signIn(page, 'anne@famille.test');
+  await page.goto('/people/anne');
+  await page.getByRole('button', { name: /^Réside à/ }).click();
+  const input = page.getByRole('textbox', { name: 'Réside à' });
+  await expect(input).toBeFocused();
+  await input.fill('Pau');
+  await input.press('Enter');
+  await expect(page.getByRole('button', { name: /^Réside à : Pau/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Annuler la modification' }).click();
+  await expect(page.getByRole('button', { name: /^Réside à : Bordeaux/ })).toBeVisible();
+});
+
+test('le nom se corrige en touchant le titre ; Échap abandonne', async ({ page }, info) => {
+  await signIn(page, 'anne@famille.test');
+  await page.goto('/people/tom');
+  const heading = page.getByRole('heading', { level: 1 });
+  // La base est partagée entre projets : on part du prénom actuel, on écrit le sien.
+  const before = (await heading.textContent()) ?? '';
+  const renamed = `Tom-${info.project.name}`;
+  await heading.getByRole('button').click();
+  await page.getByRole('textbox', { name: 'Prénom' }).fill(renamed);
+  await page.getByRole('textbox', { name: 'Prénom' }).press('Escape');
+  await expect(heading).toHaveText(before);
+  await heading.getByRole('button').click();
+  await page.getByRole('textbox', { name: 'Prénom' }).fill(renamed);
+  await page.getByRole('textbox', { name: 'Prénom' }).press('Enter');
+  await expect(heading).toContainText(renamed);
+});
+
+test('un fait sourcé dit pourquoi il ne se change pas ; ailleurs, rien à toucher', async ({
+  page,
+}) => {
+  await signIn(page, 'anne@famille.test');
+  await page.goto('/people/henri');
+  await page.getByRole('button', { name: /^Décès/ }).click();
+  await page.getByRole('textbox', { name: 'Date du décès' }).fill('1980');
+  await page.getByRole('textbox', { name: 'Date du décès' }).press('Enter');
+  // (Next a son propre annonceur de navigation, lui aussi en role="alert".)
+  await expect(page.getByRole('alert').filter({ hasText: 'sourcé' })).toBeVisible();
+
+  await page.goto('/people/bernard');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Bernard');
+  await expect(page.getByRole('button', { name: /^Naissance/ })).toHaveCount(0);
+});
+
+test('cocher « décédé » garde le formulaire ouvert, la date suit, puis on annule', async ({
+  page,
+}) => {
+  await signIn(page, 'anne@famille.test');
+  await page.goto('/people/tom');
+  await page.getByRole('button', { name: /^Décès : En vie/ }).click();
+  await page.getByText('Décédé ou décédée').click();
+  // Toucher la case, à l'intérieur du formulaire, ne le ferme pas.
+  const date = page.getByRole('textbox', { name: 'Date du décès' });
+  await expect(date).toBeVisible();
+  await date.fill('2024');
+  await date.press('Enter');
+  await expect(page.getByRole('button', { name: /^Décès : 2024/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Annuler la modification' }).click();
+  await expect(page.getByRole('button', { name: /^Décès : En vie/ })).toBeVisible();
+});
+
+test('toucher ailleurs dans la page enregistre, comme quitter le champ', async ({ page }) => {
+  await signIn(page, 'anne@famille.test');
+  await page.goto('/people/anne');
+  await page.getByRole('button', { name: /^Réside à/ }).click();
+  await page.getByRole('textbox', { name: 'Réside à' }).fill('Biarritz');
+  await page.getByRole('heading', { level: 1 }).click();
+  await expect(page.getByRole('button', { name: /^Réside à : Biarritz/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Annuler la modification' }).click();
+  await expect(page.getByRole('button', { name: /^Réside à : Bordeaux/ })).toBeVisible();
+});

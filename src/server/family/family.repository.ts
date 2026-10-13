@@ -1,6 +1,6 @@
 // tdd-cover: e2e src/server/family/family.repository.integration.test.ts
 
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { AppError } from '../_shared/errors';
 import {
   events,
@@ -12,10 +12,15 @@ import {
   unions,
 } from '../db/schema';
 import type { Db } from '../db/types';
+
+/** Transaction Drizzle, telle que `db.transaction` la passe. */
+type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+
 import { ParentsFullError } from './family.errors';
 import { FILIATION_KINDS } from './family.helper';
-import { graphToRows, rowsToGraph } from './family.mapper';
-import type { FamilyGraph } from './family.types';
+import { fuzzyDateToColumns, graphToRows, normalizePlaceLabel, rowsToGraph } from './family.mapper';
+import type { FamilyGraph, Person } from './family.types';
+import type { PersonEdit } from './person-edit.helper';
 import type { RelativePlan } from './relatives.helper';
 
 // Seul point de contact du domaine famille avec la base. L'arbre tient en mémoire :
@@ -145,6 +150,79 @@ export async function insertRelative(
           status: 409,
         });
       }
+    }
+  });
+}
+
+/** Identifiant d'un lieu, créé au besoin ; la clé est le libellé normalisé. */
+async function ensurePlace(tx: Tx, label: string): Promise<string> {
+  const normalizedLabel = normalizePlaceLabel(label);
+  await tx
+    .insert(places)
+    .values({ id: crypto.randomUUID(), label, normalizedLabel })
+    .onConflictDoNothing({ target: places.normalizedLabel });
+  const [place] = await tx
+    .select({ id: places.id })
+    .from(places)
+    .where(eq(places.normalizedLabel, normalizedLabel));
+  if (!place) throw new Error(`Lieu introuvable après création : ${normalizedLabel}`);
+  return place.id;
+}
+
+/**
+ * Écrit un seul champ d'une fiche (modification sur place), dans une transaction qui
+ * verrouille la fiche : deux modifications simultanées ne s'entremêlent pas.
+ */
+export async function updatePersonField(
+  db: Db,
+  person: Person,
+  field: PersonEdit['field'],
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [row] = await tx
+      .select({ id: persons.id })
+      .from(persons)
+      .where(eq(persons.id, person.id))
+      .for('update');
+    if (!row) {
+      throw new AppError({ message: 'Fiche introuvable', code: 'FAMILY_NOT_FOUND', status: 404 });
+    }
+    if (field === 'birth' || field === 'death') {
+      const kind = field === 'birth' ? 'naissance' : 'deces';
+      await tx.delete(events).where(and(eq(events.personId, person.id), eq(events.kind, kind)));
+      const event = person[field];
+      if (event) {
+        const d = fuzzyDateToColumns(event.date);
+        await tx.insert(events).values({
+          personId: person.id,
+          kind,
+          datePrecision: d.precision,
+          dateValue: d.value,
+          dateValueEnd: d.valueEnd,
+          placeId: event.place ? await ensurePlace(tx, event.place) : undefined,
+        });
+      }
+    } else if (field === 'residence') {
+      // La résidence en cours (sans fin) est corrigée ou retirée ; l'historique reste.
+      const current = and(eq(residences.personId, person.id), isNull(residences.endPrecision));
+      if (person.residence) {
+        const placeId = await ensurePlace(tx, person.residence);
+        const updated = await tx
+          .update(residences)
+          .set({ placeId })
+          .where(current)
+          .returning({ id: residences.id });
+        if (updated.length === 0) {
+          await tx.insert(residences).values({ personId: person.id, placeId });
+        }
+      } else {
+        await tx.delete(residences).where(current);
+      }
+    } else {
+      await tx
+        .update(persons)
+        .set({ [field]: person[field] ?? null, version: sql`${persons.version} + 1` }) // allow-null: colonne vidée en base
+        .where(eq(persons.id, person.id));
     }
   });
 }
