@@ -72,7 +72,7 @@ describe('drawTree', () => {
   it('pose une poignée par départ de branche : sous le couple, ou sous le parent seul', async () => {
     const { branches, nodes } = await drawTree(hugo, elk);
     const couple = branches.find((b) => b.id === 'u-luc-sophie');
-    expect(couple).toMatchObject({ anchorId: 'luc', owners: 'Luc Marchand et Sophie Marchand' });
+    expect(couple).toMatchObject({ owners: 'Luc Marchand et Sophie Marchand' });
     const luc = nodes.find((n) => n.id === 'luc');
     const sophie = nodes.find((n) => n.id === 'sophie');
     expect(couple?.x).toBeGreaterThan(Math.min(luc?.x ?? 0, sophie?.x ?? 0));
@@ -89,6 +89,14 @@ describe('drawTree', () => {
       branches: [],
       width: 0,
       height: 0,
+      layout: {
+        persons: {},
+        unions: {},
+        unknownPartners: {},
+        detachedUnions: [],
+        width: 0,
+        height: 0,
+      },
     });
   });
 });

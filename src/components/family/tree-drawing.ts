@@ -38,8 +38,6 @@ export type TreeNode = TreeNeighbors &
 export type BranchHandle = Point & {
   /** Clé de la branche : l'union d'un couple, ou la personne qui l'a seule. */
   id: string;
-  /** Bulle qui reste en place quand la branche se plie (le premier parent). */
-  anchorId: string;
   /** « Luc Marchand et Sophie Marchand », pour le nom accessible de la poignée. */
   owners: string;
 };
@@ -53,6 +51,11 @@ export type TreeDrawing = {
   branches: BranchHandle[];
   width: number;
   height: number;
+  /**
+   * Placement d'origine : une branche pliée se retire sans rien déplacer, le dessin
+   * plié reprend ces positions (retour de Folpe, 2026-10-13).
+   */
+  layout: TreeLayout;
 };
 
 /** Sous la bulle, au bas de l'étiquette : là où partent les branches (tree.routes.ts). */
@@ -76,12 +79,11 @@ function branchHandles(
       .map((owner) => layout.persons[owner])
       .filter((point) => point !== undefined)
       .sort((a, b) => a.x - b.x);
-    const [anchorId] = ownerIds;
     // Une union détachée n'a pas de point : sa poignée va sous le parent de gauche.
     const at = (union ? layout.unions[id] : undefined) ?? placed[0];
-    if (!at || !anchorId) return [];
+    if (!at) return [];
     const owners = ownerIds.map((owner) => people[owner]?.fullName ?? '').join(' et ');
-    return [{ id, anchorId, owners, x: at.x, y: at.y + BRANCH_DROP }];
+    return [{ id, owners, x: at.x, y: at.y + BRANCH_DROP }];
   });
 }
 
@@ -115,6 +117,7 @@ export function assembleDrawing(
     branches: branchHandles(drawn, layout, people, keys),
     width: layout.width,
     height: layout.height,
+    layout,
   };
 }
 

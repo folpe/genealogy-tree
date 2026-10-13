@@ -387,7 +387,6 @@ export function FamilyTree({
   const camera = useTreeCamera({ viewport, layer, content, start, restore, onSettle });
   const leaving = useRelayout({
     drawing: fold.drawing,
-    anchorId: fold.anchorId,
     camera,
     elements,
     links: linksRef,
@@ -417,18 +416,18 @@ export function FamilyTree({
     [byId, camera],
   );
 
-  const { folded, branchesOf, isRequested, setFolded } = fold;
+  const { folded, branchesOf, setFolded } = fold;
   const onKeyDown = useCallback(
     (id: string, event: KeyboardEvent<HTMLAnchorElement>) => {
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       // « - » replie les branches sous la bulle, « + » les déplie (DESIGN.md, section 11).
       const keys = branchesOf.get(id) ?? [];
       // D'après la dernière demande : « - » puis « + » coup sur coup s'annulent.
-      const collapse = event.key === '-' && keys.some((k) => !isRequested(k));
-      const expand = (event.key === '+' || event.key === '=') && keys.some(isRequested);
+      const collapse = event.key === '-' && keys.some((k) => !folded.has(k));
+      const expand = (event.key === '+' || event.key === '=') && keys.some((k) => folded.has(k));
       if (collapse || expand) {
         event.preventDefault();
-        setFolded(keys, collapse, id);
+        setFolded(keys, collapse);
         return;
       }
       const move = MOVES[event.key];
@@ -443,7 +442,7 @@ export function FamilyTree({
       // Bulle virtualisée, pas encore rendue : le focus suit après le rendu.
       else pendingFocus.current = target;
     },
-    [byId, rows, branchesOf, isRequested, setFolded],
+    [byId, rows, branchesOf, folded, setFolded],
   );
 
   // Les plis retenus reviennent une fois la caméra en place, autour de la bulle repère.
@@ -453,13 +452,13 @@ export function FamilyTree({
     foldsRestored.current = true;
     const remembered = memory.current;
     if (remembered && remembered.folded.length > 0) {
-      setFolded(remembered.folded, true, remembered.anchorId);
+      setFolded(remembered.folded, true);
     }
   }, [camera, setFolded]);
 
   const toggleBranch = useCallback(
-    (branch: BranchHandle) => setFolded([branch.id], !isRequested(branch.id), branch.anchorId),
-    [isRequested, setFolded],
+    (branch: BranchHandle) => setFolded([branch.id], !folded.has(branch.id)),
+    [folded, setFolded],
   );
 
   useLayoutEffect(() => {
@@ -492,7 +491,6 @@ export function FamilyTree({
       <section
         ref={viewport}
         aria-label="Canevas de l’arbre"
-        aria-busy={fold.pending}
         // Niveau des échelles de départ ; la caméra le tient ensuite à jour.
         data-detail="mid"
         // Le focus d'une bulle ne doit jamais faire défiler le canevas : la caméra s'en charge.
@@ -548,9 +546,6 @@ export function FamilyTree({
         <TreeMinimap points={nodes} width={width} height={height} camera={camera} />
       ) : undefined}
       <CanvasControls camera={camera} home={me ? home : undefined} />
-      <p role="status" className="absolute top-4 left-4 text-sm text-ink-2 empty:hidden">
-        {fold.failed ? 'La branche n’a pas pu se replacer. Réessaie dans un instant.' : undefined}
-      </p>
     </div>
   );
 }

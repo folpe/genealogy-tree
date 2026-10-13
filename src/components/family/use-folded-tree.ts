@@ -1,154 +1,68 @@
 // tdd-cover: e2e src/components/family/family-tree.test.tsx
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { branchesOf, branchKeys, foldGraph } from '@/lib/tree/tree.fold';
 import type { DisplayedGraph } from '@/server/family/family.display';
 import { assembleDrawing, peopleOf, type TreeDrawing } from './tree-drawing';
-import { createLayoutClient, type LayoutClient } from './tree-layout.client';
 
-// Branches pliées du canevas. Le premier dessin vient du serveur ; chaque pliage
-// demande un nouveau placement au worker, gardé en cache par ensemble de branches
-// pliées. Seule la dernière demande compte : une réponse dépassée est ignorée.
+// Branches pliées du canevas. Plier retire la branche sans rien déplacer : le dessin
+// plié reprend le placement d'origine (retour de Folpe, 2026-10-13 : un arbre qui se
+// réorganise à chaque pli fait perdre ses repères). Calcul synchrone, sans worker.
 
 export type FoldedTree = {
   drawing: TreeDrawing;
-  /** Bulle de la dernière branche pliée ou dépliée : la caméra la garde en place. */
-  anchorId: string | undefined;
-  /**
-   * Branches pliées, telles que demandées (clés : union d'un couple, ou parent seul).
-   * Les poignées et `aria-expanded` suivent la demande ; le dessin suit au calcul.
-   */
+  /** Branches pliées (clés : union d'un couple, ou parent seul). */
   folded: ReadonlySet<string>;
   /** Branches qui partent de chaque personne. */
   branchesOf: ReadonlyMap<string, string[]>;
   /** Personnes cachées sous une branche pliée, pour son libellé. */
   hiddenBelow: (key: string) => number;
-  pending: boolean;
-  failed: boolean;
-  /** Branche pliée dans la dernière demande, même pas encore affichée (clavier). */
-  isRequested: (key: string) => boolean;
-  /** Plie (`fold`) ou déplie des branches ; `anchorId` reste en place à l'écran. */
-  setFolded: (keys: string[], fold: boolean, anchorId: string) => void;
+  /** Plie (`fold`) ou déplie des branches. */
+  setFolded: (keys: string[], fold: boolean) => void;
 };
 
-const keyOf = (folded: ReadonlySet<string>) => [...folded].sort().join(' ');
-
 export function useFoldedTree(initial: TreeDrawing, graph: DisplayedGraph): FoldedTree {
-  const [state, setState] = useState<{
-    initial: TreeDrawing;
-    drawing: TreeDrawing;
-    folded: ReadonlySet<string>;
-    /** Dernière demande, pour l'affichage ; `requested` en est le miroir synchrone. */
-    asked: ReadonlySet<string>;
-    anchorId: string | undefined;
-    pending: boolean;
-    failed: boolean;
-  }>({
+  const [state, setState] = useState<{ initial: TreeDrawing; folded: ReadonlySet<string> }>({
     initial,
-    drawing: initial,
     folded: new Set(),
-    asked: new Set(),
-    anchorId: undefined,
-    pending: false,
-    failed: false,
   });
-  const cache = useRef(new Map<string, TreeDrawing>());
-  const latest = useRef(0);
-  const client = useRef<LayoutClient>(undefined);
-  /**
-   * Dernier ensemble demandé, base de la demande suivante : un pliage lancé pendant
-   * un calcul s'ajoute au précédent au lieu de repartir de ce qui est affiché.
-   */
-  const requested = useRef<ReadonlySet<string>>(new Set());
-
-  // Nouveau rendu serveur (données changées) : on repart de son dessin, tout déplié,
-  // et une réponse encore attendue pour l'ancien graphe ne s'appliquera pas.
-  if (state.initial !== initial) {
-    latest.current += 1;
-    requested.current = new Set();
-    setState({
-      initial,
-      drawing: initial,
-      folded: new Set(),
-      asked: new Set(),
-      anchorId: undefined,
-      pending: false,
-      failed: false,
-    });
-  }
-  useEffect(() => {
-    cache.current = new Map([['', initial]]);
-  }, [initial]);
-  useEffect(() => () => client.current?.dispose(), []);
+  // Nouveau rendu serveur (données changées) : on repart de son dessin, tout déplié.
+  if (state.initial !== initial) setState({ initial, folded: new Set() });
+  const { folded } = state;
 
   const people = useMemo(() => peopleOf(initial.nodes), [initial.nodes]);
   const keys = useMemo(() => branchKeys(graph), [graph]);
   const byPerson = useMemo(() => branchesOf(graph), [graph]);
-  const folded = state.folded;
 
-  const setFolded = useCallback(
-    (changed: string[], fold: boolean, id: string) => {
-      const base = requested.current;
-      const next = new Set(base);
-      for (const key of changed) {
-        if (!keys.has(key)) continue;
-        if (fold) next.add(key);
-        else next.delete(key);
-      }
-      if (keyOf(next) === keyOf(base)) return;
-      requested.current = next;
-      const request = ++latest.current;
-      const cached = cache.current.get(keyOf(next));
-      if (cached) {
-        setState((s) => ({
-          ...s,
-          drawing: cached,
-          folded: next,
-          asked: next,
-          anchorId: id,
-          pending: false,
-          failed: false,
-        }));
-        return;
-      }
-      setState((s) => ({ ...s, asked: next, pending: true, failed: false }));
-      const shown = foldGraph(graph, next);
-      client.current ??= createLayoutClient();
-      client.current.layout(shown).then(
-        (layout) => {
-          if (request !== latest.current) return;
-          const drawing = assembleDrawing(shown, layout, people, keys);
-          cache.current.set(keyOf(next), drawing);
-          setState((s) => ({ ...s, drawing, folded: next, anchorId: id, pending: false }));
-        },
-        () => {
-          if (request !== latest.current) return;
-          // La demande a échoué : la suivante repart de ce qui est affiché.
-          requested.current = folded;
-          setState((s) => ({ ...s, asked: folded, pending: false, failed: true }));
-        },
-      );
-    },
-    [folded, keys, graph, people],
+  const drawing = useMemo(
+    () =>
+      folded.size === 0
+        ? initial
+        : assembleDrawing(foldGraph(graph, folded), initial.layout, people, keys),
+    [folded, initial, graph, people, keys],
   );
 
-  const isRequested = useCallback((key: string) => requested.current.has(key), []);
+  const setFolded = useCallback(
+    (changed: string[], fold: boolean) =>
+      setState((s) => {
+        const next = new Set(s.folded);
+        for (const key of changed) {
+          if (!keys.has(key)) continue;
+          if (fold) next.add(key);
+          else next.delete(key);
+        }
+        return next.size === s.folded.size && [...next].every((k) => s.folded.has(k))
+          ? s
+          : { ...s, folded: next };
+      }),
+    [keys],
+  );
 
   const hiddenBelow = useCallback(
     (key: string) => graph.personIds.length - foldGraph(graph, new Set([key])).personIds.length,
     [graph],
   );
 
-  return {
-    drawing: state.drawing,
-    anchorId: state.anchorId,
-    folded: state.asked,
-    branchesOf: byPerson,
-    hiddenBelow,
-    pending: state.pending,
-    failed: state.failed,
-    isRequested,
-    setFolded,
-  };
+  return { drawing, folded, branchesOf: byPerson, hiddenBelow, setFolded };
 }

@@ -315,7 +315,7 @@ Principes : d3 calcule, GSAP anime, React rend (ADR 05). Animations interruptibl
 ## 11. Accessibilité et mobile
 
 - Navigation clavier complète dans le canevas : flèches pour passer de nœud en nœud (parent, enfant, conjoint, frère), Entrée ouvre la fiche, Échap ferme, ⌘K partout.
-- Branches : « - » sur une bulle replie les branches qui en partent, « + » les déplie ; la bulle porte `aria-expanded`. Les poignées sur les traits (« − », ou « +N » personnes cachées) sont hors du Tab, cible de 44 px à toute échelle.
+- Branches : « - » sur une bulle replie les branches qui en partent, « + » les déplie ; la bulle porte `aria-expanded`. Plier ne déplace aucune autre bulle : la branche laisse sa place vide, les repères restent. Les poignées sur les traits (« − », ou « +N » personnes cachées) sont hors du Tab, cible de 44 px à toute échelle.
 - Chaque bulle a un nom accessible "Prénom Nom, années, relation".
 - Focus visible : anneau encre 2px décalé de 2px (accent en sombre).
 - Contrastes : voir 3.2.

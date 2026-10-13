@@ -3,16 +3,10 @@ import { E2E_ISABELLE_EMAIL } from './e2e.constants';
 import { expect, test } from './fixtures';
 import { signIn } from './outbox';
 
-// Plier et déplier une branche (plan phase 4, lot 5) : le placement est recalculé
-// par le worker, dans le vrai navigateur, sous la CSP de production.
+// Plier et déplier une branche (plan phase 4, lot 5) : la branche se retire et
+// revient sans qu'aucune autre bulle ne bouge.
 
-test('« - » replie une branche par le worker, « + » la rouvre, la bulle reste en place', async ({
-  page,
-}) => {
-  const refused: string[] = [];
-  page.on('console', (message) => {
-    if (/Content Security Policy|worker/i.test(message.text())) refused.push(message.text());
-  });
+test('« - » replie une branche, « + » la rouvre, rien d’autre ne bouge', async ({ page }) => {
   await signIn(page, E2E_ISABELLE_EMAIL);
   await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
   const items = page.getByRole('treeitem');
@@ -31,7 +25,7 @@ test('« - » replie une branche par le worker, « + » la rouvre, la bulle rest
       name: /^Déplier la branche de Luc Marchand et Sophie Marchand, \d+ personnes$/,
     }),
   ).toBeAttached();
-  // La caméra suit le nouveau placement : Luc n'a pas bougé à l'écran.
+  // Même placement : Luc n'a pas bougé à l'écran.
   await settled(page);
   const after = await luc.boundingBox();
   expect(Math.abs((after?.x ?? 0) - (anchored?.x ?? 0))).toBeLessThan(2);
@@ -40,7 +34,6 @@ test('« - » replie une branche par le worker, « + » la rouvre, la bulle rest
   await page.keyboard.press('+');
   await expect(luc).toHaveAttribute('aria-expanded', 'true');
   await expect(items).toHaveCount(before);
-  expect(refused).toEqual([]);
 });
 
 test('la poignée sous une bulle plie sa branche au doigt ou à la souris', async ({ page }) => {
