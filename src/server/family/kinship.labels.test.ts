@@ -4,7 +4,7 @@ import { marchandFamily } from '../../../tests/fixtures/marchand-family';
 import { buildFamilyIndex, type FamilyIndex } from './family.helper';
 import type { FamilyGraph } from './family.types';
 import { relationship } from './kinship.helper';
-import { describeDegree, describeRelationship } from './kinship.labels';
+import { describeAncestor, describeDegree, describeRelationship } from './kinship.labels';
 
 const index = buildFamilyIndex(marchandFamily);
 const label = (from: string, to: string, idx: FamilyIndex = index) =>
@@ -211,5 +211,20 @@ describe('couverture des cas rares', () => {
     ['g3', 'g2', 'ton parent'],
   ])('%s -> %s : « %s »', (from, to, expected) => {
     expect(label(from, to, idx)).toBe(expected);
+  });
+});
+
+describe('describeAncestor (éventail)', () => {
+  it('nomme les ancêtres du lecteur au tutoiement', () => {
+    expect(describeAncestor(1, 'femme')).toBe('ta mère');
+    expect(describeAncestor(3, 'homme')).toBe('ton arrière-grand-père');
+    expect(describeAncestor(2, 'inconnu')).toBe('ton grand-parent');
+    expect(describeAncestor(6, 'femme')).toBe('ton ancêtre à la 6e génération');
+  });
+
+  it('nomme les ancêtres d’une autre personne, avec élision', () => {
+    expect(describeAncestor(1, 'homme', 'Luc')).toBe('le père de Luc');
+    expect(describeAncestor(2, 'femme', 'Émile')).toBe('la grand-mère d’Émile');
+    expect(describeAncestor(5, 'homme', 'Hugo')).toBe('l’ancêtre d’Hugo à la 5e génération');
   });
 });
