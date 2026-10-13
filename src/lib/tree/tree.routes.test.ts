@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayedGraph } from '../../server/family/family.display';
-import { DEFAULT_METRICS, type TreeLayout } from './tree.layout';
+import type { TreeLayout } from './tree.layout';
+import { DEFAULT_METRICS } from './tree.metrics';
 import { routeLinks } from './tree.routes';
 
 const r = DEFAULT_METRICS.bubble / 2;
@@ -53,7 +54,11 @@ describe('routeLinks', () => {
   });
 
   it('fait partir une branche directe sous l’étiquette du parent, sans la barrer', () => {
-    expect(link('parent:d>e')).toMatchObject({ kind: 'parent', filiation: 'adoptive' });
+    expect(link('parent:d>e')).toMatchObject({
+      kind: 'parent',
+      filiation: 'adoptive',
+      parentId: 'd',
+    });
     const d = link('parent:d>e')?.d ?? '';
     expect(d.startsWith(`M500,${50 + below} C`)).toBe(true);
     expect(d.endsWith(` 500,${300 - r}`)).toBe(true);

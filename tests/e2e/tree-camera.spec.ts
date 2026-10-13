@@ -157,3 +157,75 @@ test('glisser depuis une bulle ne lance pas le glisser-déposer du navigateur', 
     );
   expect(prevented).toBe(true);
 });
+
+test('zoom sémantique : de près, le nom complet ; le texte reste net', async ({ page }) => {
+  const canvas = await openTree(page);
+  const me = page.getByRole('treeitem', { name: /c’est toi$/ });
+  await expect(canvas).toHaveAttribute('data-detail', 'mid');
+  await expect(me.getByText('Toi', { exact: true })).toBeVisible();
+  const zoomIn = page.getByRole('button', { name: 'Zoomer', exact: true });
+  for (let i = 0; i < 3; i += 1) {
+    await zoomIn.click();
+    await settled(page);
+  }
+  await expect(canvas).toHaveAttribute('data-detail', 'near');
+  await expect(me.getByText('Isabelle Lefèvre')).toBeVisible();
+  await expect(me.getByText('Toi', { exact: true })).toBeHidden();
+  // Calque figé à son échelle de départ pendant le geste seulement, sinon le texte est flou.
+  await expect(page.locator('[data-camera-layer]')).toHaveCSS('will-change', 'auto');
+});
+
+test('zoom sémantique : de loin, des pastilles sans texte', async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobile', 'l’arbre de test tient en entier sur grand écran');
+  const canvas = await openTree(page);
+  const zoomOut = page.getByRole('button', { name: 'Dézoomer', exact: true });
+  for (let i = 0; i < 4; i += 1) {
+    await zoomOut.click();
+    await settled(page);
+  }
+  await expect(canvas).toHaveAttribute('data-detail', 'far');
+  const henri = page.getByRole('treeitem', { name: /^Henri Marchand/ });
+  await expect(henri).toBeVisible();
+  await expect(henri.getByText('Henri', { exact: true })).toBeHidden();
+});
+
+test('mouvements réduits : « Me retrouver » saute sans animer', async ({ page }) => {
+  const canvas = await openTree(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const me = page.getByRole('treeitem', { name: /c’est toi$/ });
+  for (let i = 0; i < 4; i += 1) await drag(page, canvas, [300, 300], [20, 20]);
+  await settled(page);
+  const layer = page.locator('[data-camera-layer]');
+  await page.getByRole('button', { name: 'Me retrouver' }).click();
+  // Pas de vol : dès la frame suivante, la caméra est à sa place finale.
+  const next = await layer.evaluate(
+    (el) => new Promise<string>((done) => requestAnimationFrame(() => done(el.style.transform))),
+  );
+  await settled(page);
+  expect(next).toBe(await layer.evaluate((el) => el.style.transform));
+  await expect(me).toBeInViewport();
+});
+
+test('un tap pendant un vol arrête la caméra et finit le mouvement', async ({ page }) => {
+  const canvas = await openTree(page);
+  const layer = page.locator('[data-camera-layer]');
+  for (let i = 0; i < 4; i += 1) await drag(page, canvas, [300, 300], [20, 20]);
+  await settled(page);
+  await page.getByRole('button', { name: 'Me retrouver' }).click();
+  // En plein vol, un tap sur le fond du canevas, loin de toute bulle et des boutons.
+  await page.waitForTimeout(120);
+  const empty = await canvas.evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    for (let y = 16; y < box.height / 2; y += 16) {
+      for (let x = 16; x < box.width / 2; x += 16) {
+        const hit = document.elementFromPoint(box.left + x, box.top + y);
+        if (hit && !hit.closest('a, button')) return { x, y };
+      }
+    }
+    throw new Error('aucun point vide dans le canevas');
+  });
+  await canvas.click({ position: empty });
+  await expect(page).toHaveURL(/\/tree$/);
+  await settled(page);
+  await expect(layer).toHaveCSS('will-change', 'auto');
+});

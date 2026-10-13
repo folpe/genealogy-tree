@@ -52,6 +52,18 @@
   --color-grid-dot: light-dark(oklch(22.9% 0.007 67.4 / 0.24), oklch(95.4% 0.014 78.3 / 0.16));
 }
 
+/*
+ * Générations vues de loin (zoom sémantique) : cinq teintes de la palette, en boucle.
+ * Hors de @theme : lues par un style en ligne, aucune classe ne les ferait émettre.
+ */
+:root {
+  --color-gen-0: light-dark(oklch(62% 0.09 43), oklch(75% 0.1 50));
+  --color-gen-1: light-dark(oklch(68% 0.09 80), oklch(80% 0.09 85));
+  --color-gen-2: light-dark(oklch(62% 0.07 145), oklch(76% 0.07 145));
+  --color-gen-3: light-dark(oklch(58% 0.07 235), oklch(74% 0.07 235));
+  --color-gen-4: light-dark(oklch(56% 0.08 320), oklch(74% 0.08 320));
+}
+
 @layer base {
   :root {
     color-scheme: light dark;

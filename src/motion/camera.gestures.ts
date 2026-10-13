@@ -1,6 +1,6 @@
 // tdd-cover: e2e tests/e2e/tree-camera.spec.ts
 import { type Camera, zoomAt } from '@/lib/tree/tree.camera';
-import type { Point } from '@/lib/tree/tree.layout';
+import type { Point } from '@/lib/tree/tree.metrics';
 import type { CameraController } from './camera';
 
 // Gestes du canevas, en Pointer Events unifiés (souris, stylet, doigts) : un pointeur
@@ -29,6 +29,8 @@ export function bindCameraGestures(viewport: HTMLElement, camera: CameraControll
   let start: { camera: Camera; point: Point; distance: number } | undefined;
   let dragging = false;
   let swallowClick = false;
+  /** Le premier appui a coupé une animation : la caméra est arrêtée en route. */
+  let interrupted = false;
   let samples: Sample[] = [];
   let wheelTimer: ReturnType<typeof setTimeout> | undefined;
   let safari: { camera: Camera; point: Point } | undefined;
@@ -90,7 +92,7 @@ export function bindCameraGestures(viewport: HTMLElement, camera: CameraControll
     // Un geste tactile qui a bougé n'émet pas de click : un nouvel appui repart à zéro,
     // sinon le premier tap après un glissé serait avalé.
     swallowClick = false;
-    camera.stop();
+    if (camera.stop() && pointers.size === 0) interrupted = true;
     pointers.set(event.pointerId, local(event.clientX, event.clientY));
     if (pointers.size === 1) dragging = false;
     begin();
@@ -128,7 +130,14 @@ export function bindCameraGestures(viewport: HTMLElement, camera: CameraControll
       begin();
       return;
     }
-    if (!dragging) return;
+    if (!dragging) {
+      // Un tap a coupé un vol, un zoom ou un retour élastique : on relâche sur place,
+      // pour revenir dans les bornes et finir le mouvement (texte net, bulles à jour).
+      if (interrupted) camera.release({ x: 0, y: 0 });
+      interrupted = false;
+      return;
+    }
+    interrupted = false;
     // Après un pincement, pas d'élan : seulement le retour dans les bornes.
     camera.release(start && start.distance > 0 ? { x: 0, y: 0 } : velocity());
     swallowClick = true;

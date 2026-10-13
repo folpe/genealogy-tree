@@ -12,7 +12,7 @@ import {
   scaleLimits,
   zoomAt,
 } from '@/lib/tree/tree.camera';
-import type { Point } from '@/lib/tree/tree.layout';
+import type { Point } from '@/lib/tree/tree.metrics';
 
 gsap.registerPlugin(InertiaPlugin);
 
@@ -27,8 +27,11 @@ export type CameraController = {
   get: () => Camera;
   viewport: () => Size;
   limits: () => ScaleLimits;
-  /** Arrête toute animation en cours : le doigt reprend la main. */
-  stop: () => void;
+  /**
+   * Arrête toute animation en cours : le doigt reprend la main. Rend `true` si une
+   * animation a été coupée : la caméra est alors arrêtée en route, à relâcher.
+   */
+  stop: () => boolean;
   /** Pose la caméra ; `elastic` laisse dépasser les bornes avec résistance (geste en cours). */
   set: (camera: Camera, options?: { elastic?: boolean }) => void;
   /** Lâcher d'un geste : inertie (px/s), puis retour élastique dans les bornes. */
@@ -61,8 +64,9 @@ export function createCamera({
   const state: Camera = { ...initial };
   const listeners = new Set<(camera: Camera) => void>();
   let tween: gsap.core.Tween | undefined;
+  let moving = false;
 
-  const apply = () => {
+  const paint = () => {
     layer.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.k})`;
     // Trame (spec 12) : ses points restent fixés au monde, au pas de 46 px.
     viewportElement.style.setProperty('--cam-x', `${size.width / 2 + state.x}px`);
@@ -70,16 +74,33 @@ export function createCamera({
     viewportElement.style.setProperty('--cam-k', String(state.k));
     for (const listener of listeners) listener(state);
   };
+  // `will-change` le temps du mouvement seulement : gardé, le navigateur figerait le
+  // calque à son échelle de départ, et les noms deviendraient flous de près.
+  const apply = () => {
+    if (!moving) {
+      moving = true;
+      layer.style.willChange = 'transform';
+    }
+    paint();
+  };
   const assign = (camera: Camera) => {
     state.x = camera.x;
     state.y = camera.y;
     state.k = camera.k;
     apply();
   };
-  const settle = () => onSettle({ ...state });
+  const settle = () => {
+    // Une animation finie n'est plus « en cours » : un tap ensuite n'a rien à conclure.
+    tween = undefined;
+    moving = false;
+    layer.style.willChange = 'auto';
+    onSettle({ ...state });
+  };
   const stop = () => {
+    const interrupted = tween !== undefined || moving;
     tween?.kill();
     tween = undefined;
+    return interrupted;
   };
   /** Sans animation quand l'utilisateur la refuse (DESIGN.md, section 10). */
   const instant = (to: Camera) => {
@@ -160,9 +181,11 @@ export function createCamera({
     },
     dispose() {
       stop();
+      // Le calque survit à la caméra (remontée sur un nouveau placement).
+      layer.style.willChange = 'auto';
       listeners.clear();
     },
   };
-  apply();
+  paint();
   return controller;
 }

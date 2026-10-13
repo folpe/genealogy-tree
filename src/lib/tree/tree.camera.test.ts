@@ -3,6 +3,9 @@ import {
   cameraBounds,
   cameraOn,
   clampCamera,
+  DETAIL_FAR_BELOW,
+  DETAIL_NEAR_FROM,
+  detailLevel,
   flightPath,
   nodesInView,
   rubberBand,
@@ -123,5 +126,21 @@ describe('nodesInView', () => {
     expect(shown.map((n) => n.id)).toContain('n0');
     expect(shown.map((n) => n.id)).toContain('n300');
     expect(shown.map((n) => n.id)).not.toContain('n19');
+  });
+});
+
+describe('detailLevel', () => {
+  it('loin : des points ; moyen : bulles et prénoms ; proche : tout', () => {
+    expect(detailLevel(0.2)).toBe('far');
+    expect(detailLevel(DETAIL_FAR_BELOW - 0.01)).toBe('far');
+    expect(detailLevel(DETAIL_FAR_BELOW)).toBe('mid');
+    expect(detailLevel(1)).toBe('mid');
+    expect(detailLevel(DETAIL_NEAR_FROM)).toBe('near');
+    expect(detailLevel(2.5)).toBe('near');
+  });
+
+  it('les échelles de départ (0,75 et 1) tombent au niveau moyen, celui du rendu serveur', () => {
+    expect(detailLevel(0.75)).toBe('mid');
+    expect(detailLevel(1)).toBe('mid');
   });
 });
