@@ -25,7 +25,11 @@ export async function addRelative(
     throw new AppError({ message: 'Accès réservé', code: 'FAMILY_FORBIDDEN', status: 403 });
   }
   const index = buildFamilyIndex(graph);
-  if (!editableIds(buildAccessContext(index, members), viewer).includes(input.anchorId)) {
+  // L'autre parent voit aussi ses liens changer : la policy vaut pour lui comme pour
+  // la fiche de départ (un ancien conjoint, par exemple, reste hors de portée).
+  const editable = new Set(editableIds(buildAccessContext(index, members), viewer));
+  const touched = [input.anchorId, ...(input.otherParentId ? [input.otherParentId] : [])];
+  if (!touched.every((id) => editable.has(id))) {
     throw new AppError({
       message:
         'Cette fiche est hors de ta lignée : tu ne peux pas encore y ajouter quelqu’un. Les suggestions à la famille arrivent bientôt.',

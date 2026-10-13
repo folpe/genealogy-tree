@@ -79,6 +79,23 @@ describe('planAddRelative', () => {
     ).toThrow(ValidationError);
   });
 
+  it('ne remplace pas en silence l’union d’une filiation existante', () => {
+    // Sophie est la mère de Léa dans l'union avec Luc : on retire Luc pour l'exemple.
+    const graph = {
+      ...marchandFamily,
+      parentChildren: marchandFamily.parentChildren.filter(
+        (l) => !(l.parentId === 'luc' && l.childId === 'lea'),
+      ),
+    };
+    expect(() =>
+      planAddRelative(
+        buildFamilyIndex(graph),
+        input({ anchorId: 'lea', otherParentId: 'sophie' }),
+        ids,
+      ),
+    ).toThrow('appartient déjà à une union');
+  });
+
   it('un enfant d’un couple : les deux parents, rattachés à leur union', () => {
     const plan = planAddRelative(
       index,

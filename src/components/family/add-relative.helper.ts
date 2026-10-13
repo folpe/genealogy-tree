@@ -24,6 +24,9 @@ export function relativeOptions(tree: TreeForViewer, anchorId: string): Relative
     const person = tree.persons.find((p) => p.id === id);
     return person ? personLabel(person) : undefined;
   };
+  // Seul un autre parent que le lecteur peut modifier est proposé : le serveur
+  // refuserait les autres (la policy vaut pour lui aussi).
+  const editable = new Set(tree.editableIds);
   const parents = tree.parentChildren
     .filter((l) => l.childId === anchorId && l.kind !== 'a_eleve')
     .flatMap((l) => {
@@ -35,13 +38,16 @@ export function relativeOptions(tree: TreeForViewer, anchorId: string): Relative
     .flatMap((u) => {
       const id = u.partnerIds[0] === anchorId ? u.partnerIds[1] : u.partnerIds[0];
       const name = id ? label(id) : undefined;
-      return id && name ? [{ id, label: name, ongoing: u.end === undefined }] : [];
+      return id && name && editable.has(id)
+        ? [{ id, label: name, ongoing: u.end === undefined }]
+        : [];
     })
     .sort((a, b) => Number(b.ongoing) - Number(a.ongoing));
   return {
-    canAdd: tree.editableIds.includes(anchorId),
+    canAdd: editable.has(anchorId),
     parentsFull: parents.length >= 2,
-    singleParent: parents.length === 1 ? parents[0] : undefined,
+    singleParent:
+      parents.length === 1 && parents[0] && editable.has(parents[0].id) ? parents[0] : undefined,
     partners,
   };
 }

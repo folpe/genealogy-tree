@@ -92,6 +92,21 @@ describe.skipIf(!db)('relatives.service (intégration)', () => {
     expect((await loadFamilyGraph(client)).persons).toHaveLength(before);
   });
 
+  it('l’autre parent hors de portée (un ancien conjoint) bloque l’ajout', async () => {
+    const before = (await loadFamilyGraph(client)).parentChildren.length;
+    await expect(
+      addRelative(deps, 'u-luc', {
+        anchorId: 'luc',
+        relation: 'child',
+        firstName: 'Zoé',
+        lastName: 'Marchand',
+        gender: 'femme',
+        otherParentId: 'claire',
+      }),
+    ).rejects.toMatchObject({ code: 'FAMILY_OUTSIDE_PERIMETER' });
+    expect((await loadFamilyGraph(client)).parentChildren).toHaveLength(before);
+  });
+
   it('deux ajouts simultanés ne donnent jamais trois parents', async () => {
     await addRelative(deps, 'u-owner', bernardsFather);
     const results = await Promise.allSettled([

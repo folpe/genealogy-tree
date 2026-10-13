@@ -104,6 +104,17 @@ export function planAddRelative(
     const link: ParentChild = { parentId: person.id, childId: anchorId, kind: 'biologique' };
     if (otherParentId) {
       if (!parents.some((p) => p.id === otherParentId)) throw invalid('Autre parent inconnu');
+      const existing = (index.linksByChild.get(anchorId) ?? []).find(
+        (l) => l.parentId === otherParentId,
+      );
+      // Déjà rattaché à une union : on ne la remplace pas en silence.
+      if (existing?.unionId) {
+        throw new AppError({
+          message: `Le lien avec ${index.persons.get(otherParentId)?.firstName ?? 'ce parent'} appartient déjà à une union : ajoute ce parent sans cocher « En couple ».`,
+          code: 'FAMILY_LINK_HAS_UNION',
+          status: 422,
+        });
+      }
       plan.unions.push({ id: ids.union, partnerIds: [otherParentId, person.id], kind: 'inconnu' });
       link.unionId = ids.union;
       plan.linkUnions.push({ parentId: otherParentId, childId: anchorId, unionId: ids.union });

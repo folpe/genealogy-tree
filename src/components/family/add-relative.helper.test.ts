@@ -16,11 +16,16 @@ describe('relativeOptions', () => {
   });
 
   it('les conjoints, l’union en cours d’abord, pour l’autre parent d’un enfant', () => {
-    const luc = relativeOptions(treeForViewer('m-luc'), 'luc');
+    const luc = relativeOptions(treeForViewer('m-folpe'), 'luc');
     expect(luc.partners).toEqual([
       { id: 'sophie', label: 'Sophie Marchand', ongoing: true },
       { id: 'claire', label: expect.stringMatching(/^Claire/), ongoing: false },
     ]);
+  });
+
+  it('ne propose pas un autre parent que le lecteur ne peut pas modifier (ancien conjoint)', () => {
+    const luc = relativeOptions(treeForViewer('m-luc'), 'luc');
+    expect(luc.partners.map((p) => p.id)).toEqual(['sophie']);
   });
 
   it('hors de sa lignée : pas d’ajout direct', () => {
