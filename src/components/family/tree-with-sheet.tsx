@@ -29,9 +29,12 @@ type AddAction = (
 
 const WIDE = '(min-width: 1024px)';
 
-/** Grand écran ; `false` au rendu serveur, où le CSS montre déjà le bon panneau. */
-function useWide(): boolean {
-  const [wide, setWide] = useState(false);
+/**
+ * Grand écran ; `undefined` tant qu'on ne sait pas (rendu serveur, hydratation) : le
+ * CSS montre alors le panneau, et la feuille mobile attend d'être sûre.
+ */
+function useWide(): boolean | undefined {
+  const [wide, setWide] = useState<boolean>();
   useEffect(() => {
     const query = window.matchMedia(WIDE);
     setWide(query.matches);
@@ -42,13 +45,19 @@ function useWide(): boolean {
   return wide;
 }
 
-/** Next suit `pushState` : `useSearchParams` change, sans nouveau rendu serveur. */
-function pushFiche(id: string | undefined) {
+/**
+ * Next suit `pushState` et `replaceState` : `useSearchParams` change, sans nouveau
+ * rendu serveur. Ouvrir ajoute une entrée ; fermer la remplace, pour que Retour ne
+ * rouvre pas la fiche qu'on vient de fermer.
+ */
+function showFiche(id: string | undefined) {
   const url = new URL(window.location.href);
   if (id) url.searchParams.set('fiche', id);
   else url.searchParams.delete('fiche');
-  // allow-null: contrat de pushState tel que Next le documente pour suivre l'URL.
-  window.history.pushState(null, '', `${url.pathname}${url.search}`);
+  const next = `${url.pathname}${url.search}`;
+  // allow-null: contrat de pushState et replaceState tel que Next le documente.
+  if (id) window.history.pushState(null, '', next);
+  else window.history.replaceState(null, '', next);
 }
 
 export function TreeWithSheet({
@@ -66,8 +75,8 @@ export function TreeWithSheet({
   const person = asked ? tree.persons.find((p) => p.id === asked) : undefined;
   const title = person ? `Fiche de ${personLabel(person)}` : '';
   const wide = useWide();
-  const open = useCallback((id: string) => pushFiche(id), []);
-  const close = useCallback(() => pushFiche(undefined), []);
+  const open = useCallback((id: string) => showFiche(id), []);
+  const close = useCallback(() => showFiche(undefined), []);
 
   const panel = person ? (
     <PersonPanel
@@ -91,7 +100,8 @@ export function TreeWithSheet({
           onOpen={open}
         />
       </div>
-      {panel ? (
+      {/* Monté une seule fois : en panneau, sauf sur un écran qu'on sait étroit. */}
+      {panel && wide !== false ? (
         <aside
           aria-label={title}
           className="hidden max-h-[calc(100dvh-13rem)] w-[420px] shrink-0 overflow-y-auto rounded-[var(--radius-card)] bg-card p-7 shadow-card lg:block"
@@ -99,7 +109,10 @@ export function TreeWithSheet({
           {panel}
         </aside>
       ) : undefined}
-      <Drawer.Root open={panel !== undefined && !wide} onOpenChange={(next) => !next && close()}>
+      <Drawer.Root
+        open={panel !== undefined && wide === false}
+        onOpenChange={(next) => !next && close()}
+      >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-40 bg-ink/20" />
           <Drawer.Content

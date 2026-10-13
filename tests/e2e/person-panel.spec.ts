@@ -34,12 +34,17 @@ test('un tap ouvre la fiche à côté de l’arbre ; on passe de fiche en fiche'
     .click();
   await expect(page).toHaveURL(/\/tree$/);
   await expect(sheetOf(page, info, /Luc Marchand/)).toHaveCount(0);
+  // Fermer remplace l'entrée : Retour ne rouvre pas la fiche fermée.
+  await page.goBack();
+  await expect(page).not.toHaveURL(/fiche=luc/);
 });
 
 test('un lien vers une fiche ouvre l’arbre avec la fiche', async ({ page }, info) => {
   await signIn(page, 'hugo@famille.test');
   await page.goto('/tree?fiche=paul');
   await expect(sheetOf(page, info, /Paul Marchand/)).toContainText('Ton grand-père');
+  // Sur grand écran, jamais de feuille mobile, même un instant.
+  if (info.project.name !== 'mobile') await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(
     sheetOf(page, info, /Paul Marchand/).getByRole('link', { name: 'Fiche complète' }),
   ).toHaveAttribute('href', '/people/paul');
