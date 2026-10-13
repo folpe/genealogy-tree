@@ -1,6 +1,7 @@
 import type { ElkExtendedEdge, ElkNode, ElkPort } from 'elkjs/lib/elk-api';
 import { z } from 'zod';
 import type { DisplayedGraph } from '../../server/family/family.display';
+import { countCrossings } from './tree.crossings';
 import { DEFAULT_METRICS, type LayoutMetrics, type Point } from './tree.metrics';
 
 // Placement de l'arbre (plan phase 4, lot 2). ELK (algorithme `layered`) ne connaît
@@ -124,24 +125,109 @@ const elkResultSchema = z.object({
   children: z.array(z.object({ id: z.string(), x: z.number(), y: z.number() })),
 });
 
+/** Un placement neuf à chaque fois : ses tables sont remplies sur place. */
+const emptyLayout = (): TreeLayout => ({
+  persons: {},
+  unions: {},
+  unknownPartners: {},
+  detachedUnions: [],
+  width: 0,
+  height: 0,
+});
+
 export async function computeTreeLayout(
   drawn: DisplayedGraph,
   elk: ElkLike,
   metrics: LayoutMetrics = DEFAULT_METRICS,
 ): Promise<TreeLayout> {
-  const empty: TreeLayout = {
-    persons: {},
-    unions: {},
-    unknownPartners: {},
-    detachedUnions: [],
-    width: 0,
-    height: 0,
-  };
-  if (drawn.personIds.length === 0) return empty;
+  if (drawn.personIds.length === 0) return emptyLayout();
+  // La minimisation des croisements d'ELK est une heuristique qui peut s'arrêter sur
+  // un optimum local selon sa graine : on en essaie quelques-unes et on garde le
+  // placement le plus lisible, en s'arrêtant au premier sans croisement.
+  let best: { layout: TreeLayout; crossings: number } | undefined;
+  for (const seed of SEEDS) {
+    const layout = await placeOnce(drawn, elk, metrics, seed);
+    const crossings = countCrossings(drawn, layout);
+    if (!best || crossings < best.crossings) best = { layout, crossings };
+    if (crossings === 0) break;
+  }
+  return best?.layout ?? emptyLayout();
+}
 
+/** Graines essayées, dans l'ordre ; la première suffit presque toujours. */
+const SEEDS = [1, 2, 3] as const;
+
+async function placeOnce(
+  drawn: DisplayedGraph,
+  elk: ElkLike,
+  metrics: LayoutMetrics,
+  seed: number,
+): Promise<TreeLayout> {
+  const { blocks, detached } = buildBlocks(drawn);
+  const first = await placeBlocks(drawn, blocks, detached, elk, metrics, seed);
+  // ELK range les blocs mais ne retourne pas un couple : chaque partenaire passe du
+  // côté de sa famille d'origine, puis on replace (retour de Folpe, 2026-10-13).
+  return orientCouples(drawn, blocks, first)
+    ? placeBlocks(drawn, blocks, detached, elk, metrics, seed)
+    : first;
+}
+
+/** Abscisse d'où descend le trait vers une personne : l'union de ses parents, ou son parent. */
+function originsX(drawn: DisplayedGraph, layout: TreeLayout): Map<string, number> {
+  const partners = new Map(drawn.unions.map((u) => [u.id, u.partnerIds]));
+  const origins = new Map<string, number>();
+  for (const edge of drawn.edges) {
+    if (edge.kind !== 'child' && edge.kind !== 'parent') continue;
+    let x = edge.kind === 'parent' ? layout.persons[edge.from]?.x : layout.unions[edge.from]?.x;
+    if (x === undefined && edge.kind === 'child') {
+      const placed = (partners.get(edge.from) ?? []).flatMap((p) =>
+        p && layout.persons[p] ? [layout.persons[p].x] : [],
+      );
+      if (placed.length > 0) x = placed.reduce((a, b) => a + b, 0) / placed.length;
+    }
+    if (x !== undefined && !origins.has(edge.to)) origins.set(edge.to, x);
+  }
+  return origins;
+}
+
+/**
+ * Couples de deux : le partenaire dont la famille est à gauche passe à gauche. Sans
+ * famille dessinée d'un côté, l'autre partenaire se tourne vers la sienne. Rend `true`
+ * si un couple a été retourné.
+ */
+function orientCouples(drawn: DisplayedGraph, blocks: Block[], layout: TreeLayout): boolean {
+  const origins = originsX(drawn, layout);
+  let changed = false;
+  for (const block of blocks) {
+    const [left, right] = block.slots;
+    if (block.slots.length !== 2 || left?.kind !== 'person' || right?.kind !== 'person') continue;
+    const center = ((layout.persons[left.id]?.x ?? 0) + (layout.persons[right.id]?.x ?? 0)) / 2;
+    const pullLeft = origins.get(left.id);
+    const pullRight = origins.get(right.id);
+    const swap =
+      pullLeft !== undefined && pullRight !== undefined
+        ? pullLeft > pullRight
+        : pullLeft !== undefined
+          ? pullLeft > center
+          : pullRight !== undefined && pullRight < center;
+    if (swap) {
+      block.slots.reverse();
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+async function placeBlocks(
+  drawn: DisplayedGraph,
+  blocks: Block[],
+  detached: Set<string>,
+  elk: ElkLike,
+  metrics: LayoutMetrics,
+  seed: number,
+): Promise<TreeLayout> {
   const slot = metrics.nodeWidth + metrics.gap;
   const slotX = (index: number) => index * slot + metrics.nodeWidth / 2;
-  const { blocks, detached } = buildBlocks(drawn);
   const personSlot = new Map<string, { block: Block; index: number }>();
   for (const block of blocks) {
     block.slots.forEach((s, index) => {
@@ -215,6 +301,13 @@ export async function computeTreeLayout(
         'elk.direction': 'DOWN',
         'elk.layered.layering.strategy': 'NETWORK_SIMPLEX',
         'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
+        // Croisements (retour de Folpe, 2026-10-13) : deux familles reliées par un couple
+        // laissaient des cousins s'intercaler. Plus de passes de minimisation et des
+        // échanges gloutons des deux côtés : 0 croisement sur la famille réelle, en moins
+        // de temps qu'avant (65 ms contre 91 pour 112 fiches).
+        'elk.layered.thoroughness': '50',
+        'elk.layered.crossingMinimization.greedySwitch.type': 'TWO_SIDED',
+        'elk.randomSeed': String(seed),
         'elk.spacing.nodeNode': String(metrics.blockGap),
         'elk.layered.spacing.nodeNodeBetweenLayers': String(metrics.layerGap),
         'elk.separateConnectedComponents': 'true',
@@ -238,7 +331,7 @@ export async function computeTreeLayout(
     return { x: node.x + x, y: node.y + metrics.bubble / 2 };
   };
   const layout: TreeLayout = {
-    ...empty,
+    ...emptyLayout(),
     detachedUnions: [...detached].sort(),
     width: result.width,
     height: result.height,
