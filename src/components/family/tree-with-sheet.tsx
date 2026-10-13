@@ -239,10 +239,15 @@ function LinkButton({
   async function ask() {
     setPending(true);
     setError(undefined);
-    const result = await relationshipAction(personId);
-    setPending(false);
-    if (result.ok) onLink(result.view);
-    else setError(result.error);
+    try {
+      const result = await relationshipAction(personId);
+      if (result.ok) onLink(result.view);
+      else setError(result.error);
+    } catch {
+      setError('Le lien n’a pas pu être calculé. Réessaie dans un instant.');
+    } finally {
+      setPending(false);
+    }
   }
   return (
     <div className="flex flex-col gap-2">

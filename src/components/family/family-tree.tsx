@@ -434,10 +434,13 @@ export function FamilyTree({
     [nodes, fold.folded, viewKey],
   );
   const camera = useTreeCamera({ viewport, layer, content, start, restore, onSettle });
-  // Un nouveau lien éclairé : la caméra cadre tout son chemin.
+  // Un nouveau lien éclairé : la caméra cadre tout son chemin, et recadre quand la carte
+  // a pris sa hauteur. Un pli ensuite ne la déplace pas : les bulles sont relues ici.
+  const nodesById = useRef(byId);
+  nodesById.current = byId;
   useEffect(() => {
     if (!camera || !highlight) return;
-    const onPath = [...highlight.persons].flatMap((id) => byId.get(id) ?? []);
+    const onPath = [...highlight.persons].flatMap((id) => nodesById.current.get(id) ?? []);
     if (onPath.length === 0) return;
     const rect = {
       x0: Math.min(...onPath.map((n) => n.x)) - NODE_HALF_WIDTH,
@@ -446,7 +449,7 @@ export function FamilyTree({
       y1: Math.max(...onPath.map((n) => n.y)) + BUBBLE_RADIUS + LABEL_HEIGHT,
     };
     camera.flyTo(cameraFraming(rect, camera.viewport(), camera.limits(), { top: coveredTop }));
-  }, [camera, highlight, byId, coveredTop]);
+  }, [camera, highlight, coveredTop]);
   const leaving = useRelayout({
     drawing: fold.drawing,
     camera,
