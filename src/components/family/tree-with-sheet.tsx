@@ -15,6 +15,7 @@ import { AddRelative } from './add-relative';
 import { relativeOptions } from './add-relative.helper';
 import { FamilyTree } from './family-tree';
 import { PersonSheet } from './family-views';
+import { useOpenFicheRequests } from './open-fiche';
 import { personLabel } from './person.helper';
 import type { TreeDrawing } from './tree-drawing';
 
@@ -53,6 +54,8 @@ function useWide(): boolean | undefined {
  */
 function showFiche(id: string | undefined) {
   const url = new URL(window.location.href);
+  // Ouvrir une autre fiche : l'anneau du retour (`focus`) suit la dernière bulle touchée.
+  if (id) url.searchParams.delete('focus');
   if (id) url.searchParams.set('fiche', id);
   else url.searchParams.delete('fiche');
   const next = `${url.pathname}${url.search}`;
@@ -72,12 +75,20 @@ export function TreeWithSheet({
   viewKey: string;
   addAction: AddAction;
 }) {
-  const asked = useSearchParams().get('fiche') ?? undefined;
+  const search = useSearchParams();
+  const asked = search.get('fiche') ?? undefined;
+  /** Retour d'une fiche complète : la bulle de la personne, sans rouvrir sa fiche. */
+  const focusOn = search.get('focus') ?? undefined;
   const person = asked ? tree.persons.find((p) => p.id === asked) : undefined;
   const title = person ? `Fiche de ${personLabel(person)}` : '';
   const wide = useWide();
   const open = useCallback((id: string) => showFiche(id), []);
   const close = useCallback(() => showFiche(undefined), []);
+  useOpenFicheRequests((id) => {
+    if (!tree.drawn.personIds.includes(id)) return false;
+    showFiche(id);
+    return true;
+  });
   const [link, setLink] = useState<{ view: RelationshipView; highlight: PathHighlight }>();
   const [cardHeight, setCardHeight] = useState(0);
   // Une autre vue de l'arbre (recentrage, profondeur) : le lien éclairé ne vaut plus.
@@ -128,6 +139,7 @@ export function TreeWithSheet({
           centerId={tree.centerId}
           viewKey={viewKey}
           selectedId={person?.id}
+          focusOn={focusOn}
           onOpen={open}
           highlight={link?.highlight}
           coveredTop={link ? cardHeight : 0}

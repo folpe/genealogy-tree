@@ -105,10 +105,13 @@ test('au retour d’une fiche, l’arbre revient là où on l’avait laissé, p
   await page.getByRole('link', { name: 'Retour à l’arbre' }).click();
   await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
   await expect(page.getByRole('treeitem', { name: /^Hugo Marchand/ })).toHaveCount(0);
+  // Même zoom, centré sur la bulle de la fiche qu'on quittait, cerclée.
   const back = await settled(page);
   expect(back.k).toBeCloseTo(left.k, 3);
-  expect(Math.abs(back.x - left.x)).toBeLessThan(2);
-  expect(Math.abs(back.y - left.y)).toBeLessThan(2);
+  await expect(page).toHaveURL(/[?&]focus=luc/);
+  const luc = page.getByRole('treeitem', { name: /^Luc Marchand/ });
+  await expect(luc).toBeInViewport();
+  await expect(luc).toHaveAttribute('aria-selected', 'true');
 });
 
 test('un pli fait sans bouger l’arbre tient sur deux allers-retours vers une fiche', async ({

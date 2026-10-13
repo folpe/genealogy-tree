@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { readTreeMemory } from './tree-memory.storage';
 
@@ -18,6 +19,28 @@ export function useTreeHref(): string {
   return href;
 }
 
+/** Segment d'URL décodé ; un échappement abîmé est gardé tel quel. */
+function decoded(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+/**
+ * Depuis une fiche : l'arbre revient centré sur sa bulle, cerclée, zoom et plis
+ * gardés (`?focus=`), sans rouvrir la fiche : sur mobile, elle cacherait la lignée
+ * qu'on vient chercher. La fiche se lit dans l'URL : le lien vaut aussi pendant le
+ * chargement.
+ */
 export function BackToTree() {
-  return <Link href={useTreeHref()}>Retour à l’arbre</Link>;
+  const href = useTreeHref();
+  const personId = usePathname().match(/^\/people\/([^/]+)$/)?.[1];
+  if (!personId) return <Link href={href}>Retour à l’arbre</Link>;
+  const [path = '/tree', search = ''] = href.split('?');
+  const query = new URLSearchParams(search);
+  query.delete('fiche');
+  query.set('focus', decoded(personId));
+  return <Link href={`${path}?${query.toString()}`}>Retour à l’arbre</Link>;
 }

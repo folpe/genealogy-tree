@@ -7,6 +7,7 @@ import { Dialog } from 'radix-ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { searchDirectoryAction } from '@/actions/family.actions';
 import type { SearchDirectory } from '@/server/family/family.service';
+import { requestOpenFiche } from '../family/open-fiche';
 import { isDeceased, personInitials } from '../family/person.helper';
 import { PersonBubble } from '../family/person-bubble';
 import { type PaletteItem, paletteItems, pushRecent, recentItems } from './command-palette.helper';
@@ -97,7 +98,9 @@ export function CommandPalette() {
     writeRecent(pushRecent(readRecent(), id));
     setOpen(false);
     setQuery('');
-    router.push(`/people/${id}`);
+    // Comme un tap sur sa bulle : l'arbre à l'écran ouvre la fiche s'il la dessine ;
+    // sinon, toute la famille, fiche ouverte et centrée sur elle.
+    if (!requestOpenFiche(id)) router.push(`/tree?view=all&fiche=${encodeURIComponent(id)}`);
   }
 
   return (
@@ -209,7 +212,7 @@ function Result({ item, onChoose }: { item: PaletteItem; onChoose: (id: string) 
     <Command.Item
       value={item.id}
       onSelect={onChoose}
-      className="flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-3 py-2 data-[selected=true]:bg-canvas"
+      className="flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5 data-[selected=true]:bg-canvas"
     >
       <PersonBubble
         initials={personInitials(item.person)}
@@ -218,15 +221,19 @@ function Result({ item, onChoose }: { item: PaletteItem; onChoose: (id: string) 
         size="result"
         name=""
       />
+      {/* Le nom d'abord, en entier ; le lien dessous : sur mobile, un lien long
+          (« la cousine germaine de ta compagne ») mangeait le nom. */}
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate font-display text-[17px]">{item.name}</span>
+        <span className="font-display text-[17px] leading-snug [overflow-wrap:anywhere]">
+          {item.name}
+        </span>
+        {item.relation ? (
+          <span className="text-sm leading-snug text-accent">{item.relation}</span>
+        ) : undefined}
         {item.detail ? (
           <span className="truncate text-sm text-ink-2">{item.detail}</span>
         ) : undefined}
       </span>
-      {item.relation ? (
-        <span className="shrink-0 text-right text-sm text-accent">{item.relation}</span>
-      ) : undefined}
     </Command.Item>
   );
 }
