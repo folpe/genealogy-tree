@@ -6,6 +6,7 @@ import type { FuzzyDate, Union } from '@/server/family/family.types';
 import { formatFuzzyDate } from '@/server/family/fuzzy-date.helper';
 import { relativesOf } from './fiche.helper';
 import { EditableName, EditableRow } from './fiche-edit';
+import { PhotoPicker } from './fiche-photo';
 import { isDeceased, lifeYears, personInitials, personLabel } from './person.helper';
 import { PersonBubble } from './person-bubble';
 
@@ -181,6 +182,15 @@ function SheetHeader({
   editable: boolean;
 }) {
   const Heading = heading;
+  const bubble = (
+    <PersonBubble
+      initials={personInitials(person)}
+      deceased={isDeceased(person)}
+      photo={tree.photos[person.id]}
+      size="sheet"
+      name={personLabel(person)}
+    />
+  );
   const titleClass =
     'mt-3 font-display text-[30px] leading-[1.1] tracking-[-0.01em] [text-wrap:balance] md:text-[32px]';
   const feminine = person.gender === 'femme';
@@ -191,13 +201,11 @@ function SheetHeader({
   const sourced = person.level === 'full' && person.sourcedFields.length > 0;
   return (
     <header className="flex flex-col items-center gap-1.5 text-center">
-      <PersonBubble
-        initials={personInitials(person)}
-        deceased={isDeceased(person)}
-        photo={tree.photos[person.id]}
-        size="sheet"
-        name={personLabel(person)}
-      />
+      {editable && person.level === 'full' ? (
+        <PhotoPicker personId={person.id}>{bubble}</PhotoPicker>
+      ) : (
+        bubble
+      )}
       {editable && person.level === 'full' ? (
         <EditableName
           personId={person.id}

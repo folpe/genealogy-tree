@@ -12,7 +12,9 @@ import {
   type SearchDirectory,
 } from '@/server/family/family.service';
 import { editPerson } from '@/server/family/person-edit.service';
+import { changePhoto } from '@/server/family/person-photo.service';
 import { addRelative } from '@/server/family/relatives.service';
+import { getMediaDeps } from '@/server/media/media.instance';
 
 // Actions d'édition de l'arbre. L'identité vient toujours de la session ; la policy et
 // les invariants sont revérifiés dans le service.
@@ -85,6 +87,25 @@ export async function editPersonAction(data: FormData): Promise<EditResult> {
   );
   try {
     await editPerson(getFamilyDeps(), user.id, fields);
+  } catch (error) {
+    const result = toResult(error);
+    return result.ok ? { ok: true } : result;
+  }
+  revalidatePath('/', 'layout');
+  return { ok: true };
+}
+
+/** Nouvelle photo d'une fiche, déjà réduite dans le navigateur. */
+export async function changePhotoAction(data: FormData): Promise<EditResult> {
+  const { user } = await requireSession();
+  const personId = data.get('personId');
+  const photo = data.get('photo');
+  const id = personIdSchema.safeParse(personId);
+  if (!id.success || !(photo instanceof File) || photo.size === 0) {
+    return { ok: false, error: 'Choisis une photo.' };
+  }
+  try {
+    await changePhoto(getMediaDeps(), user.id, id.data, Buffer.from(await photo.arrayBuffer()));
   } catch (error) {
     const result = toResult(error);
     return result.ok ? { ok: true } : result;

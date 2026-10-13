@@ -4,7 +4,10 @@ import { describe, expect, it, vi } from 'vitest';
 import type { TreeForViewer } from '@/server/family/family.service';
 import { treeForViewer } from '../../../tests/fixtures/tree-for-viewer';
 
-vi.mock('@/actions/family.actions', () => ({ editPersonAction: vi.fn() }));
+vi.mock('@/actions/family.actions', () => ({
+  editPersonAction: vi.fn(),
+  changePhotoAction: vi.fn(),
+}));
 
 import { PersonSheet } from './family-views';
 
