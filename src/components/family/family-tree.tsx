@@ -341,6 +341,8 @@ export function FamilyTree({
   drawing: initial,
   graph,
   focusId,
+  centerId,
+  viewKey = '/tree',
 }: {
   /** Premier dessin, calculé au rendu serveur. */
   drawing: TreeDrawing;
@@ -348,16 +350,21 @@ export function FamilyTree({
   graph: DisplayedGraph;
   /** Bulle de départ : celle du lecteur. */
   focusId: string | undefined;
+  /** Personne au centre de la vue (lot 6) : départ de la caméra, qui y revient quand la vue change. */
+  centerId?: string | undefined;
+  /** URL de la vue : la position retenue ne revient que dans la même vue. */
+  viewKey?: string;
 }) {
   const fold = useFoldedTree(initial, graph);
   const { nodes, width, height } = fold.drawing;
   const byId = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const rows = useRows(nodes);
   const me = focusId ? byId.get(focusId) : undefined;
-  const start = me ?? nodes[0];
+  const startId = centerId ?? focusId;
+  const start = (startId ? byId.get(startId) : undefined) ?? me ?? nodes[0];
   // Le rendu serveur se cale sur le premier dessin : un pliage ne doit pas le déplacer.
   const first =
-    (focusId ? initial.nodes.find((n) => n.id === focusId) : undefined) ?? initial.nodes[0];
+    (startId ? initial.nodes.find((n) => n.id === startId) : undefined) ?? initial.nodes[0];
   const [chosenId, setActiveId] = useState(start?.id);
   // Une bulle disparue (nouveau rendu serveur, branche pliée) n'emporte pas le Tab.
   const activeId = chosenId && byId.has(chosenId) ? chosenId : start?.id;
@@ -379,16 +386,16 @@ export function FamilyTree({
   const restore = useCallback(() => {
     if (!memory.current.read) memory.current = { read: true, value: readTreeMemory() };
     const remembered = memory.current.value;
-    return remembered ? recallCamera(remembered, nodes) : undefined;
-  }, [nodes]);
+    return remembered?.view === viewKey ? recallCamera(remembered, nodes) : undefined;
+  }, [nodes, viewKey]);
   const onSettle = useCallback(
     (state: Camera, size: Size) => {
       if (nodes.length > VIRTUALIZE_ABOVE) setView(visibleWorld(state, size));
       else setView(undefined);
-      const remembered = rememberCamera(state, nodes, [...fold.folded]);
+      const remembered = rememberCamera(state, nodes, [...fold.folded], viewKey);
       if (remembered) writeTreeMemory(remembered);
     },
-    [nodes, fold.folded],
+    [nodes, fold.folded, viewKey],
   );
   const camera = useTreeCamera({ viewport, layer, content, start, restore, onSettle });
   const leaving = useRelayout({
@@ -457,18 +464,28 @@ export function FamilyTree({
     if (!camera || foldsRestored.current) return;
     foldsRestored.current = true;
     const remembered = memory.current.value;
-    if (remembered && remembered.folded.length > 0) {
+    if (remembered?.view === viewKey && remembered.folded.length > 0) {
       setFolded(remembered.folded, true);
     }
-  }, [camera, setFolded]);
+  }, [camera, setFolded, viewKey]);
 
   // Un pli ne fait pas bouger la caméra : la mémoire suit aussi chaque pli, sans
   // attendre le prochain arrêt de la caméra.
   useEffect(() => {
     if (!camera) return;
-    const remembered = rememberCamera(camera.get(), nodes, [...folded]);
+    const remembered = rememberCamera(camera.get(), nodes, [...folded], viewKey);
     if (remembered) writeTreeMemory(remembered);
-  }, [camera, nodes, folded]);
+  }, [camera, nodes, folded, viewKey]);
+
+  // Nouvelle vue (ou nouvelles données) servie par le serveur : la caméra rejoint la
+  // personne au centre ; les bulles glissent vers leur nouvelle place (useRelayout).
+  const shownInitial = useRef(initial);
+  useEffect(() => {
+    if (!camera || shownInitial.current === initial) return;
+    shownInitial.current = initial;
+    const center = initial.nodes.find((n) => n.id === (centerId ?? focusId));
+    if (center) camera.flyTo(cameraOn(center, camera.get().k));
+  }, [camera, initial, centerId, focusId]);
 
   const toggleBranch = useCallback(
     (branch: BranchHandle) => setFolded([branch.id], !folded.has(branch.id)),
@@ -501,7 +518,7 @@ export function FamilyTree({
     me && camera ? () => camera.flyTo(cameraOn(me, Math.max(camera.get().k, 0.75))) : undefined;
 
   return (
-    <div className="relative h-[calc(100dvh-9rem)] min-h-[420px] overflow-hidden rounded-[var(--radius-panel)] border border-line">
+    <div className="relative h-[calc(100dvh-15rem)] min-h-[420px] md:h-[calc(100dvh-13rem)] overflow-hidden rounded-[var(--radius-panel)] border border-line">
       <section
         ref={viewport}
         aria-label="Canevas de l’arbre"

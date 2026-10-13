@@ -11,6 +11,7 @@ import { loadAccessMembers } from '../members/members.repository';
 import { type DisplayedGraph, selectDisplayedGraph } from './family.display';
 import { buildFamilyIndex, generationLevels } from './family.helper';
 import { loadFamilyGraph } from './family.repository';
+import { selectSubgraph } from './family.subgraph';
 import { todayIn } from './fuzzy-date.helper';
 
 // Lecture de l'arbre à travers la policy (spec section 6.4). Rien ne sort d'ici
@@ -34,11 +35,27 @@ export type TreeForViewer = Omit<TreeView, 'audited'> & {
    * des liens : la vue filtrée les expose déjà tous, unions et filiations comprises.
    */
   drawn: DisplayedGraph;
+  /** Personne au centre de la vue dessinée : celle demandée, sinon le lecteur. */
+  centerId: string;
 };
+
+/** Ce que l'arbre dessine (plan phase 4, lot 6), lu dans l'URL de `/tree`. */
+export type TreeDisplay = {
+  view: 'all' | 'descendants' | 'hourglass';
+  /** Personne au centre des vues descendants et sablier ; par défaut, le lecteur. */
+  p?: string;
+  /** Unions passées montrées (spec section 8.1 : masquées par défaut). */
+  past: boolean;
+  /** Générations au plus de chaque côté ; sans limite par défaut. */
+  depth?: number;
+};
+
+const WHOLE_FAMILY: TreeDisplay = { view: 'all', past: false };
 
 export async function getTreeForViewer(
   deps: FamilyDeps,
   viewerUserId: string,
+  display: TreeDisplay = WHOLE_FAMILY,
 ): Promise<TreeForViewer> {
   const members = await loadAccessMembers(deps.db);
   const viewer = members.find((m) => m.userId === viewerUserId);
@@ -76,11 +93,25 @@ export async function getTreeForViewer(
   const generations = generationLevels(index);
   const focusId =
     viewer.personId ?? graph.persons.find((p) => generations.get(p.id) === 0)?.id ?? '';
+  // La personne demandée doit exister ; sinon la vue se centre sur le lecteur. Le
+  // sous-graphe se prend sur le graphe complet, comme la vue « toute la famille » :
+  // il n'en garde qu'une partie, et `drawn` ne porte que des ids et la forme des
+  // liens, que la vue filtrée par la policy expose déjà tous.
+  const centerId = display.p && index.persons.has(display.p) ? display.p : focusId;
+  const shown =
+    display.view === 'all'
+      ? graph
+      : selectSubgraph(graph, {
+          view: display.view,
+          rootId: centerId,
+          ...(display.depth ? { depth: display.depth } : {}),
+        });
   return {
     ...view,
     generations: Object.fromEntries(generations),
     viewerPersonId: viewer.personId ?? undefined,
     photos,
-    drawn: selectDisplayedGraph(graph, { focusId }),
+    drawn: selectDisplayedGraph(shown, { focusId: centerId, showPastUnions: display.past }),
+    centerId,
   };
 }

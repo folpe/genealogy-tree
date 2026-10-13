@@ -83,6 +83,48 @@ describe.skipIf(!db)('family.service (intégration)', () => {
     expect(maxime.drawn.unions.map((u) => u.id)).toContain('u-luc-claire');
   });
 
+  it('montre les unions passées sur demande', async () => {
+    const hugo = await getTreeForViewer(deps(), 'u-hugo', { view: 'all', past: true });
+    expect(hugo.drawn.unions.map((u) => u.id)).toContain('u-luc-claire');
+  });
+
+  it('sablier de Hugo : ses ancêtres et lui, sans cousin ; centré sur lui', async () => {
+    const tree = await getTreeForViewer(deps(), 'u-hugo', { view: 'hourglass', past: false });
+    expect(tree.centerId).toBe('hugo');
+    expect(tree.drawn.personIds).toEqual(
+      expect.arrayContaining(['hugo', 'luc', 'sophie', 'henri']),
+    );
+    expect(tree.drawn.personIds).not.toContain('tom');
+    expect(tree.drawn.personIds).not.toContain('lea');
+  });
+
+  it('descendants de Luc, sur une génération', async () => {
+    const tree = await getTreeForViewer(deps(), 'u-hugo', {
+      view: 'descendants',
+      p: 'luc',
+      past: false,
+      depth: 1,
+    });
+    expect(tree.centerId).toBe('luc');
+    expect(tree.drawn.personIds).toEqual(expect.arrayContaining(['luc', 'hugo', 'lea', 'maxime']));
+    expect(tree.drawn.personIds).not.toContain('jade');
+    expect(tree.drawn.personIds).not.toContain('henri');
+  });
+
+  it('une personne au centre inconnue retombe sur le lecteur', async () => {
+    const tree = await getTreeForViewer(deps(), 'u-hugo', {
+      view: 'hourglass',
+      p: 'personne',
+      past: false,
+    });
+    expect(tree.centerId).toBe('hugo');
+  });
+
+  it('les textes restent ceux de la vue filtrée : toutes les fiches, quelle que soit la vue', async () => {
+    const tree = await getTreeForViewer(deps(), 'u-hugo', { view: 'hourglass', past: false });
+    expect(tree.persons.map((p) => p.id)).toContain('tom');
+  });
+
   it('dessine aussi l’arbre d’un admin non relié à une fiche', async () => {
     const tree = await getTreeForViewer(deps(), 'u-owner');
     expect(tree.drawn.personIds).toContain('hugo');

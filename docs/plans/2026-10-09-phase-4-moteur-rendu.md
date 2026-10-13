@@ -79,10 +79,10 @@ Prototype sur la famille réelle (branche `notion-import`, 103 fiches) le 2026-1
 
 ### Lot 6 : vues descendants et sablier
 
-- [ ] État d'URL via nuqs : `/tree?p=<id>&view=descendants|hourglass&past=0|1`.
-- [ ] Sablier : ancêtres au-dessus (layout ELK direction `UP` fusionné) et descendants en dessous de la personne centrale.
-- [ ] Interrupteur "Montrer les unions passées" (désactivé par défaut) dans les réglages d'affichage.
-- [ ] Interrupteur "Ce que je peux modifier" (maquette Arbre) : estompe les nœuds hors périmètre à partir du résultat de la policy servi par le serveur (le client ne calcule pas les droits).
+- [x] État d'URL via nuqs : `/tree?p=<id>&view=descendants|hourglass&past=0|1`. Sans nuqs : l'arbre est rendu par le serveur, qui lit l'URL avec Zod (`src/lib/tree/tree.params.ts`, `depth` borné à 20, toute valeur invalide retombe sur son défaut) ; les contrôles sont des liens (`tree-view-controls.tsx`), le retour du navigateur revient à la vue précédente. La fiche propose « Ses descendants » et « Son sablier ». La position retenue au retour d'une fiche ne revient que dans la même vue.
+- [x] Sablier : ancêtres au-dessus (layout ELK direction `UP` fusionné) et descendants en dessous de la personne centrale. Un seul placement vers le bas suffit : `selectSubgraph` (lot 1) écarte fratrie et collatéraux, les générations rangent les ancêtres au-dessus. Le service applique la vue après la policy (`getTreeForViewer(…, display)`), une personne au centre inconnue retombe sur le lecteur, et la caméra part de la personne au centre.
+- [x] Interrupteur "Montrer les unions passées" (désactivé par défaut) dans les réglages d'affichage. Switch Radix, état dans l'URL (`past=1`).
+- [ ] Interrupteur "Ce que je peux modifier" (maquette Arbre) : estompe les nœuds hors périmètre à partir du résultat de la policy servi par le serveur (le client ne calcule pas les droits). Reporté en phase 6 : le périmètre d'édition y est défini avec l'éditeur.
 
 ## Tests
 

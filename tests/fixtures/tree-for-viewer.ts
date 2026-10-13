@@ -22,5 +22,6 @@ export function treeForViewer(memberId: string): TreeForViewer {
     viewerPersonId: viewer.personId ?? undefined,
     photos: {},
     drawn: selectDisplayedGraph(marchandFamily, { focusId: viewer.personId ?? 'henri' }),
+    centerId: viewer.personId ?? 'henri',
   };
 }
