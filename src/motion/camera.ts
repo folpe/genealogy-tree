@@ -90,6 +90,8 @@ export function createCamera({
     apply();
   };
   const settle = () => {
+    // Une animation finie n'est plus « en cours » : un tap ensuite n'a rien à conclure.
+    tween = undefined;
     moving = false;
     layer.style.willChange = 'auto';
     onSettle({ ...state });
