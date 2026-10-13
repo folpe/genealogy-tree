@@ -39,7 +39,11 @@ export type CameraController = {
   /** Zoom animé autour d'un point de l'écran (compté depuis le centre du canevas). */
   zoomTo: (k: number, around?: Point) => void;
   flyTo: (camera: Camera) => void;
+  /** Pose la caméra sans animation et conclut le mouvement (nouveau placement). */
+  jump: (camera: Camera) => void;
   resize: (viewport: Size) => void;
+  /** Nouveau placement : nouvelles bornes, sans remonter la caméra. */
+  setContent: (content: Size) => void;
   /** Appelé à chaque frame (mini-carte). */
   subscribe: (listener: (camera: Camera) => void) => () => void;
   dispose: () => void;
@@ -48,7 +52,7 @@ export type CameraController = {
 export function createCamera({
   viewport: viewportElement,
   layer,
-  content,
+  content: initialContent,
   initial,
   onSettle,
 }: {
@@ -60,6 +64,7 @@ export function createCamera({
 }): CameraController {
   const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let size: Size = { width: viewportElement.clientWidth, height: viewportElement.clientHeight };
+  let content = initialContent;
   let limits = scaleLimits(content, size);
   const state: Camera = { ...initial };
   const listeners = new Set<(camera: Camera) => void>();
@@ -166,6 +171,13 @@ export function createCamera({
         onUpdate: () => assign(path.at(progress.t)),
         onComplete: settle,
       });
+    },
+    jump(camera) {
+      instant(clampCamera(camera, content));
+    },
+    setContent(next) {
+      content = next;
+      limits = scaleLimits(content, size);
     },
     resize(next) {
       size = next;

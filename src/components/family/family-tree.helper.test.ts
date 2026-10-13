@@ -69,12 +69,24 @@ describe('drawTree', () => {
     for (const node of nodes) expect(node.branchesBelow).toBe(from.has(node.id));
   });
 
+  it('pose une poignée par départ de branche : sous le couple, ou sous le parent seul', async () => {
+    const { branches, nodes } = await drawTree(hugo, elk);
+    const couple = branches.find((b) => b.id === 'u-luc-sophie');
+    expect(couple).toMatchObject({ anchorId: 'luc', owners: 'Luc Marchand et Sophie Marchand' });
+    const luc = nodes.find((n) => n.id === 'luc');
+    const sophie = nodes.find((n) => n.id === 'sophie');
+    expect(couple?.x).toBeGreaterThan(Math.min(luc?.x ?? 0, sophie?.x ?? 0));
+    expect(couple?.x).toBeLessThan(Math.max(luc?.x ?? 0, sophie?.x ?? 0));
+    expect(couple?.y).toBeGreaterThan((luc?.y ?? 0) + 76);
+  });
+
   it('arbre vide : rien à dessiner', async () => {
     const empty = { ...hugo, persons: [], drawn: { personIds: [], unions: [], edges: [] } };
     expect(await drawTree(empty, elk)).toEqual({
       nodes: [],
       links: [],
       unknownPartners: [],
+      branches: [],
       width: 0,
       height: 0,
     });

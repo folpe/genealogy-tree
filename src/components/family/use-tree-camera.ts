@@ -1,7 +1,7 @@
 // tdd-cover: e2e tests/e2e/tree-camera.spec.ts
 'use client';
 
-import { type RefObject, useEffect, useState } from 'react';
+import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { type Camera, cameraOn, detailLevel, type Size } from '@/lib/tree/tree.camera';
 import type { Point } from '@/lib/tree/tree.metrics';
 import { type CameraController, createCamera } from '@/motion/camera';
@@ -32,19 +32,25 @@ export function useTreeCamera({
   onSettle: (camera: Camera, viewport: Size) => void;
 }): CameraController | undefined {
   const [controller, setController] = useState<CameraController>();
-  const startX = start?.x ?? 0;
-  const startY = start?.y ?? 0;
+  // Lus au montage seulement : un nouveau placement (branche pliée) passe par
+  // setContent et jump, sans remonter la caméra ni la ramener au départ.
+  const mount = useRef({ content, start });
+  const settleTo = useRef(onSettle);
+  useLayoutEffect(() => {
+    settleTo.current = onSettle;
+  });
 
   useEffect(() => {
     const viewportElement = viewport.current;
     const layerElement = layer.current;
     if (!viewportElement || !layerElement) return;
+    const { content: firstContent, start: firstStart } = mount.current;
     const camera = createCamera({
       viewport: viewportElement,
       layer: layerElement,
-      content,
-      initial: cameraOn({ x: startX, y: startY }, initialScale(viewportElement)),
-      onSettle: (state) => onSettle(state, camera.viewport()),
+      content: firstContent,
+      initial: cameraOn(firstStart ?? { x: 0, y: 0 }, initialScale(viewportElement)),
+      onSettle: (state) => settleTo.current(state, camera.viewport()),
     });
     const unbind = bindCameraGestures(viewportElement, camera);
     // Zoom sémantique : une écriture du DOM au changement de niveau, aucune entre deux.
@@ -59,7 +65,7 @@ export function useTreeCamera({
     resize.observe(viewportElement);
     layerElement.dataset['cameraReady'] = 'true';
     setController(camera);
-    onSettle(camera.get(), camera.viewport());
+    settleTo.current(camera.get(), camera.viewport());
     return () => {
       resize.disconnect();
       unfollow();
@@ -67,8 +73,7 @@ export function useTreeCamera({
       camera.dispose();
       delete layerElement.dataset['cameraReady'];
     };
-    // La caméra se remonte si le placement change, pas à chaque rendu de la page.
-  }, [viewport, layer, content, startX, startY, onSettle]);
+  }, [viewport, layer]);
 
   return controller;
 }
