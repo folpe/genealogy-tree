@@ -20,7 +20,17 @@ const figtree = Figtree({
 export const metadata: Metadata = {
   title: { default: 'Ances-Tree', template: '%s - Ances-Tree' },
   description: 'L’arbre privé de la famille.',
+  applicationName: 'Ances-Tree',
   robots: { index: false, follow: false },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
+  // Safari sur iPhone : l'app ajoutée à l'écran d'accueil s'ouvre en plein écran.
+  appleWebApp: { capable: true, title: 'Ances-Tree', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {

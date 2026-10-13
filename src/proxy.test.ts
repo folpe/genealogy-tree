@@ -20,7 +20,7 @@ describe('proxy matcher', () => {
     '/favicon.ico',
     '/robots.txt',
     '/favicon-96x96.png',
-    '/site.webmanifest',
+    '/manifest.webmanifest',
   ])('reste exclu : %s', (path) => {
     expect(matches(path)).toBe(false);
   });
