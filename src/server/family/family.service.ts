@@ -13,6 +13,8 @@ import { buildFamilyIndex, generationLevels, partnersOf } from './family.helper'
 import { loadFamilyGraph } from './family.repository';
 import { selectSubgraph } from './family.subgraph';
 import { todayIn } from './fuzzy-date.helper';
+import { type Relationship, relationship } from './kinship.helper';
+import { describeRelationship } from './kinship.labels';
 
 // Lecture de l'arbre à travers la policy (spec section 6.4). Rien ne sort d'ici
 // sans être passé par viewTreeAs : c'est la frontière entre la base et le client.
@@ -64,20 +66,17 @@ export type TreeDisplay = {
 
 const DEFAULT_DISPLAY: TreeDisplay = { past: false };
 
-export async function getTreeForViewer(
-  deps: FamilyDeps,
-  viewerUserId: string,
-  display: TreeDisplay = DEFAULT_DISPLAY,
-): Promise<TreeForViewer> {
+/**
+ * Ce que le lecteur a le droit de voir, et le graphe complet pour les calculs qui ne
+ * sortent que des identifiants. Journalise les lectures d'admin au-delà de son cercle.
+ */
+async function readAsViewer(deps: FamilyDeps, viewerUserId: string) {
   const members = await loadAccessMembers(deps.db);
   const viewer = members.find((m) => m.userId === viewerUserId);
   if (!viewer) {
     throw new AppError({ message: 'Accès réservé', code: 'FAMILY_FORBIDDEN', status: 403 });
   }
-  const [graph, profilePhotos] = await Promise.all([
-    loadFamilyGraph(deps.db),
-    loadProfilePhotos(deps.db),
-  ]);
+  const graph = await loadFamilyGraph(deps.db);
   const index = buildFamilyIndex(graph);
   const now = deps.now();
   const today = todayIn(now, FAMILY_TIME_ZONE);
@@ -93,6 +92,18 @@ export async function getTreeForViewer(
       .values(audited.map((personId) => ({ userId: viewerUserId, personId, viewedOn })))
       .onConflictDoNothing();
   }
+  return { graph, index, ctx, viewer, view, now };
+}
+
+export async function getTreeForViewer(
+  deps: FamilyDeps,
+  viewerUserId: string,
+  display: TreeDisplay = DEFAULT_DISPLAY,
+): Promise<TreeForViewer> {
+  const [{ graph, index, ctx, viewer, view, now }, profilePhotos] = await Promise.all([
+    readAsViewer(deps, viewerUserId),
+    loadProfilePhotos(deps.db),
+  ]);
 
   const photos = Object.fromEntries(
     view.persons.flatMap((person) => {
@@ -136,4 +147,47 @@ export async function getTreeForViewer(
     centerInCouple,
     editableIds: editableIds(ctx, viewer),
   };
+}
+
+/** Générations entre le lecteur et la fiche ; une alliance compte pour un pas. */
+function distanceOf(r: Relationship): number {
+  switch (r.type) {
+    case 'self':
+      return 0;
+    case 'blood':
+      return r.up + r.down;
+    case 'spouseOfRelative':
+    case 'relativeOfSpouse':
+      return r.relative.up + r.relative.down + 1;
+    default:
+      return 1;
+  }
+}
+
+/** Annuaire du ⌘K : les fiches visibles, et le lien de chacune avec le lecteur. */
+export type SearchDirectory = {
+  persons: TreeView['persons'];
+  /** « ton grand-père », pour les fiches reliées au lecteur. */
+  relations: Record<string, string>;
+  /** Distance de parenté (générations montées et descendues) : les proches d'abord. */
+  proximity: Record<string, number>;
+};
+
+export async function getSearchDirectory(
+  deps: FamilyDeps,
+  viewerUserId: string,
+): Promise<SearchDirectory> {
+  const { index, viewer, view } = await readAsViewer(deps, viewerUserId);
+  const from = viewer.personId;
+  const relations: Record<string, string> = {};
+  const proximity: Record<string, number> = {};
+  if (from) {
+    for (const person of view.persons) {
+      const r = relationship(index, from, person.id);
+      if (r.type === 'none') continue;
+      relations[person.id] = describeRelationship(index, r, person.id);
+      proximity[person.id] = distanceOf(r);
+    }
+  }
+  return { persons: view.persons, relations, proximity };
 }
