@@ -5,7 +5,12 @@ import { testDb } from '../../../tests/integration/test-db';
 import { adminRecordViews, media, memberships, persons, users } from '../db/schema';
 import { mediaUrlKey, verifyMediaUrl } from '../media/media.url';
 import { insertFamilyGraph } from './family.repository';
-import { type FamilyDeps, getSearchDirectory, getTreeForViewer } from './family.service';
+import {
+  type FamilyDeps,
+  getRelationship,
+  getSearchDirectory,
+  getTreeForViewer,
+} from './family.service';
 
 // Spec section 6.4 sur des données en base : ce que le service renvoie est ce qui
 // part vers le client. On cherche donc les fuites dans sa forme sérialisée.
@@ -226,5 +231,23 @@ describe.skipIf(!db)('family.service (intégration)', () => {
     const directory = await getSearchDirectory(deps(), 'u-owner');
     expect(directory.persons.length).toBeGreaterThan(10);
     expect(directory.relations).toEqual({});
+  });
+
+  it('notre lien : la phrase, les étapes du chemin et les ancêtres communs', async () => {
+    const link = await getRelationship(deps(), 'u-hugo', 'isabelle');
+    expect(link.sentence).toBe('Isabelle est la cousine germaine de ton père.');
+    expect(link.steps.map((s) => s.id)).toEqual(['hugo', 'luc', 'paul', 'marie', 'isabelle']);
+    expect(link.steps[1]).toMatchObject({ name: 'Luc', relation: 'ton père' });
+    expect(link.common).toEqual(['Henri', 'Louise']);
+    expect(link.path).toContain('u-paul-jeanne');
+  });
+
+  it('notre lien : refusé sans fiche reliée ou pour une fiche inconnue', async () => {
+    await expect(getRelationship(deps(), 'u-owner', 'luc')).rejects.toMatchObject({
+      code: 'FAMILY_NO_VIEWER_PERSON',
+    });
+    await expect(getRelationship(deps(), 'u-hugo', 'personne')).rejects.toMatchObject({
+      status: 404,
+    });
   });
 });

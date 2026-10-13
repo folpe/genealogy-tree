@@ -5,7 +5,12 @@ import { z } from 'zod';
 import { isAppError, ValidationError } from '@/server/_shared/errors';
 import { requireSession } from '@/server/auth/session';
 import { getFamilyDeps } from '@/server/family/family.instance';
-import { getSearchDirectory, type SearchDirectory } from '@/server/family/family.service';
+import {
+  getRelationship,
+  getSearchDirectory,
+  type RelationshipView,
+  type SearchDirectory,
+} from '@/server/family/family.service';
 import { addRelative } from '@/server/family/relatives.service';
 
 // Actions d'édition de l'arbre. L'identité vient toujours de la session ; la policy et
@@ -48,4 +53,23 @@ export async function addRelativeAction(
 export async function searchDirectoryAction(): Promise<SearchDirectory> {
   const { user } = await requireSession();
   return getSearchDirectory(getFamilyDeps(), user.id);
+}
+
+export type RelationshipResult =
+  | { ok: true; view: RelationshipView }
+  | { ok: false; error: string };
+
+const personIdSchema = z.string().min(1).max(64);
+
+/** « Notre lien » avec une fiche, à la demande depuis le panneau. */
+export async function relationshipAction(targetId: unknown): Promise<RelationshipResult> {
+  const { user } = await requireSession();
+  const parsed = personIdSchema.safeParse(targetId);
+  if (!parsed.success) return { ok: false, error: 'Fiche invalide.' };
+  try {
+    return { ok: true, view: await getRelationship(getFamilyDeps(), user.id, parsed.data) };
+  } catch (error) {
+    if (isAppError(error)) return { ok: false, error: error.message };
+    throw error;
+  }
 }

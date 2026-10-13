@@ -45,6 +45,29 @@ export const cameraOn = (point: Point, k: number): Camera => ({
   k,
 });
 
+/** Lecture confortable : un cadrage ne grossit pas au-delà. */
+const FRAMING_K_MAX = 1.2;
+
+/**
+ * Caméra qui montre toute une zone du monde, avec une marge (« Notre lien »). `top` :
+ * hauteur couverte en haut de l'écran (une carte posée sur le canevas) ; la zone se
+ * centre dans ce qui reste.
+ */
+export function cameraFraming(
+  rect: Rect,
+  viewport: Size,
+  limits: ScaleLimits,
+  { top = 0 }: { top?: number } = {},
+): Camera {
+  const width = rect.x1 - rect.x0 + 2 * FIT_PADDING;
+  const height = rect.y1 - rect.y0 + 2 * FIT_PADDING;
+  const free = Math.max(1, viewport.height - top);
+  const fit = Math.min(viewport.width / width, free / height);
+  const k = Math.max(limits.kMin, Math.min(fit, FRAMING_K_MAX, limits.kMax));
+  const centered = cameraOn({ x: (rect.x0 + rect.x1) / 2, y: (rect.y0 + rect.y1) / 2 }, k);
+  return { ...centered, y: centered.y + top / 2 };
+}
+
 /** Point du monde sous un point de l'écran (compté depuis le centre du canevas). */
 export const worldAt = (camera: Camera, screen: Point): Point => ({
   x: (screen.x - camera.x) / camera.k,

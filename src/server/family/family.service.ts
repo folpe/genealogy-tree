@@ -13,7 +13,7 @@ import { buildFamilyIndex, type FamilyIndex, generationLevels, partnersOf } from
 import { loadFamilyGraph } from './family.repository';
 import { selectSubgraph } from './family.subgraph';
 import { todayIn } from './fuzzy-date.helper';
-import { type Relationship, relationship } from './kinship.helper';
+import { findRelationshipPath, type Relationship, relationship } from './kinship.helper';
 import { describeRelationship } from './kinship.labels';
 
 // Lecture de l'arbre à travers la policy (spec section 6.4). Rien ne sort d'ici
@@ -202,4 +202,56 @@ export async function getSearchDirectory(
   const { index, viewer, view } = await readAsViewer(deps, viewerUserId);
   const ids = view.persons.map((p) => p.id);
   return { persons: view.persons, ...relationsFrom(index, viewer.personId, ids) };
+}
+
+/** « Notre lien » (plan phase 5, lot 6) : ce qui relie le lecteur à une fiche. */
+export type RelationshipView = {
+  /** « Isabelle est la cousine germaine de ton père. » */
+  sentence: string;
+  /** Les personnes du chemin, du lecteur à la fiche, avec leur lien au lecteur. */
+  steps: { id: string; name: string; relation: string | undefined }[];
+  /** Prénoms des ancêtres communs les plus proches (lien de sang). */
+  common: string[];
+  /** Chemin complet, unions comprises, pour l'éclairer dans l'arbre. */
+  path: string[];
+};
+
+export async function getRelationship(
+  deps: FamilyDeps,
+  viewerUserId: string,
+  targetId: string,
+): Promise<RelationshipView> {
+  const { index, viewer, view } = await readAsViewer(deps, viewerUserId);
+  const from = viewer.personId;
+  if (!from) {
+    throw new AppError({
+      message: 'Relie d’abord ton compte à ta fiche : « C’est moi ».',
+      code: 'FAMILY_NO_VIEWER_PERSON',
+      status: 409,
+    });
+  }
+  const visible = new Map(view.persons.map((p) => [p.id, p]));
+  const target = visible.get(targetId);
+  if (!target) {
+    throw new AppError({ message: 'Fiche introuvable', code: 'FAMILY_NOT_FOUND', status: 404 });
+  }
+  const r = relationship(index, from, targetId);
+  const label = describeRelationship(index, r, targetId);
+  const sentence =
+    r.type === 'self'
+      ? 'C’est toi.'
+      : r.type === 'none' && !r.connected
+        ? `Aucun lien connu entre toi et ${target.firstName}.`
+        : `${target.firstName} est ${label}.`;
+  // Le chemin ne cite que ce que la vue du lecteur montre déjà (fiches et unions).
+  const shown = new Set([...visible.keys(), ...view.unions.map((u) => u.id)]);
+  const path = findRelationshipPath(index, from, targetId).filter((id) => shown.has(id));
+  const { relations } = relationsFrom(index, from, path);
+  const steps = path.flatMap((id) => {
+    const person = visible.get(id);
+    return person ? [{ id, name: person.firstName, relation: relations[id] }] : [];
+  });
+  const common =
+    r.type === 'blood' ? r.common.flatMap((id) => visible.get(id)?.firstName ?? []) : [];
+  return { sentence, steps, common, path };
 }

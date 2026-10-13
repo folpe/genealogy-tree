@@ -14,6 +14,7 @@ import {
 } from 'react';
 import {
   type Camera,
+  cameraFraming,
   cameraOn,
   nodesInView,
   type Rect,
@@ -23,6 +24,7 @@ import {
 } from '@/lib/tree/tree.camera';
 import { recallCamera, rememberCamera, type TreeMemory } from '@/lib/tree/tree.memory';
 import { DEFAULT_METRICS } from '@/lib/tree/tree.metrics';
+import type { PathHighlight } from '@/lib/tree/tree.path';
 import type { TreeLink } from '@/lib/tree/tree.routes';
 import type { CameraController } from '@/motion/camera';
 import type { DisplayedGraph } from '@/server/family/family.display';
@@ -75,11 +77,14 @@ const TreeLinks = memo(function TreeLinks({
   links,
   width,
   height,
+  lit,
 }: {
   ref: Ref<SVGSVGElement>;
   links: TreeLink[];
   width: number;
   height: number;
+  /** Traits du lien de parenté en cours : en accent, les autres estompés. */
+  lit: ReadonlySet<string> | undefined;
 }) {
   return (
     <svg
@@ -94,11 +99,11 @@ const TreeLinks = memo(function TreeLinks({
           key={link.id}
           d={link.d}
           // De loin, le trait garde son épaisseur à l'écran au lieu de s'effacer.
-          className={`fill-none stroke-link [stroke-linecap:round] group-data-[detail=far]/canvas:[vector-effect:non-scaling-stroke] ${
+          className={`fill-none [stroke-linecap:round] transition-opacity group-data-[detail=far]/canvas:[vector-effect:non-scaling-stroke] ${
             link.kind === 'raised'
               ? `[stroke-dasharray:4_6] [stroke-width:1.5] ${FAR_HIDDEN}`
               : 'stroke-2'
-          }`}
+          } ${!lit ? 'stroke-link' : lit.has(link.id) ? 'stroke-accent [stroke-width:3.5]' : 'stroke-link opacity-25'}`}
         />
       ))}
     </svg>
@@ -126,6 +131,7 @@ const TreeItem = memo(function TreeItem({
   node,
   active,
   selected,
+  onPath,
   onOpen,
   expanded,
   register,
@@ -135,6 +141,8 @@ const TreeItem = memo(function TreeItem({
   node: TreeNode;
   active: boolean;
   selected: boolean;
+  /** Sur le chemin du lien de parenté en cours ; absent sans lien affiché. */
+  onPath: boolean | undefined;
   onOpen: ((id: string) => void) | undefined;
   /** Branche dépliée ou pliée ; absent si la bulle n'a pas d'enfant. */
   expanded: boolean | undefined;
@@ -153,6 +161,7 @@ const TreeItem = memo(function TreeItem({
       aria-label={node.label}
       aria-expanded={expanded}
       aria-selected={selected}
+      data-on-path={onPath}
       tabIndex={active ? 0 : -1}
       draggable={false}
       onFocus={() => onFocus(node.id)}
@@ -165,7 +174,7 @@ const TreeItem = memo(function TreeItem({
         event.preventDefault();
         onOpen(node.id);
       }}
-      className="group absolute flex w-[120px] flex-col items-center outline-none"
+      className={`group absolute flex w-[120px] flex-col items-center outline-none transition-opacity ${onPath === false ? 'opacity-30' : ''}`}
       style={{ left: node.x - NODE_HALF_WIDTH, top: node.y - BUBBLE_RADIUS }}
     >
       <PendingRing />
@@ -360,6 +369,8 @@ export function FamilyTree({
   viewKey = '/tree',
   selectedId,
   onOpen,
+  highlight,
+  coveredTop = 0,
 }: {
   /** Premier dessin, calculé au rendu serveur. */
   drawing: TreeDrawing;
@@ -375,6 +386,10 @@ export function FamilyTree({
   selectedId?: string | undefined;
   /** Ouvre la fiche sans quitter l'arbre ; sans lui, la bulle mène à la page de la fiche. */
   onOpen?: ((id: string) => void) | undefined;
+  /** Lien de parenté éclairé (« Notre lien ») : la caméra cadre son chemin. */
+  highlight?: PathHighlight | undefined;
+  /** Hauteur couverte en haut du canevas (carte du lien) : le cadrage l'évite. */
+  coveredTop?: number;
 }) {
   const fold = useFoldedTree(initial, graph);
   const { nodes, width, height } = fold.drawing;
@@ -419,6 +434,22 @@ export function FamilyTree({
     [nodes, fold.folded, viewKey],
   );
   const camera = useTreeCamera({ viewport, layer, content, start, restore, onSettle });
+  // Un nouveau lien éclairé : la caméra cadre tout son chemin, et recadre quand la carte
+  // a pris sa hauteur. Un pli ensuite ne la déplace pas : les bulles sont relues ici.
+  const nodesById = useRef(byId);
+  nodesById.current = byId;
+  useEffect(() => {
+    if (!camera || !highlight) return;
+    const onPath = [...highlight.persons].flatMap((id) => nodesById.current.get(id) ?? []);
+    if (onPath.length === 0) return;
+    const rect = {
+      x0: Math.min(...onPath.map((n) => n.x)) - NODE_HALF_WIDTH,
+      y0: Math.min(...onPath.map((n) => n.y)) - BUBBLE_RADIUS,
+      x1: Math.max(...onPath.map((n) => n.x)) + NODE_HALF_WIDTH,
+      y1: Math.max(...onPath.map((n) => n.y)) + BUBBLE_RADIUS + LABEL_HEIGHT,
+    };
+    camera.flyTo(cameraFraming(rect, camera.viewport(), camera.limits(), { top: coveredTop }));
+  }, [camera, highlight, coveredTop]);
   const leaving = useRelayout({
     drawing: fold.drawing,
     camera,
@@ -563,7 +594,13 @@ export function FamilyTree({
             transform: `translate(calc(${-first.x}px * var(--k0)), calc(${-first.y}px * var(--k0))) scale(var(--k0))`,
           }}
         >
-          <TreeLinks ref={linksRef} links={fold.drawing.links} width={width} height={height} />
+          <TreeLinks
+            ref={linksRef}
+            links={fold.drawing.links}
+            width={width}
+            height={height}
+            lit={highlight?.links}
+          />
           <UnknownPartners slots={fold.drawing.unknownPartners} />
           <div ref={ghostsRef} aria-hidden="true" className="pointer-events-none">
             {leaving.map((node) => (
@@ -577,6 +614,7 @@ export function FamilyTree({
                 node={node}
                 active={node.id === activeId}
                 selected={node.id === selectedId}
+                onPath={highlight ? highlight.persons.has(node.id) : undefined}
                 onOpen={onOpen}
                 expanded={expandedOf(node.id)}
                 register={register}

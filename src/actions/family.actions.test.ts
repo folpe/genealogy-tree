@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   requireSession: vi.fn(),
   addRelative: vi.fn(),
   getSearchDirectory: vi.fn(),
+  getRelationship: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 vi.mock('server-only', () => ({}));
@@ -14,10 +15,11 @@ vi.mock('@/server/auth/session', () => ({ requireSession: mocks.requireSession }
 vi.mock('@/server/family/family.instance', () => ({ getFamilyDeps: () => ({ deps: true }) }));
 vi.mock('@/server/family/family.service', () => ({
   getSearchDirectory: mocks.getSearchDirectory,
+  getRelationship: mocks.getRelationship,
 }));
 vi.mock('@/server/family/relatives.service', () => ({ addRelative: mocks.addRelative }));
 
-import { addRelativeAction, searchDirectoryAction } from './family.actions';
+import { addRelativeAction, relationshipAction, searchDirectoryAction } from './family.actions';
 
 const form = (fields: Record<string, string>) => {
   const data = new FormData();
@@ -86,5 +88,31 @@ describe('searchDirectoryAction', () => {
     mocks.getSearchDirectory.mockResolvedValue({ persons: [], relations: {}, proximity: {} });
     expect(await searchDirectoryAction()).toEqual({ persons: [], relations: {}, proximity: {} });
     expect(mocks.getSearchDirectory).toHaveBeenCalledWith({ deps: true }, 'u-hugo');
+  });
+});
+
+describe('relationshipAction', () => {
+  beforeEach(() => {
+    mocks.requireSession.mockReset().mockResolvedValue({ user: { id: 'u-hugo' } });
+    mocks.getRelationship.mockReset();
+  });
+
+  it('calcule le lien au nom de la session', async () => {
+    const view = { sentence: 'Luc est ton père.', steps: [], common: [], path: [] };
+    mocks.getRelationship.mockResolvedValue(view);
+    expect(await relationshipAction('luc')).toEqual({ ok: true, view });
+    expect(mocks.getRelationship).toHaveBeenCalledWith({ deps: true }, 'u-hugo', 'luc');
+  });
+
+  it('refuse un identifiant invalide sans interroger le service, et traduit un refus', async () => {
+    expect(await relationshipAction({ id: 'luc' })).toEqual({
+      ok: false,
+      error: 'Fiche invalide.',
+    });
+    expect(mocks.getRelationship).not.toHaveBeenCalled();
+    mocks.getRelationship.mockRejectedValue(
+      new AppError({ message: 'Fiche introuvable', code: 'X', status: 404 }),
+    );
+    expect(await relationshipAction('x')).toEqual({ ok: false, error: 'Fiche introuvable' });
   });
 });
