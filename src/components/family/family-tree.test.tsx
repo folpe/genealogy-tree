@@ -17,6 +17,12 @@ vi.mock('./tree-layout.client', () => ({
 import { drawTree } from './family-tree.helper';
 import type { TreeDrawing } from './tree-drawing';
 
+/**
+ * Un pliage refait le placement avec ELK dans le processus de test : sous la charge
+ * de la suite complète, cela dépasse les délais par défaut (5 s, 1 s pour waitFor).
+ */
+const FOLD_TIMEOUT = { test: 20_000, wait: { timeout: 10_000 } };
+
 const hugoView = treeForViewer('m-hugo');
 let drawing: TreeDrawing;
 beforeAll(async () => {
@@ -134,24 +140,62 @@ describe('FamilyTree', () => {
     expect(within(hugo).getByText('Hugo Marchand')).toBeInTheDocument();
   });
 
-  it('« - » replie la branche de Luc, « + » la rouvre', async () => {
-    render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
-    const luc = item(/^Luc Marchand/);
-    expect(luc).toHaveAttribute('aria-expanded', 'true');
-    luc.focus();
-    fireEvent.keyDown(luc, { key: '-' });
-    await waitFor(() => expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull());
-    expect(item(/^Luc Marchand/)).toHaveAttribute('aria-expanded', 'false');
-    expect(
-      screen.getByRole('button', {
-        name: /^Déplier la branche de Luc Marchand et Sophie Marchand, \d+ personnes$/,
-      }),
-    ).toBeInTheDocument();
+  it(
+    '« - » replie la branche de Luc, « + » la rouvre',
+    async () => {
+      render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
+      const luc = item(/^Luc Marchand/);
+      expect(luc).toHaveAttribute('aria-expanded', 'true');
+      luc.focus();
+      fireEvent.keyDown(luc, { key: '-' });
+      await waitFor(
+        () => expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull(),
+        FOLD_TIMEOUT.wait,
+      );
+      expect(item(/^Luc Marchand/)).toHaveAttribute('aria-expanded', 'false');
+      expect(
+        screen.getByRole('button', {
+          name: /^Déplier la branche de Luc Marchand et Sophie Marchand, \d+ personnes$/,
+        }),
+      ).toBeInTheDocument();
 
-    fireEvent.keyDown(item(/^Luc Marchand/), { key: '+' });
-    await waitFor(() => expect(item(/c’est toi$/)).toBeInTheDocument());
-    expect(item(/^Luc Marchand/)).toHaveAttribute('aria-expanded', 'true');
-  });
+      fireEvent.keyDown(item(/^Luc Marchand/), { key: '+' });
+      await waitFor(() => expect(item(/c’est toi$/)).toBeInTheDocument(), FOLD_TIMEOUT.wait);
+      expect(item(/^Luc Marchand/)).toHaveAttribute('aria-expanded', 'true');
+    },
+    FOLD_TIMEOUT.test,
+  );
+
+  it(
+    'deux pliages coup sur coup s’ajoutent, et le canevas n’est plus occupé ensuite',
+    async () => {
+      render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
+      const canvas = screen.getByRole('region', { name: 'Canevas de l’arbre' });
+      // Léa d'abord (sa fille Jade), puis le couple de Luc, sans attendre le premier calcul.
+      fireEvent.keyDown(item(/^Léa Marchand/), { key: '-' });
+      fireEvent.keyDown(item(/^Luc Marchand/), { key: '-' });
+      await waitFor(
+        () => expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull(),
+        FOLD_TIMEOUT.wait,
+      );
+      expect(screen.queryByRole('treeitem', { name: /^Jade/ })).toBeNull();
+      await waitFor(() => expect(canvas).toHaveAttribute('aria-busy', 'false'));
+    },
+    FOLD_TIMEOUT.test,
+  );
+
+  it(
+    'replier puis rouvrir aussitôt : le dessin connu revient, sans rester occupé',
+    async () => {
+      render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
+      const canvas = screen.getByRole('region', { name: 'Canevas de l’arbre' });
+      fireEvent.keyDown(item(/^Luc Marchand/), { key: '-' });
+      fireEvent.keyDown(item(/^Luc Marchand/), { key: '+' });
+      await waitFor(() => expect(canvas).toHaveAttribute('aria-busy', 'false'), FOLD_TIMEOUT.wait);
+      expect(item(/c’est toi$/)).toBeInTheDocument();
+    },
+    FOLD_TIMEOUT.test,
+  );
 
   it('une bulle sans enfant n’a ni poignée ni état plié', () => {
     render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);

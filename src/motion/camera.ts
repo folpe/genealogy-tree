@@ -173,7 +173,9 @@ export function createCamera({
       });
     },
     jump(camera) {
-      instant(clampCamera(camera, content));
+      // Le contenu a pu changer de taille : l'échelle reste dans les nouvelles bornes.
+      const k = Math.min(limits.kMax, Math.max(limits.kMin, camera.k));
+      instant(clampCamera({ ...camera, k }, content));
     },
     setContent(next) {
       content = next;

@@ -23,6 +23,8 @@ export type FoldedTree = {
   hiddenBelow: (key: string) => number;
   pending: boolean;
   failed: boolean;
+  /** Branche pliée dans la dernière demande, même pas encore affichée (clavier). */
+  isRequested: (key: string) => boolean;
   /** Plie (`fold`) ou déplie des branches ; `anchorId` reste en place à l'écran. */
   setFolded: (keys: string[], fold: boolean, anchorId: string) => void;
 };
@@ -48,10 +50,25 @@ export function useFoldedTree(initial: TreeDrawing, graph: DisplayedGraph): Fold
   const cache = useRef(new Map<string, TreeDrawing>());
   const latest = useRef(0);
   const client = useRef<LayoutClient>(undefined);
+  /**
+   * Dernier ensemble demandé, base de la demande suivante : un pliage lancé pendant
+   * un calcul s'ajoute au précédent au lieu de repartir de ce qui est affiché.
+   */
+  const requested = useRef<ReadonlySet<string>>(new Set());
 
-  // Nouveau rendu serveur (données changées) : on repart de son dessin, tout déplié.
+  // Nouveau rendu serveur (données changées) : on repart de son dessin, tout déplié,
+  // et une réponse encore attendue pour l'ancien graphe ne s'appliquera pas.
   if (state.initial !== initial) {
-    setState({ ...state, initial, drawing: initial, folded: new Set(), anchorId: undefined });
+    latest.current += 1;
+    requested.current = new Set();
+    setState({
+      initial,
+      drawing: initial,
+      folded: new Set(),
+      anchorId: undefined,
+      pending: false,
+      failed: false,
+    });
   }
   useEffect(() => {
     cache.current = new Map([['', initial]]);
@@ -65,17 +82,26 @@ export function useFoldedTree(initial: TreeDrawing, graph: DisplayedGraph): Fold
 
   const setFolded = useCallback(
     (changed: string[], fold: boolean, id: string) => {
-      const next = new Set(folded);
+      const base = requested.current;
+      const next = new Set(base);
       for (const key of changed) {
         if (!keys.has(key)) continue;
         if (fold) next.add(key);
         else next.delete(key);
       }
-      if (keyOf(next) === keyOf(folded)) return;
+      if (keyOf(next) === keyOf(base)) return;
+      requested.current = next;
       const request = ++latest.current;
       const cached = cache.current.get(keyOf(next));
       if (cached) {
-        setState((s) => ({ ...s, drawing: cached, folded: next, anchorId: id, failed: false }));
+        setState((s) => ({
+          ...s,
+          drawing: cached,
+          folded: next,
+          anchorId: id,
+          pending: false,
+          failed: false,
+        }));
         return;
       }
       setState((s) => ({ ...s, pending: true, failed: false }));
@@ -83,19 +109,23 @@ export function useFoldedTree(initial: TreeDrawing, graph: DisplayedGraph): Fold
       client.current ??= createLayoutClient();
       client.current.layout(shown).then(
         (layout) => {
+          if (request !== latest.current) return;
           const drawing = assembleDrawing(shown, layout, people, keys);
           cache.current.set(keyOf(next), drawing);
-          if (request !== latest.current) return;
           setState((s) => ({ ...s, drawing, folded: next, anchorId: id, pending: false }));
         },
         () => {
           if (request !== latest.current) return;
+          // La demande a échoué : la suivante repart de ce qui est affiché.
+          requested.current = folded;
           setState((s) => ({ ...s, pending: false, failed: true }));
         },
       );
     },
     [folded, keys, graph, people],
   );
+
+  const isRequested = useCallback((key: string) => requested.current.has(key), []);
 
   const hiddenBelow = useCallback(
     (key: string) => graph.personIds.length - foldGraph(graph, new Set([key])).personIds.length,
@@ -110,6 +140,7 @@ export function useFoldedTree(initial: TreeDrawing, graph: DisplayedGraph): Fold
     hiddenBelow,
     pending: state.pending,
     failed: state.failed,
+    isRequested,
     setFolded,
   };
 }

@@ -227,7 +227,7 @@ const BranchToggle = memo(function BranchToggle({
   branch: BranchHandle;
   folded: boolean;
   hidden: number;
-  onToggle: (keys: string[], fold: boolean, anchorId: string) => void;
+  onToggle: (branch: BranchHandle) => void;
 }) {
   // Hors du Tab (l'arbre se parcourt aux flèches, « + » et « - » plient) ; reste
   // atteignable au doigt, à la souris et par un lecteur d'écran.
@@ -241,7 +241,7 @@ const BranchToggle = memo(function BranchToggle({
           ? `Déplier la branche de ${branch.owners}, ${hidden} ${hidden > 1 ? 'personnes' : 'personne'}`
           : `Replier la branche de ${branch.owners}`
       }
-      onClick={() => onToggle([branch.id], !folded, branch.anchorId)}
+      onClick={() => onToggle(branch)}
       className={`${FAR_HIDDEN} group/toggle absolute grid size-11 -translate-x-1/2 -translate-y-1/2 scale-[calc(1/var(--cam-k,1))] cursor-pointer place-items-center`}
       style={{ left: branch.x, top: branch.y }}
     >
@@ -388,14 +388,15 @@ export function FamilyTree({
     [byId, camera],
   );
 
-  const { folded, branchesOf, setFolded } = fold;
+  const { folded, branchesOf, isRequested, setFolded } = fold;
   const onKeyDown = useCallback(
     (id: string, event: KeyboardEvent<HTMLAnchorElement>) => {
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       // « - » replie les branches sous la bulle, « + » les déplie (DESIGN.md, section 11).
       const keys = branchesOf.get(id) ?? [];
-      const collapse = event.key === '-' && keys.some((k) => !folded.has(k));
-      const expand = (event.key === '+' || event.key === '=') && keys.some((k) => folded.has(k));
+      // D'après la dernière demande : « - » puis « + » coup sur coup s'annulent.
+      const collapse = event.key === '-' && keys.some((k) => !isRequested(k));
+      const expand = (event.key === '+' || event.key === '=') && keys.some(isRequested);
       if (collapse || expand) {
         event.preventDefault();
         setFolded(keys, collapse, id);
@@ -413,7 +414,12 @@ export function FamilyTree({
       // Bulle virtualisée, pas encore rendue : le focus suit après le rendu.
       else pendingFocus.current = target;
     },
-    [byId, rows, branchesOf, folded, setFolded],
+    [byId, rows, branchesOf, isRequested, setFolded],
+  );
+
+  const toggleBranch = useCallback(
+    (branch: BranchHandle) => setFolded([branch.id], !isRequested(branch.id), branch.anchorId),
+    [isRequested, setFolded],
   );
 
   useLayoutEffect(() => {
@@ -493,7 +499,7 @@ export function FamilyTree({
               branch={branch}
               folded={folded.has(branch.id)}
               hidden={folded.has(branch.id) ? fold.hiddenBelow(branch.id) : 0}
-              onToggle={setFolded}
+              onToggle={toggleBranch}
             />
           ))}
         </div>

@@ -31,9 +31,23 @@ export function createLayoutClient(): LayoutClient {
   let engine: ReturnType<typeof loadEngine> | undefined;
   let disposed = false;
 
+  /** Arrête le worker ; le prochain pliage en relance un neuf. */
+  const stop = () => {
+    const running = engine;
+    engine = undefined;
+    running
+      ?.then(({ elk }) => elk.terminateWorker())
+      .catch(() => {
+        // Moteur jamais chargé (import échoué) : rien à arrêter.
+      });
+  };
   const withTimeout = <T>(work: Promise<T>) =>
     new Promise<T>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('Placement trop long')), LAYOUT_TIMEOUT_MS);
+      const timer = setTimeout(() => {
+        // Un worker bloqué retiendrait les demandes suivantes derrière lui.
+        stop();
+        reject(new Error('Placement trop long'));
+      }, LAYOUT_TIMEOUT_MS);
       work.then(
         (value) => {
           clearTimeout(timer);
@@ -56,11 +70,7 @@ export function createLayoutClient(): LayoutClient {
     dispose() {
       if (disposed) return;
       disposed = true;
-      engine
-        ?.then(({ elk }) => elk.terminateWorker())
-        .catch(() => {
-          // Moteur jamais chargé (import échoué) : rien à arrêter.
-        });
+      stop();
     },
   };
 }
