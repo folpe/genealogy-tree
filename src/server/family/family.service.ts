@@ -15,6 +15,7 @@ import { selectSubgraph } from './family.subgraph';
 import { todayIn } from './fuzzy-date.helper';
 import { findRelationshipPath, type Relationship, relationship } from './kinship.helper';
 import { describeRelationship } from './kinship.labels';
+import { trashRefusal } from './person-trash.service';
 
 // Lecture de l'arbre à travers la policy (spec section 6.4). Rien ne sort d'ici
 // sans être passé par viewTreeAs : c'est la frontière entre la base et le client.
@@ -47,6 +48,8 @@ export type TreeForViewer = Omit<TreeView, 'audited'> & {
   editableIds: string[];
   /** « ton grand-père » : le lien de chaque fiche avec le lecteur (kicker de la fiche). */
   relations: Record<string, string>;
+  /** Fiches que le lecteur peut mettre à la corbeille (même règle que le service). */
+  trashableIds: string[];
 };
 
 export type TreeViewKind = 'all' | 'couple' | 'descendants' | 'hourglass';
@@ -148,6 +151,7 @@ export async function getTreeForViewer(
     shownView,
     centerInCouple,
     editableIds: editableIds(ctx, viewer),
+    trashableIds: view.persons.flatMap((p) => (trashRefusal(ctx, viewer, p.id) ? [] : [p.id])),
     relations: relationsFrom(
       index,
       viewer.personId,

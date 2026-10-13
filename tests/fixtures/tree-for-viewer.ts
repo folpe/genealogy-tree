@@ -24,5 +24,6 @@ export function treeForViewer(memberId: string): TreeForViewer {
     centerInCouple: false,
     editableIds: editableIds(ctx, viewer),
     relations: {},
+    trashableIds: [],
   };
 }

@@ -7,6 +7,7 @@ import { formatFuzzyDate } from '@/server/family/fuzzy-date.helper';
 import { relativesOf } from './fiche.helper';
 import { EditableName, EditableRow } from './fiche-edit';
 import { PhotoPicker } from './fiche-photo';
+import { TrashButton } from './fiche-trash';
 import { isDeceased, lifeYears, personInitials, personLabel } from './person.helper';
 import { PersonBubble } from './person-bubble';
 
@@ -388,6 +389,9 @@ export function PersonSheet({
         <PeopleRow label="A aussi été élevé par" people={r.raisedBy} tree={tree} onPick={onPick} />
         <PeopleRow label="A élevé" people={r.raised} tree={tree} onPick={onPick} />
       </dl>
+      {tree.trashableIds.includes(person.id) ? (
+        <TrashButton personId={person.id} name={personLabel(person)} />
+      ) : undefined}
       {notice ? (
         <p className="rounded-2xl bg-paper px-4 py-3 text-[13px] leading-relaxed text-ink-2">
           {notice}

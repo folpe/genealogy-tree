@@ -1,6 +1,6 @@
 // tdd-cover: e2e src/server/family/family.repository.integration.test.ts
 
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { AppError } from '../_shared/errors';
 import {
   events,
@@ -10,6 +10,7 @@ import {
   residences,
   sourcedFacts,
   unions,
+  users,
 } from '../db/schema';
 import type { Db } from '../db/types';
 
@@ -36,15 +37,51 @@ export async function loadFamilyGraph(db: Db): Promise<FamilyGraph> {
     db.select().from(parentChild),
     db.select().from(sourcedFacts),
   ]);
+  // Corbeille : une fiche supprimée disparaît, avec ce qui ne tient qu'à elle. Rien
+  // n'est effacé en base ; une restauration ramène tout.
+  const trashed = new Set(p.filter((row) => row.deletedAt !== null).map((row) => row.id)); // allow-null: colonne Postgres
+  const kept = (id: string | null) => id === null || !trashed.has(id); // allow-null: partenaire inconnu
   return rowsToGraph({
-    persons: p,
-    events: e,
+    persons: p.filter((row) => kept(row.id)),
+    events: e.filter((row) => kept(row.personId)),
     places: pl,
-    residences: r,
-    unions: u,
-    parentChildren: pc,
-    sourcedFacts: sf,
+    residences: r.filter((row) => kept(row.personId)),
+    unions: u.filter((row) => kept(row.partnerAId) && kept(row.partnerBId)),
+    parentChildren: pc.filter((row) => kept(row.parentId) && kept(row.childId)),
+    sourcedFacts: sf.filter((row) => kept(row.personId)),
   });
+}
+
+/** Met une fiche à la corbeille (`at` défini) ou l'en sort (`at` absent). */
+export async function setPersonTrashed(
+  db: Db,
+  personId: string,
+  trash: { at: Date; by: string } | undefined,
+): Promise<boolean> {
+  const rows = await db
+    .update(persons)
+    .set(
+      trash ? { deletedAt: trash.at, deletedBy: trash.by } : { deletedAt: null, deletedBy: null },
+    ) // allow-null: colonnes vidées
+    .where(eq(persons.id, personId))
+    .returning({ id: persons.id });
+  return rows.length === 1;
+}
+
+/** Les fiches à la corbeille, les plus récentes d'abord, avec qui les y a mises. */
+export async function loadTrash(db: Db) {
+  return db
+    .select({
+      id: persons.id,
+      firstName: persons.firstName,
+      lastName: persons.lastName,
+      deletedAt: persons.deletedAt,
+      deletedByName: users.name,
+    })
+    .from(persons)
+    .leftJoin(users, eq(users.id, persons.deletedBy))
+    .where(isNotNull(persons.deletedAt))
+    .orderBy(desc(persons.deletedAt));
 }
 
 /** Insère un graphe complet en une transaction : tout ou rien (seed, migration Notion). */

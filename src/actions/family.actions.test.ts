@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   getSearchDirectory: vi.fn(),
   getRelationship: vi.fn(),
   editPerson: vi.fn(),
+  trashPerson: vi.fn(),
+  restorePerson: vi.fn(),
   changePhoto: vi.fn(),
   revalidatePath: vi.fn(),
 }));
@@ -21,6 +23,10 @@ vi.mock('@/server/family/family.service', () => ({
 }));
 vi.mock('@/server/family/relatives.service', () => ({ addRelative: mocks.addRelative }));
 vi.mock('@/server/family/person-edit.service', () => ({ editPerson: mocks.editPerson }));
+vi.mock('@/server/family/person-trash.service', () => ({
+  trashPerson: mocks.trashPerson,
+  restorePerson: mocks.restorePerson,
+}));
 vi.mock('@/server/family/person-photo.service', () => ({ changePhoto: mocks.changePhoto }));
 vi.mock('@/server/media/media.instance', () => ({ getMediaDeps: () => ({ media: true }) }));
 
@@ -29,7 +35,9 @@ import {
   changePhotoAction,
   editPersonAction,
   relationshipAction,
+  restorePersonAction,
   searchDirectoryAction,
+  trashPersonAction,
 } from './family.actions';
 
 const form = (fields: Record<string, string>) => {
@@ -182,5 +190,32 @@ describe('changePhotoAction', () => {
       error: 'Choisis une photo.',
     });
     expect(mocks.changePhoto).not.toHaveBeenCalled();
+  });
+});
+
+describe('corbeille', () => {
+  beforeEach(() => {
+    mocks.requireSession.mockReset().mockResolvedValue({ user: { id: 'u-anne' } });
+    mocks.trashPerson.mockReset();
+    mocks.restorePerson.mockReset();
+    mocks.revalidatePath.mockReset();
+  });
+
+  it('met à la corbeille au nom de la session, et rafraîchit', async () => {
+    expect(await trashPersonAction('tom')).toEqual({ ok: true });
+    expect(mocks.trashPerson).toHaveBeenCalledWith(
+      expect.objectContaining({ deps: true }),
+      'u-anne',
+      'tom',
+    );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith('/', 'layout');
+  });
+
+  it('restaure (admin) ; dit pourquoi un refus', async () => {
+    mocks.restorePerson.mockRejectedValue(
+      new AppError({ message: 'Réservé aux admins', code: 'X', status: 403 }),
+    );
+    expect(await restorePersonAction('tom')).toEqual({ ok: false, error: 'Réservé aux admins' });
+    expect(await trashPersonAction(42)).toEqual({ ok: false, error: 'Fiche invalide.' });
   });
 });

@@ -13,6 +13,7 @@ import {
 } from '@/server/family/family.service';
 import { editPerson } from '@/server/family/person-edit.service';
 import { changePhoto } from '@/server/family/person-photo.service';
+import { restorePerson, trashPerson } from '@/server/family/person-trash.service';
 import { addRelative } from '@/server/family/relatives.service';
 import { getMediaDeps } from '@/server/media/media.instance';
 
@@ -112,4 +113,35 @@ export async function changePhotoAction(data: FormData): Promise<EditResult> {
   }
   revalidatePath('/', 'layout');
   return { ok: true };
+}
+
+async function onPerson(
+  personId: unknown,
+  run: (userId: string, id: string) => Promise<void>,
+): Promise<EditResult> {
+  const { user } = await requireSession();
+  const parsed = personIdSchema.safeParse(personId);
+  if (!parsed.success) return { ok: false, error: 'Fiche invalide.' };
+  try {
+    await run(user.id, parsed.data);
+  } catch (error) {
+    const result = toResult(error);
+    return result.ok ? { ok: true } : result;
+  }
+  revalidatePath('/', 'layout');
+  return { ok: true };
+}
+
+/** Met une fiche à la corbeille : elle quitte l'arbre, un admin peut la restaurer. */
+export async function trashPersonAction(personId: unknown): Promise<EditResult> {
+  return onPerson(personId, (userId, id) =>
+    trashPerson({ ...getFamilyDeps(), now: () => new Date() }, userId, id),
+  );
+}
+
+/** Sort une fiche de la corbeille (admin). */
+export async function restorePersonAction(personId: unknown): Promise<EditResult> {
+  return onPerson(personId, (userId, id) =>
+    restorePerson({ ...getFamilyDeps(), now: () => new Date() }, userId, id),
+  );
 }
