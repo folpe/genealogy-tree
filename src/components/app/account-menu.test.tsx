@@ -3,16 +3,16 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { addPasskey, signOut, push, refresh } = vi.hoisted(() => ({
+const { addPasskey, signOut, replace, refresh } = vi.hoisted(() => ({
   addPasskey: vi.fn(),
   signOut: vi.fn(),
-  push: vi.fn(),
+  replace: vi.fn(),
   refresh: vi.fn(),
 }));
 vi.mock('@/lib/auth-client', () => ({
   authClient: { passkey: { addPasskey }, signOut },
 }));
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push, refresh }) }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace, refresh }) }));
 
 import { AccountMenu } from './account-menu';
 
@@ -41,7 +41,7 @@ describe('AccountMenu', () => {
     vi.restoreAllMocks();
     addPasskey.mockReset().mockResolvedValue({ data: {}, error: null });
     signOut.mockReset().mockResolvedValue({});
-    push.mockReset();
+    replace.mockReset();
     refresh.mockReset();
   });
 
@@ -78,7 +78,16 @@ describe('AccountMenu', () => {
     const menu = await openMenu();
     await userEvent.click(within(menu).getByRole('menuitem', { name: 'Me déconnecter' }));
     expect(signOut).toHaveBeenCalled();
-    expect(push).toHaveBeenCalledWith('/login');
+    expect(replace).toHaveBeenCalledWith('/login');
+  });
+
+  it('reste sur place et le dit si la déconnexion échoue', async () => {
+    signOut.mockResolvedValue({ error: { message: 'réseau' } });
+    render(<AccountMenu account={hugo} hasPasskey />);
+    const menu = await openMenu();
+    await userEvent.click(within(menu).getByRole('menuitem', { name: 'Me déconnecter' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('La déconnexion n’a pas abouti');
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it('propose Face ID tant que l’appareil n’a pas de passkey, et confirme', async () => {

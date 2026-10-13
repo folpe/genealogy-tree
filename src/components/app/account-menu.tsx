@@ -47,8 +47,12 @@ export function AccountMenu({ account, hasPasskey }: { account: Account; hasPass
   }
 
   async function signOut() {
-    await authClient.signOut();
-    router.push('/login');
+    const result = await authClient.signOut();
+    if (result?.error) {
+      setStatus('La déconnexion n’a pas abouti. Réessaie dans un instant.');
+      return;
+    }
+    router.replace('/login');
   }
 
   return (
@@ -65,6 +69,10 @@ export function AccountMenu({ account, hasPasskey }: { account: Account; hasPass
             align="end"
             sideOffset={8}
             collisionPadding={16}
+            // Le mode d'emploi s'ouvre depuis le menu : le focus va à lui, pas à l'avatar.
+            onCloseAutoFocus={(event) => {
+              if (installOpen) event.preventDefault();
+            }}
             className="z-50 min-w-64 rounded-2xl bg-card p-2 text-ink shadow-float"
           >
             <DropdownMenu.Label className="px-3 pt-2 pb-3">
