@@ -54,3 +54,18 @@ test('le thème choisi s’applique tout de suite et tient au rechargement', asy
   await page.getByRole('menuitemradio', { name: 'Comme l’appareil' }).click();
   await expect(html).not.toHaveAttribute('data-theme');
 });
+
+test('l’arbre tient dans l’écran : rien ne défile, le canevas prend la place', async ({ page }) => {
+  await signIn(page, 'hugo@famille.test');
+  await expect(page.getByRole('tree')).toBeVisible();
+  const { scroll, viewport, canvas } = await page.evaluate(() => ({
+    scroll: document.documentElement.scrollHeight,
+    viewport: window.innerHeight,
+    canvas:
+      document.querySelector('[data-camera-layer]')?.parentElement?.getBoundingClientRect()
+        .height ?? 0,
+  }));
+  expect(scroll).toBeLessThanOrEqual(viewport);
+  // Le canevas occupe l'essentiel de l'écran, sur téléphone comme sur ordinateur.
+  expect(canvas).toBeGreaterThan(viewport * 0.5);
+});

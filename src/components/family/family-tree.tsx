@@ -596,7 +596,7 @@ export function FamilyTree({
     me && camera ? () => camera.flyTo(cameraOn(me, Math.max(camera.get().k, 0.75))) : undefined;
 
   return (
-    <div className="relative h-[calc(100dvh-15rem)] min-h-[420px] md:h-[calc(100dvh-13rem)] overflow-hidden rounded-[var(--radius-panel)] border border-line">
+    <div className="relative h-full min-h-[280px] overflow-hidden rounded-[var(--radius-panel)] border border-line">
       <section
         ref={viewport}
         aria-label="Canevas de l’arbre"

@@ -22,9 +22,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     cookies(),
   ]);
 
+  // Un écran d'app : l'en-tête reste en place, la page occupe le reste. Rien ne défile
+  // en entier ; une page longue (fiche, membres) défile dans sa zone, l'arbre jamais.
   return (
-    <>
-      <header className="flex items-center justify-between gap-3 px-4 pt-3 md:grid md:grid-cols-[1fr_auto_1fr] md:px-8 md:pt-[18px]">
+    <div className="flex h-dvh flex-col overflow-hidden">
+      <header className="flex shrink-0 items-center justify-between gap-3 px-4 pt-3 pb-1 md:grid md:grid-cols-[1fr_auto_1fr] md:px-8 md:pt-[18px]">
         {/* Sous 640 px, l'onglet « Arbre » tient lieu de marque : la place manque. */}
         <Link
           href="/tree"
@@ -42,7 +44,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           />
         </div>
       </header>
-      {children}
-    </>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
+    </div>
   );
 }

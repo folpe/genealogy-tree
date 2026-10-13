@@ -4,13 +4,13 @@
 
 export default function TreeLoading() {
   return (
-    <main className="flex flex-col gap-6 p-4 md:p-8">
-      <h1 className="font-display text-[28px] leading-tight md:text-[32px]">
+    <main className="flex h-full flex-col gap-3 px-4 pt-2 pb-4 md:gap-4 md:p-8 md:pt-4">
+      <h1 className="sr-only font-display text-[32px] leading-tight md:not-sr-only">
         L’arbre de la famille
       </h1>
       <div
         aria-busy="true"
-        className="canvas-grid relative grid h-[calc(100dvh-15rem)] min-h-[420px] md:h-[calc(100dvh-13rem)] place-items-center overflow-hidden rounded-[var(--radius-panel)] border border-line"
+        className="canvas-grid relative grid min-h-0 flex-1 place-items-center overflow-hidden rounded-[var(--radius-panel)] border border-line"
       >
         <p role="status" className="flex flex-col items-center gap-3 text-[15px] text-ink-2">
           <span
