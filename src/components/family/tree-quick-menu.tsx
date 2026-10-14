@@ -8,6 +8,7 @@ import {
   type PointerEvent,
   type ReactNode,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -42,6 +43,8 @@ export function useQuickPress(enabled: boolean) {
       }),
     [],
   );
+  // Un arbre quitté pendant l'appui n'ouvre plus rien.
+  useEffect(() => press.cancel, [press]);
   const canvas = {
     onPointerDown: (event: PointerEvent) => {
       const id = enabled ? personAt(event.target) : undefined;

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createLongPress, LONG_PRESS_MS } from './long-press';
+import { CLICK_AFTER_MS, createLongPress, LONG_PRESS_MS } from './long-press';
 
 const finger = (x = 0, y = 0) => ({ x, y, pointerType: 'touch', isPrimary: true });
 
@@ -60,5 +60,24 @@ describe('appui long sur une bulle', () => {
     press.down('luc', finger());
     press.up();
     expect(press.swallowClick()).toBe(false);
+  });
+
+  it('sans clic au lever (menu modal, iOS), le prochain clic n’est pas avalé', () => {
+    const press = createLongPress(() => undefined);
+    press.down('luc', finger());
+    vi.advanceTimersByTime(LONG_PRESS_MS);
+    press.up();
+    vi.advanceTimersByTime(CLICK_AFTER_MS);
+    // Entrée au clavier sur une bulle : un clic sans appui avant.
+    expect(press.swallowClick()).toBe(false);
+  });
+
+  it('se tait une fois démonté : plus d’ouverture en attente', () => {
+    const opened: string[] = [];
+    const press = createLongPress((id) => opened.push(id));
+    press.down('luc', finger());
+    press.cancel();
+    vi.advanceTimersByTime(LONG_PRESS_MS);
+    expect(opened).toEqual([]);
   });
 });
