@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "4.0.0",
+  "version": "5.0.2",
   "files": [
     {
       "path": ".claude/agents/accessibility-specialist.md",
@@ -40,7 +40,7 @@
     },
     {
       "path": ".claude/agents/independent-code-reviewer.md",
-      "sha256": "9c7eac30783f35120f0fdf2438db362f7ccb5be82de7e49f4be5c8ff6344514d"
+      "sha256": "07cb384e639210001442066542d54a1f115eb378963d8ab3a253a85ca366c9ac"
     },
     {
       "path": ".claude/agents/migration-planner.md",
@@ -88,7 +88,7 @@
     },
     {
       "path": ".claude/settings.json",
-      "sha256": "8a6bef9160869f3a95dc2bfa583ec3d26ea0458ea7b4db7da0cb9b364592aef1"
+      "sha256": "3e704b72ed79ab3e0ead5c7c0da662870bddcca28037e182399aecace96ed3fa"
     },
     {
       "path": ".claude/skills/void-accessibility-check/SKILL.md",
@@ -112,7 +112,7 @@
     },
     {
       "path": ".claude/skills/void-autopilot/SKILL.md",
-      "sha256": "a4e7849f0f43214c0d5c20684eac668770b490bc5a70e2d8fa0ca70152acc6b5"
+      "sha256": "75417ed525cb5e03a13a27fdbc2093782c0f0528cf94d586453691245db94488"
     },
     {
       "path": ".claude/skills/void-background-job-pattern/SKILL.md",
@@ -120,7 +120,7 @@
     },
     {
       "path": ".claude/skills/void-brainstorm/SKILL.md",
-      "sha256": "f1b69c6f59ea63b90bff69be596dfe2670c1cfc0f165ef2a8ea078581fa30096"
+      "sha256": "b6d15c5412598766186a3455a251922105894d319ab1b53be2feb4b10e3888c8"
     },
     {
       "path": ".claude/skills/void-cache-component-pattern/SKILL.md",
@@ -148,7 +148,7 @@
     },
     {
       "path": ".claude/skills/void-context/SKILL.md",
-      "sha256": "0ba5b21a850b3834d50d53cce3a3c50c491ed742900eb357332ba771f547786f"
+      "sha256": "b84b4de0d60048a55441c6cb8989d63c50618045874184c32e069661bf42797a"
     },
     {
       "path": ".claude/skills/void-debug/SKILL.md",
@@ -200,7 +200,7 @@
     },
     {
       "path": ".claude/skills/void-implement/SKILL.md",
-      "sha256": "e405e1e85b26b961569d0179b3489beff1ae07db025008b858c13bf1d96a0845"
+      "sha256": "e8801118d0a13c2be6c44ca4ddda0347a6f67eaf90ac577a95e050785054d7d7"
     },
     {
       "path": ".claude/skills/void-install-prompt-ux/SKILL.md",
@@ -247,6 +247,10 @@
       "sha256": "f28684d9637cf3a3fa640f9f6219fce02a4e61ef7b4a14814abe7c122d539a1e"
     },
     {
+      "path": ".claude/skills/void-orchestrate/SKILL.md",
+      "sha256": "d50833ec620f0e5630d3f25596556eb5aa763fb364edc16e5f3d9326fede434a"
+    },
+    {
       "path": ".claude/skills/void-parallel-routes-slots/SKILL.md",
       "sha256": "b56325dfbbc59196a30a4ec44153ea2f691275ce32fc5f93d7dcd48e87b9bd79"
     },
@@ -256,7 +260,7 @@
     },
     {
       "path": ".claude/skills/void-plan/SKILL.md",
-      "sha256": "ba9013224f5b9af70c039892af97574a6f9718692d1fafeaba576f34f9a052e6"
+      "sha256": "7ff5173c01b28a3145d2e1aab07e2c87dfa0609803857766ffac96b35afd1045"
     },
     {
       "path": ".claude/skills/void-qa/SKILL.md",
@@ -284,7 +288,7 @@
     },
     {
       "path": ".claude/skills/void-security-guidance/SKILL.md",
-      "sha256": "da4d0d8aebbe98fe274ae7bf051ce4c080b383dd9988729fb1679c4171d815c8"
+      "sha256": "29b072b5af8a8f469df444ab74f2dda91a77d0dda849cd9e3c68bd2936bad237"
     },
     {
       "path": ".claude/skills/void-server-action/SKILL.md",
@@ -316,7 +320,7 @@
     },
     {
       "path": ".claude/skills/void-ticket/SKILL.md",
-      "sha256": "f4e3032f9d35e78656e876d687856c377c0fccc980eea1256c7e4be314205950"
+      "sha256": "311787ab54b9e6ecc59c5189cf82f2e61264114830961ab4ee5c71fa1379358b"
     },
     {
       "path": ".claude/skills/void-typescript-strict/SKILL.md",
@@ -336,11 +340,11 @@
     },
     {
       "path": ".gitignore",
-      "sha256": "18bf91cb25f6dbf04f514ba51a397eae4baa0be98616291dcfd04d0596b46aa1"
+      "sha256": "01d54651250055f5a77096463fdcc22a965760a3878fb8aa885948f5887e7578"
     },
     {
       "path": ".void/config.json",
-      "sha256": "b842c98ba95867f97c6051f450cb60380e1b8fd1da54cd7bfacf8ecc7b3e6a87"
+      "sha256": "c0e9a69ecac659c1f71b3a8d34c0771482c94dab680622d6411718934a9fbfd2"
     },
     {
       "path": ".void/hooks/_syntax-worker.cjs",
@@ -348,7 +352,7 @@
     },
     {
       "path": ".void/hooks/_void-hook.mjs",
-      "sha256": "4145592bc696e731e0a729325386fecbf49a1662a736715f3e2e2fc1bf7cd599"
+      "sha256": "d7f23799231a1e65bb45e7343938f60a3c5d2b48d4c7e62992fef451eef45fb2"
     },
     {
       "path": ".void/installed/PHILOSOPHY.md",
@@ -360,7 +364,7 @@
     },
     {
       "path": "CLAUDE.md",
-      "sha256": "c88407ace6736278522839d5ff371c3bdfe00955ce86499e56abc2b131fc7f46"
+      "sha256": "5494aba18fa1a74219b6c02a829b4a78860f5d35ce59a83f6858dd3e9356077d"
     }
   ],
   "projectDoctrineTemplateSha256": "fb469eb88cc780a7359748683652cd268909037fff6762dadbede4994e20c3bc"
