@@ -6,7 +6,6 @@ import {
   formatFuzzyDate,
   fuzzyDateRange,
   isCertainlyBefore,
-  parseFuzzyDate,
   todayIn,
   VERS_MARGIN_YEARS,
 } from './fuzzy-date.helper';
@@ -18,47 +17,6 @@ const exacte = (year: number, month: number, day: number): FuzzyDate => ({
   day,
 });
 const annee = (year: number): FuzzyDate => ({ precision: 'annee', year });
-
-describe('parseFuzzyDate', () => {
-  it.each<[string, FuzzyDate]>([
-    ['12/03/1987', exacte(1987, 3, 12)],
-    ['1/3/1987', exacte(1987, 3, 1)],
-    ['12-03-1987', exacte(1987, 3, 12)],
-    ['1987-03-12', exacte(1987, 3, 12)],
-    ['12 mars 1987', exacte(1987, 3, 12)],
-    ['1er mars 1987', exacte(1987, 3, 1)],
-    ['3 Août 1992', exacte(1992, 8, 3)],
-    ['3 aout 1992', exacte(1992, 8, 3)],
-    ['mars 1987', { precision: 'mois', year: 1987, month: 3 }],
-    ['Décembre 1950', { precision: 'mois', year: 1950, month: 12 }],
-    ['fevrier 1940', { precision: 'mois', year: 1940, month: 2 }],
-    ['1987', annee(1987)],
-    ['  1987  ', annee(1987)],
-    ['vers 1850', { precision: 'vers', year: 1850 }],
-    ['Vers 1850', { precision: 'vers', year: 1850 }],
-    ['environ 1850', { precision: 'vers', year: 1850 }],
-    ['avant 1900', { precision: 'avant', year: 1900 }],
-    ['après 1900', { precision: 'apres', year: 1900 }],
-    ['APRES 1900', { precision: 'apres', year: 1900 }],
-    ['entre 1880 et 1885', { precision: 'entre', from: 1880, to: 1885 }],
-    ['Entre 1880 et 1880', { precision: 'entre', from: 1880, to: 1880 }],
-  ])('« %s »', (input, expected) => {
-    expect(parseFuzzyDate(input)).toEqual(expected);
-  });
-
-  it.each([
-    '',
-    'hier',
-    '31/02/1987',
-    '12/13/1987',
-    '30 février 1987',
-    'entre 1885 et 1880',
-    'brumaire 1800',
-    'vers',
-  ])('rejette « %s »', (input) => {
-    expect(parseFuzzyDate(input)).toBeNull();
-  });
-});
 
 describe('formatFuzzyDate', () => {
   it.each<[FuzzyDate, string]>([
@@ -73,16 +31,6 @@ describe('formatFuzzyDate', () => {
     [{ precision: 'entre', from: 1880, to: 1885 }, 'entre 1880 et 1885'],
   ])('%j -> « %s »', (date, expected) => {
     expect(formatFuzzyDate(date)).toBe(expected);
-  });
-
-  it('relit ce qu’il écrit', () => {
-    const dates: FuzzyDate[] = [
-      exacte(1987, 3, 1),
-      { precision: 'mois', year: 1987, month: 8 },
-      { precision: 'entre', from: 1880, to: 1885 },
-      { precision: 'apres', year: 1900 },
-    ];
-    for (const date of dates) expect(parseFuzzyDate(formatFuzzyDate(date))).toEqual(date);
   });
 });
 
@@ -205,23 +153,6 @@ describe('ageAt', () => {
 });
 
 describe('durcissement (mutation testing)', () => {
-  it.each([
-    'le 12/03/1987',
-    '12/03/1987 environ',
-    'x1987-03-12',
-    '1987-03-12 midi',
-    'le 3 mars 1987',
-    'entre 1880 et 1885 env',
-    'an 1987',
-    '1987 env',
-  ])('rejette « %s » (saisie entourée de texte)', (input) => {
-    expect(parseFuzzyDate(input)).toBeNull();
-  });
-
-  it('tolère les espaces multiples', () => {
-    expect(parseFuzzyDate('12   mars    1987')).toEqual(exacte(1987, 3, 12));
-  });
-
   it('départage par la précision à point de tri égal', () => {
     const vers: FuzzyDate = { precision: 'vers', year: 1900 };
     const entre: FuzzyDate = { precision: 'entre', from: 1895, to: 1905 };

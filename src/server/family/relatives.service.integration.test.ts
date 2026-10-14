@@ -40,7 +40,9 @@ describe.skipIf(!db)('relatives.service (intégration)', () => {
     firstName: 'Marcel',
     lastName: 'Blanc',
     gender: 'homme',
-    birth: '1910',
+    birthApprox: 'on',
+    birthPrecision: 'annee',
+    birthYear: '1910',
     birthPlace: 'Nantes',
     deceased: 'on',
   };

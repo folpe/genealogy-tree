@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ValidationError } from '../_shared/errors';
+import { parseDateFields } from './date-fields.helper';
 import { genderSchema, type Person } from './family.types';
-import { parseFuzzyDate } from './fuzzy-date.helper';
 
 // Modification sur place d'une fiche (phase 6, lot 2, avancé) : un champ à la fois,
 // comme dans Contacts. Pur : on lit la saisie, on l'applique à la fiche ; le service
@@ -11,15 +11,6 @@ const text = (max: number) => z.string().trim().min(1).max(max);
 /** Un champ de formulaire vide vaut « non renseigné ». */
 const blankToUndefined = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? undefined : v);
 const optionalText = (max: number) => z.preprocess(blankToUndefined, text(max).optional());
-const date = optionalText(40).transform((value, ctx) => {
-  if (value === undefined) return undefined;
-  const parsed = parseFuzzyDate(value) ?? undefined;
-  if (!parsed) {
-    ctx.addIssue({ code: 'custom', message: 'Date illisible : essaie « 1987 » ou « vers 1850 »' });
-    return z.NEVER;
-  }
-  return parsed;
-});
 const id = z.string().min(1).max(64);
 
 const schema = z.discriminatedUnion('field', [
@@ -30,7 +21,8 @@ const schema = z.discriminatedUnion('field', [
     value: optionalText(120),
   }),
   z.object({ personId: id, field: z.literal('gender'), value: genderSchema }),
-  z.object({ personId: id, field: z.literal('birth'), date, place: optionalText(120) }),
+  // La date se lit à part, champ par champ (`date-fields.helper`).
+  z.object({ personId: id, field: z.literal('birth'), place: optionalText(120) }),
   z.object({
     personId: id,
     field: z.literal('death'),
@@ -39,7 +31,6 @@ const schema = z.discriminatedUnion('field', [
       (v) => (v === undefined ? undefined : v === 'on' || v === true),
       z.boolean().optional(),
     ),
-    date,
     place: optionalText(120),
   }),
 ]);
@@ -75,8 +66,9 @@ export function parsePersonEdit(raw: unknown): PersonEdit {
         : { personId, field: edit.field, value: edit.value };
     case 'birth':
     case 'death': {
+      const date = parseDateFields(raw, 'date');
       const event: LifeEvent = {
-        ...(edit.date ? { date: edit.date } : {}),
+        ...(date ? { date } : {}),
         ...(edit.place ? { place: edit.place } : {}),
       };
       // Décès : la case fait foi quand elle est envoyée ; sans elle, une date ou un lieu

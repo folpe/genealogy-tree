@@ -14,7 +14,11 @@ test('Anne ajoute un enfant depuis sa fiche, puis l’ouvre', async ({ page }) =
   // Les pastilles de genre sont des libellés : on touche le libellé, comme au doigt.
   await dialog.getByText('Femme', { exact: true }).click();
   await expect(dialog.getByRole('radio', { name: 'Femme' })).toBeChecked();
-  await dialog.getByLabel('Naissance', { exact: true }).fill('vers 1995');
+  // Une date ancienne ou incertaine : la case, la précision, l'année, en lettres dessous.
+  await dialog.getByLabel('Date approximative').check();
+  await dialog.getByLabel('Naissance : précision').selectOption('vers');
+  await dialog.getByLabel('Naissance : année').fill('1995');
+  await expect(dialog.getByText('vers 1995', { exact: true })).toBeVisible();
   await dialog.getByRole('button', { name: 'Ajouter Nina' }).click();
   const done = page.getByRole('dialog', { name: 'C’est ajouté' });
   await expect(done.getByRole('status')).toHaveText('Fiche de Nina créée.');
@@ -23,15 +27,20 @@ test('Anne ajoute un enfant depuis sa fiche, puis l’ouvre', async ({ page }) =
   await expect(page.getByRole('link', { name: /^Anne Marchand/ })).toBeVisible();
 });
 
-test('une date illisible est refusée avec son explication', async ({ page }) => {
+test('une date impossible est signalée pendant la saisie, puis refusée', async ({ page }) => {
   await signIn(page, 'anne@famille.test');
   await page.goto('/people/anne?ajouter=conjoint');
   const dialog = page.getByRole('dialog', { name: 'Ajouter un conjoint à Anne' });
   await dialog.getByLabel('Prénom').fill('Paul');
   await dialog.getByLabel('Nom', { exact: true }).fill('Test');
-  await dialog.getByLabel('Naissance', { exact: true }).fill('un jour');
+  await dialog.getByLabel('Date approximative').check();
+  await dialog.getByLabel('Naissance : précision').selectOption('entre');
+  await dialog.getByLabel('Naissance : de').fill('1990');
+  await dialog.getByLabel('Naissance : à').fill('1980');
+  const why = 'La première année doit précéder la seconde';
+  await expect(dialog.getByText(why)).toBeVisible();
   await dialog.getByRole('button', { name: 'Ajouter Paul' }).click();
-  await expect(dialog.getByRole('alert')).toContainText('Date illisible');
+  await expect(dialog.getByRole('alert')).toContainText(why);
 });
 
 test('depuis une case vide de l’éventail, le dialogue s’ouvre réglé', async ({ page }) => {

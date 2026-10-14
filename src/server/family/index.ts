@@ -59,7 +59,6 @@ export {
   formatFuzzyDate,
   fuzzyDateRange,
   isCertainlyBefore,
-  parseFuzzyDate,
   VERS_MARGIN_YEARS,
 } from './fuzzy-date.helper';
 export type { BloodRelationship, Relationship } from './kinship.helper';

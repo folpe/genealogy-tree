@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { AppError, ValidationError } from '../_shared/errors';
+import { parseDateFields } from './date-fields.helper';
 import { ParentsFullError } from './family.errors';
 import { type FamilyIndex, parentsOf, partnersOf } from './family.helper';
 import { assertCanAddParentChild, assertCanAddUnion } from './family.invariants';
@@ -10,7 +11,6 @@ import {
   type Person,
   type Union,
 } from './family.types';
-import { parseFuzzyDate } from './fuzzy-date.helper';
 
 // Ajout d'un proche (plan phase 6, lot 2, version minimale) : un parent, un enfant ou
 // un conjoint, créé en même temps que son lien. Pur : on prépare les lignes, les
@@ -23,16 +23,6 @@ const optionalText = (max: number) =>
     (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
     text(max).optional(),
   );
-const date = optionalText(40).transform((value, ctx) => {
-  if (value === undefined) return undefined;
-  const parsed = parseFuzzyDate(value) ?? undefined;
-  if (!parsed) {
-    ctx.addIssue({ code: 'custom', message: 'Date illisible : essaie « 1987 » ou « vers 1850 »' });
-    return z.NEVER;
-  }
-  return parsed;
-});
-
 const schema = z.object({
   anchorId: text(64),
   relation: z.enum(['parent', 'child', 'partner']),
@@ -40,10 +30,8 @@ const schema = z.object({
   lastName: text(80),
   birthName: optionalText(80),
   gender: genderSchema,
-  birth: date,
   birthPlace: optionalText(120),
   deceased: z.preprocess((v) => v === 'on' || v === true, z.boolean()),
-  death: date,
   /** Parent : l'autre parent, avec qui il forme un couple. Enfant : l'autre parent, conjoint. */
   otherParentId: optionalText(64),
 });
@@ -57,7 +45,10 @@ export type AddRelativeInput = Omit<Person, 'id' | 'visibility' | 'sourcedFields
 export function parseAddRelative(raw: unknown): AddRelativeInput {
   const parsed = schema.safeParse(raw);
   if (!parsed.success) throw new ValidationError('Fiche invalide', parsed.error);
-  const { birth, birthPlace, deceased, death, birthName, otherParentId, ...rest } = parsed.data;
+  // Les dates se lisent à part, champ par champ (`date-fields.helper`).
+  const { birthPlace, deceased, birthName, otherParentId, ...rest } = parsed.data;
+  const birth = parseDateFields(raw, 'birth');
+  const death = deceased ? parseDateFields(raw, 'death') : undefined;
   const event = (d: FuzzyDate | undefined, place?: string) => ({
     ...(d ? { date: d } : {}),
     ...(place ? { place } : {}),
