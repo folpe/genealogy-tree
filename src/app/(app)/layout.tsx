@@ -14,6 +14,7 @@ import { getViewerAccount } from '@/server/members/members.service';
 
 // Coque de l'espace connecté : la marque, qui ramène à l'arbre, les onglets des vues
 // et l'avatar du compte. Partagée par toutes les pages, elle reste en place d'une page à l'autre.
+// Sur téléphone (maquette Mobile), les onglets descendent sous le pouce, en pilule flottante.
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const { user } = await requireSession();
@@ -26,16 +27,17 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // Un écran d'app : l'en-tête reste en place, la page occupe le reste. Rien ne défile
   // en entier ; une page longue (fiche, membres) défile dans sa zone, l'arbre jamais.
   return (
-    <div className="flex h-dvh flex-col overflow-hidden">
-      <header className="flex shrink-0 items-center justify-between gap-3 px-4 pt-3 pb-1 md:grid md:grid-cols-[1fr_auto_1fr] md:px-8 md:pt-[18px]">
-        {/* Sous 640 px, l'onglet « Arbre » tient lieu de marque : la place manque. */}
+    <div className="relative flex h-dvh flex-col overflow-hidden">
+      <header className="flex shrink-0 items-center justify-between gap-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-1 md:grid md:grid-cols-[1fr_auto_1fr] md:px-8 md:pt-[18px]">
         <Link
           href="/tree"
-          className="hidden font-display text-lg leading-none whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink sm:block md:text-xl"
+          className="font-display text-xl leading-none whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
         >
           Ances-Tree
         </Link>
-        <NavPills />
+        <div className="hidden md:block">
+          <NavPills placement="header" />
+        </div>
         <div className="flex items-center justify-end gap-2.5">
           <CommandPalette />
           <AccountMenu
@@ -46,6 +48,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
       <PageZone>{children}</PageZone>
+      {/* Au-dessus des pages, sous les feuilles et dialogues (z-40 et plus). */}
+      <div className="absolute inset-x-3 bottom-[var(--tab-bar-bottom)] z-30 md:hidden">
+        <NavPills placement="bar" />
+      </div>
     </div>
   );
 }

@@ -83,3 +83,27 @@ test('l’arbre tient dans l’écran : rien ne défile, le canevas prend la pla
   // Le canevas occupe l'essentiel de l'écran, sur téléphone comme sur ordinateur.
   expect(canvas).toBeGreaterThan(viewport * 0.5);
 });
+
+test('sur téléphone, les onglets flottent en bas, sous le pouce, sans rien cacher', async ({
+  page,
+}) => {
+  const width = page.viewportSize()?.width ?? 0;
+  test.skip(width >= 768, 'sur ordinateur, les onglets restent dans l’en-tête');
+  await signIn(page, 'hugo@famille.test');
+  await expect(page.getByRole('tree')).toBeVisible();
+  const nav = page.getByRole('navigation', { name: 'Vues' });
+  const bar = await nav.boundingBox();
+  const height = page.viewportSize()?.height ?? 0;
+  expect(bar).not.toBeNull();
+  // Près du bord bas, toute la largeur moins les marges, onglets de 44 px au moins.
+  expect(height - ((bar?.y ?? 0) + (bar?.height ?? 0))).toBeLessThan(40);
+  expect(bar?.width ?? 0).toBeGreaterThan(width - 40);
+  const tab = await nav.getByRole('link', { name: 'Ancêtres' }).boundingBox();
+  expect(tab?.height ?? 0).toBeGreaterThanOrEqual(44);
+  // Le canevas s'arrête au-dessus de la barre : ses commandes restent à portée.
+  const canvas = await page.locator('[data-camera-layer]').locator('..').boundingBox();
+  expect((canvas?.y ?? 0) + (canvas?.height ?? 0)).toBeLessThanOrEqual(bar?.y ?? 0);
+  await nav.getByRole('link', { name: 'Ancêtres' }).click();
+  await expect(page).toHaveURL(/\/ancestors$/);
+  await expect(nav.getByRole('link', { name: 'Ancêtres' })).toHaveAttribute('aria-current', 'page');
+});
