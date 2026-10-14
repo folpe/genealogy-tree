@@ -44,6 +44,8 @@ export async function generateViewport(): Promise<Viewport> {
     maximumScale: 1,
     // ADR 07 : l'arbre gère lui-même le pincement.
     userScalable: false,
+    // Les marges sûres d'iOS (encoche, barre d'accueil) deviennent lisibles en CSS.
+    viewportFit: 'cover',
     themeColor: themeColor(await readTheme()),
   };
 }

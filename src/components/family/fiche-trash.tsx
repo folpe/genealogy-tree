@@ -30,7 +30,7 @@ export function TrashButton({ personId, name }: { personId: string; name: string
       </AlertDialog.Trigger>
       <AlertDialog.Portal>
         <AlertDialog.Overlay className="fixed inset-0 z-50 bg-ink/30" />
-        <AlertDialog.Content className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-[var(--radius-card)] bg-card p-6 shadow-float focus-visible:outline-none md:top-1/2 md:bottom-auto md:-translate-y-1/2">
+        <AlertDialog.Content className="fixed inset-x-4 bottom-[var(--tab-bar-bottom)] z-50 mx-auto max-w-md rounded-[var(--radius-card)] bg-card p-6 shadow-float focus-visible:outline-none md:top-1/2 md:bottom-auto md:-translate-y-1/2">
           <AlertDialog.Title className="font-display text-2xl">
             Mettre {name} à la corbeille ?
           </AlertDialog.Title>
