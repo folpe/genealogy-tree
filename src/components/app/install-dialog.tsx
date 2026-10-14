@@ -34,7 +34,7 @@ export function InstallDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/30" />
-        <Dialog.Content className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-[var(--radius-card)] bg-card p-6 shadow-float focus-visible:outline-none md:top-1/2 md:bottom-auto md:-translate-y-1/2">
+        <Dialog.Content className="fixed inset-x-4 bottom-[var(--tab-bar-bottom)] z-50 mx-auto max-w-md rounded-[var(--radius-card)] bg-card p-6 shadow-float focus-visible:outline-none md:top-1/2 md:bottom-auto md:-translate-y-1/2">
           <Dialog.Title className="font-display text-2xl">Installer Ances-Tree</Dialog.Title>
           <Dialog.Description className="mt-2 text-[15px] text-ink-2">
             L’arbre s’ouvre alors comme une app, en plein écran.

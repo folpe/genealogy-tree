@@ -54,11 +54,11 @@
 
 /*
  * Barre d'onglets du téléphone (maquette Mobile) : flottante au-dessus du bord bas, ou
- * de la barre d'accueil d'iOS ; les pages gardent sa hauteur libre (58 px) et un écart.
+ * de la barre d'accueil d'iOS ; les pages gardent sa hauteur libre (60 px) et un écart.
  */
 :root {
   --tab-bar-bottom: max(14px, env(safe-area-inset-bottom));
-  --tab-bar-space: calc(var(--tab-bar-bottom) + 58px + 10px);
+  --tab-bar-space: calc(var(--tab-bar-bottom) + 60px + 10px);
 }
 
 /*

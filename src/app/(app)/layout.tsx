@@ -28,7 +28,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // en entier ; une page longue (fiche, membres) défile dans sa zone, l'arbre jamais.
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden">
-      <header className="flex shrink-0 items-center justify-between gap-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-1 md:grid md:grid-cols-[1fr_auto_1fr] md:px-8 md:pt-[18px]">
+      <header className="flex shrink-0 items-center justify-between gap-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-1 md:grid md:grid-cols-[1fr_auto_1fr] md:pr-[max(2rem,env(safe-area-inset-right))] md:pl-[max(2rem,env(safe-area-inset-left))] md:pt-[18px]">
         <Link
           href="/tree"
           className="font-display text-xl leading-none whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
