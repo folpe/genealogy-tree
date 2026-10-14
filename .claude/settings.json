@@ -185,6 +185,14 @@
             "command": "node \"$CLAUDE_PROJECT_DIR/.void/hooks/_void-hook.mjs\" lifecycle context-continuity claude"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.void/hooks/_void-hook.mjs\" lifecycle herdr-metadata claude"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -213,6 +221,14 @@
             "command": "node \"$CLAUDE_PROJECT_DIR/.void/hooks/_void-hook.mjs\" lifecycle checkpoint-audit claude"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.void/hooks/_void-hook.mjs\" lifecycle herdr-metadata claude"
+          }
+        ]
       }
     ],
     "Stop": [
@@ -229,6 +245,22 @@
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/.void/hooks/_void-hook.mjs\" lifecycle typecheck claude"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.void/hooks/_void-hook.mjs\" lifecycle delegation-result claude"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.void/hooks/_void-hook.mjs\" lifecycle herdr-metadata claude"
           }
         ]
       }
