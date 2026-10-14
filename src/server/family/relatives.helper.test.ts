@@ -19,11 +19,13 @@ const input = (overrides: Record<string, unknown>) =>
   });
 
 describe('parseAddRelative', () => {
-  it('lit une saisie de formulaire : textes nettoyés, champs vides absents, dates en clair', () => {
+  it('lit une saisie de formulaire : textes nettoyés, champs vides absents, dates lues', () => {
     const parsed = input({
       firstName: '  Marcel ',
       birthName: '',
-      birth: 'vers 1910',
+      birthApprox: 'on',
+      birthPrecision: 'vers',
+      birthYear: '1910',
       birthPlace: 'Nantes',
       deceased: 'on',
       death: '',
@@ -36,14 +38,15 @@ describe('parseAddRelative', () => {
     expect(parsed.birthName).toBeUndefined();
   });
 
-  it('refuse une date illisible ou un champ manquant', () => {
-    expect(() => input({ birth: 'demain' })).toThrow(ValidationError);
+  it('refuse une date impossible ou un champ manquant', () => {
+    expect(() => input({ birth: '1990-02-30' })).toThrow(ValidationError);
+    expect(() => input({ deceased: 'on', death: 'demain' })).toThrow(ValidationError);
     expect(() => input({ firstName: ' ' })).toThrow(ValidationError);
     expect(() => input({ relation: 'cousin' })).toThrow(ValidationError);
   });
 
   it('sans décès coché, ignore une date de décès', () => {
-    expect(input({ death: '1975' }).death).toBeUndefined();
+    expect(input({ death: '1975-01-01' }).death).toBeUndefined();
   });
 });
 
@@ -126,7 +129,11 @@ describe('planAddRelative', () => {
 
   it('applique les invariants du graphe : un enfant né avant son parent est refusé', () => {
     expect(() =>
-      planAddRelative(index, input({ anchorId: 'luc', relation: 'child', birth: '1950' }), ids),
+      planAddRelative(
+        index,
+        input({ anchorId: 'luc', relation: 'child', birth: '1950-06-01' }),
+        ids,
+      ),
     ).toThrow(InconsistentDatesError);
   });
 

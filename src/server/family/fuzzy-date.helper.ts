@@ -1,4 +1,4 @@
-import { type FuzzyDate, type FuzzyDatePrecision, fuzzyDateSchema } from './family.types';
+import type { FuzzyDate, FuzzyDatePrecision } from './family.types';
 
 /** Marge appliquée de part et d'autre d'une date « vers ». */
 export const VERS_MARGIN_YEARS = 5;
@@ -16,7 +16,7 @@ export type Age = {
   approx: boolean;
 };
 
-const MONTHS = [
+export const MONTHS = [
   'janvier',
   'février',
   'mars',
@@ -31,80 +31,8 @@ const MONTHS = [
   'décembre',
 ] as const;
 
-const fold = (s: string) =>
-  s
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-
-const MONTH_BY_NAME = new Map(MONTHS.map((name, i) => [fold(name), i + 1]));
-
 function daysInMonth(year: number, month: number): number {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
-}
-
-function validated(candidate: unknown): FuzzyDate | null {
-  const result = fuzzyDateSchema.safeParse(candidate);
-  return result.success ? result.data : null;
-}
-
-/**
- * Lit une saisie libre en français : « 12/03/1987 », « 1er mars 1987 »,
- * « mars 1987 », « 1987 », « vers 1850 », « avant 1900 », « après 1900 »,
- * « entre 1880 et 1885 ». Retourne `null` si la saisie est illisible ou impossible.
- */
-const PREFIXES: Record<string, 'vers' | 'avant' | 'apres'> = {
-  vers: 'vers',
-  environ: 'vers',
-  avant: 'avant',
-  apres: 'apres',
-};
-
-/** Règles de lecture, essayées dans l'ordre ; chacune reçoit les groupes capturés. */
-const PARSE_RULES: [RegExp, (g: string[]) => unknown][] = [
-  [
-    /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/,
-    ([d, m, y]) => ({ precision: 'exacte', year: Number(y), month: Number(m), day: Number(d) }),
-  ],
-  [
-    /^(\d{4})-(\d{2})-(\d{2})$/,
-    ([y, m, d]) => ({ precision: 'exacte', year: Number(y), month: Number(m), day: Number(d) }),
-  ],
-  [
-    /^(\d{1,2})(?:er)? ([a-z]+) (\d{1,4})$/,
-    ([d, name, y]) => {
-      const month = MONTH_BY_NAME.get(name ?? '');
-      return month && { precision: 'exacte', year: Number(y), month, day: Number(d) };
-    },
-  ],
-  [
-    /^([a-z]+) (\d{1,4})$/,
-    ([word, y]) => {
-      const month = MONTH_BY_NAME.get(word ?? '');
-      if (month) return { precision: 'mois', year: Number(y), month };
-      const prefix = PREFIXES[word ?? ''];
-      return prefix && { precision: prefix, year: Number(y) };
-    },
-  ],
-  [
-    /^entre (\d{1,4}) et (\d{1,4})$/,
-    ([from, to]) => ({ precision: 'entre', from: Number(from), to: Number(to) }),
-  ],
-  [/^(\d{1,4})$/, ([y]) => ({ precision: 'annee', year: Number(y) })],
-];
-
-/**
- * Lit une saisie libre en français : « 12/03/1987 », « 1er mars 1987 »,
- * « mars 1987 », « 1987 », « vers 1850 », « avant 1900 », « après 1900 »,
- * « entre 1880 et 1885 ». Retourne `null` si la saisie est illisible ou impossible.
- */
-export function parseFuzzyDate(input: string): FuzzyDate | null {
-  const s = fold(input.trim()).replace(/\s+/g, ' ');
-  for (const [pattern, build] of PARSE_RULES) {
-    const match = s.match(pattern);
-    if (match) return validated(build(match.slice(1)));
-  }
-  return null;
 }
 
 /** Format français : « 1er mars 1987 », « mars 1987 », « vers 1850 »... */

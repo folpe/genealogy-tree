@@ -40,8 +40,9 @@ test('un fait sourcé dit pourquoi il ne se change pas ; ailleurs, rien à touch
   await signIn(page, 'anne@famille.test');
   await page.goto('/people/henri');
   await page.getByRole('button', { name: /^Décès/ }).click();
-  await page.getByRole('textbox', { name: 'Date du décès' }).fill('1980');
-  await page.getByRole('textbox', { name: 'Date du décès' }).press('Enter');
+  // Une année seule : la ligne s'ouvre en date approximative.
+  await page.getByLabel('Date du décès : année').fill('1980');
+  await page.getByLabel('Date du décès : année').press('Enter');
   // (Next a son propre annonceur de navigation, lui aussi en role="alert".)
   await expect(page.getByRole('alert').filter({ hasText: 'sourcé' })).toBeVisible();
 
@@ -58,12 +59,36 @@ test('cocher « décédé » garde le formulaire ouvert, la date suit, puis on a
   await page.getByRole('button', { name: /^Décès : En vie/ }).click();
   await page.getByText('Décédé ou décédée').click();
   // Toucher la case, à l'intérieur du formulaire, ne le ferme pas.
-  const date = page.getByRole('textbox', { name: 'Date du décès' });
+  // Le calendrier du téléphone ; la date s'affiche en lettres.
+  const date = page.getByLabel('Date du décès', { exact: true });
   await expect(date).toBeVisible();
-  await date.fill('2024');
+  await date.fill('2024-05-09');
+  await expect(page.getByText('9 mai 2024', { exact: true })).toBeVisible();
   await date.press('Enter');
-  await expect(page.getByRole('button', { name: /^Décès : 2024/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Décès : 9 mai 2024/ })).toBeVisible();
   await page.getByRole('button', { name: 'Annuler la modification' }).click();
+  await expect(page.getByRole('button', { name: /^Décès : En vie/ })).toBeVisible();
+});
+
+test('une date approximative se saisit avec sa précision et se relit sans perte', async ({
+  page,
+}) => {
+  await signIn(page, 'anne@famille.test');
+  await page.goto('/people/tom');
+  await page.getByRole('button', { name: /^Décès : En vie/ }).click();
+  await page.getByText('Date approximative').click();
+  await page.getByLabel('Date du décès : précision').selectOption('vers');
+  // Saisir une année coche « décédé » : ce qu'on écrit se voit.
+  await page.getByLabel('Date du décès : année').fill('2020');
+  await expect(page.getByLabel('Décédé ou décédée')).toBeChecked();
+  await page.getByLabel('Date du décès : année').press('Enter');
+  await expect(page.getByRole('button', { name: /^Décès : vers 2020/ })).toBeVisible();
+  // Rouverte, la ligne retrouve la case cochée et la précision.
+  await page.getByRole('button', { name: /^Décès : vers 2020/ }).click();
+  await expect(page.getByLabel('Date approximative')).toBeChecked();
+  await expect(page.getByLabel('Date du décès : précision')).toHaveValue('vers');
+  await page.getByLabel('Décédé ou décédée').uncheck();
+  await page.getByLabel('Date du décès : année').press('Enter');
   await expect(page.getByRole('button', { name: /^Décès : En vie/ })).toBeVisible();
 });
 

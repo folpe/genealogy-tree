@@ -260,7 +260,6 @@ const GENDER_LABELS: Record<string, string> = {
 
 /** Les faits d'une fiche qu'on peut modifier : chaque ligne se touche pour se changer. */
 function EditableFacts({ person }: { person: Extract<RedactedPerson, { level: 'full' }> }) {
-  const date = (d: FuzzyDate | undefined) => (d ? formatFuzzyDate(d) : undefined);
   return (
     <>
       <EditableRow
@@ -272,7 +271,7 @@ function EditableFacts({ person }: { person: Extract<RedactedPerson, { level: 'f
           kind: 'event',
           death: false,
           deceased: false,
-          date: date(person.birth?.date),
+          date: person.birth?.date,
           place: person.birth?.place,
         }}
       />
@@ -286,7 +285,7 @@ function EditableFacts({ person }: { person: Extract<RedactedPerson, { level: 'f
           kind: 'event',
           death: true,
           deceased: person.death !== undefined,
-          date: date(person.death?.date),
+          date: person.death?.date,
           place: person.death?.place,
         }}
       />

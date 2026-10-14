@@ -7,6 +7,7 @@ import { useActionState, useId, useState } from 'react';
 import type { AddRelativeResult } from '@/actions/family.actions';
 import type { Gender } from '@/server/family/family.types';
 import type { AddIntent, RelationKind, RelativeOptions } from './add-relative.helper';
+import { DateField } from './date-field';
 
 // « + Parent », « + Enfant », « + Conjoint » sur une fiche de sa lignée (maquette
 // Arbre, actions rapides ; version minimale de la phase 6). Le serveur revérifie
@@ -153,15 +154,11 @@ function RelativeForm({
       </div>
       <Text id={`${id}-birthname`} name="birthName" label="Nom de naissance, s’il diffère" />
       <GenderChoice defaultGender={intent.gender} />
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Text
-          id={`${id}-birth`}
-          name="birth"
-          label="Naissance"
-          placeholder="1952, mars 1952, vers 1850"
-        />
-        <Text id={`${id}-place`} name="birthPlace" label="Lieu de naissance" />
-      </div>
+      <fieldset className="flex flex-col gap-1.5">
+        <legend className={`${labelClass} mb-1.5`}>Naissance</legend>
+        <DateField prefix="birth" label="Naissance" initial={undefined} inputClass={field} />
+      </fieldset>
+      <Text id={`${id}-place`} name="birthPlace" label="Lieu de naissance" />
       <label className="flex min-h-11 items-center gap-3 text-[15px]">
         <input
           type="checkbox"
@@ -173,7 +170,10 @@ function RelativeForm({
         Décédé ou décédée
       </label>
       {deceased ? (
-        <Text id={`${id}-death`} name="death" label="Décès" placeholder="1990, vers 1900" />
+        <fieldset className="flex flex-col gap-1.5">
+          <legend className={`${labelClass} mb-1.5`}>Décès</legend>
+          <DateField prefix="death" label="Décès" initial={undefined} inputClass={field} />
+        </fieldset>
       ) : undefined}
       <OtherParent relation={relation} options={options} />
       {state && !state.ok ? (
@@ -197,7 +197,6 @@ function Text({
   name,
   label,
   required,
-  placeholder,
   defaultValue,
   value,
   onChange,
@@ -206,7 +205,6 @@ function Text({
   name: string;
   label: string;
   required?: boolean;
-  placeholder?: string;
   defaultValue?: string;
   value?: string;
   onChange?: (value: string) => void;
@@ -221,7 +219,6 @@ function Text({
         name={name}
         required={required}
         maxLength={name === 'birthPlace' ? 120 : 80}
-        placeholder={placeholder}
         autoComplete="off"
         className={field}
         {...(onChange

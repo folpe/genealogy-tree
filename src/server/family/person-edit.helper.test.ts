@@ -24,7 +24,7 @@ describe('parsePersonEdit', () => {
     });
   });
 
-  it('refuse un prénom vide, un genre inconnu, une date illisible', () => {
+  it('refuse un prénom vide, un genre inconnu, une date impossible', () => {
     expect(() => parsePersonEdit({ personId: 'luc', field: 'lastName', value: ' ' })).toThrow(
       ValidationError,
     );
@@ -32,24 +32,31 @@ describe('parsePersonEdit', () => {
       ValidationError,
     );
     expect(() =>
-      parsePersonEdit({ personId: 'luc', field: 'birth', date: 'un jour', place: '' }),
-    ).toThrow('Date illisible');
+      parsePersonEdit({ personId: 'luc', field: 'birth', date: '2019-02-30', place: '' }),
+    ).toThrow('Date impossible');
   });
 
-  it('naissance et décès : date en clair et lieu', () => {
+  it('naissance et décès : date du calendrier ou approximative, et lieu', () => {
     expect(
-      parsePersonEdit({ personId: 'luc', field: 'death', deceased: 'on', date: 'vers 2040' }),
+      parsePersonEdit({
+        personId: 'luc',
+        field: 'death',
+        deceased: 'on',
+        dateApprox: 'on',
+        datePrecision: 'vers',
+        dateYear: '2040',
+      }),
     ).toEqual({
       personId: 'luc',
       field: 'death',
       event: { date: { precision: 'vers', year: 2040 } },
     });
     // Sans la case, une date de décès dit un décès ; décochée, la case fait foi.
-    expect(parsePersonEdit({ personId: 'luc', field: 'death', date: '2040' })).toMatchObject({
-      event: { date: { precision: 'annee', year: 2040 } },
+    expect(parsePersonEdit({ personId: 'luc', field: 'death', date: '2040-05-01' })).toMatchObject({
+      event: { date: { precision: 'exacte', year: 2040, month: 5, day: 1 } },
     });
     expect(
-      parsePersonEdit({ personId: 'luc', field: 'death', deceased: '', date: '2040' }),
+      parsePersonEdit({ personId: 'luc', field: 'death', deceased: '', date: '2040-05-01' }),
     ).toEqual({ personId: 'luc', field: 'death' });
     expect(parsePersonEdit({ personId: 'luc', field: 'death' })).toEqual({
       personId: 'luc',

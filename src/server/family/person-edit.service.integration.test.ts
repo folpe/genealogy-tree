@@ -40,11 +40,14 @@ describe.skipIf(!db)('person-edit.service (intégration)', () => {
     expect((await person('luc'))?.nickname).toBeUndefined();
   });
 
-  it('naissance : date en clair et lieu, un lieu connu réutilisé', async () => {
+  it('naissance : mois et année, et lieu, un lieu connu réutilisé', async () => {
     await editPerson(deps, 'u-hugo', {
       personId: 'luc',
       field: 'birth',
-      date: 'mars 1963',
+      dateApprox: 'on',
+      datePrecision: 'mois',
+      dateYear: '1963',
+      dateMonth: '3',
       place: 'Albi',
     });
     expect((await person('luc'))?.birth).toEqual({
@@ -73,7 +76,7 @@ describe.skipIf(!db)('person-edit.service (intégration)', () => {
         personId: 'henri',
         field: 'death',
         deceased: 'on',
-        date: '1980',
+        date: '1980-01-01',
       }),
     ).rejects.toMatchObject({ code: 'FAMILY_SOURCED' });
   });
@@ -87,7 +90,12 @@ describe.skipIf(!db)('person-edit.service (intégration)', () => {
 
   it('un décès avant la naissance est refusé', async () => {
     await expect(
-      editPerson(deps, 'u-hugo', { personId: 'luc', field: 'death', deceased: 'on', date: '1950' }),
+      editPerson(deps, 'u-hugo', {
+        personId: 'luc',
+        field: 'death',
+        deceased: 'on',
+        date: '1950-01-01',
+      }),
     ).rejects.toMatchObject({ code: 'FAMILY_INCONSISTENT_DATES' });
   });
 });

@@ -13,6 +13,9 @@ import {
   useTransition,
 } from 'react';
 import { editPersonAction } from '@/actions/family.actions';
+import { dateFieldValues } from '@/server/family/date-fields.helper';
+import type { FuzzyDate } from '@/server/family/family.types';
+import { DateField } from './date-field';
 
 // Modification sur place (retour de Folpe : « comme dans une app ») : on touche une
 // ligne de la fiche, elle devient un champ ; Entrée ou quitter le champ enregistre,
@@ -110,7 +113,9 @@ function InlineForm({
   // La ligne touchée devient ce formulaire : le focus va à son premier champ.
   const form = useRef<HTMLFormElement>(null); // allow-null: contrat des refs de React
   useEffect(() => {
-    const first = form.current?.querySelector('input:not([type="checkbox"]), select');
+    const first = form.current?.querySelector(
+      'input:not([type="checkbox"]):not([type="hidden"]), select',
+    );
     if (first instanceof HTMLElement) first.focus();
   }, []);
   // Toucher ailleurs dans la page enregistre : ne dépend d'aucun ordre d'événements.
@@ -202,7 +207,7 @@ type FieldKind =
       /** Décès : la case « décédé » vient avec. */
       death: boolean;
       deceased: boolean;
-      date: string | undefined;
+      date: FuzzyDate | undefined;
       place: string | undefined;
     };
 
@@ -217,7 +222,7 @@ function initialValues(spec: FieldKind): Values {
   if (spec.kind === 'event') {
     return {
       ...(spec.death ? { deceased: spec.deceased ? 'on' : '' } : {}),
-      date: spec.date ?? '',
+      ...dateFieldValues('date', spec.date),
       place: spec.place ?? '',
     };
   }
@@ -252,9 +257,11 @@ function Fields({ spec, label, id }: { spec: FieldKind; label: string; id: strin
   const of = spec.death ? 'du décès' : 'de naissance';
   // Une date ou un lieu de décès saisis cochent « décédé » : ce qu'on écrit se voit.
   const marksDeath = spec.death
-    ? (event: FormEvent<HTMLInputElement>) => {
-        const box = event.currentTarget.form?.elements.namedItem('deceased');
-        if (box instanceof HTMLInputElement && event.currentTarget.value) box.checked = true;
+    ? (event: FormEvent<HTMLElement>) => {
+        const target = event.currentTarget;
+        const box = target.closest('form')?.elements.namedItem('deceased');
+        const filled = 'value' in target && target.value !== '';
+        if (box instanceof HTMLInputElement && filled) box.checked = true;
       }
     : undefined;
   return (
@@ -271,15 +278,12 @@ function Fields({ spec, label, id }: { spec: FieldKind; label: string; id: strin
           Décédé ou décédée
         </label>
       ) : undefined}
-      <input
-        name="date"
-        aria-label={`Date ${of}`}
-        onInput={marksDeath}
-        defaultValue={spec.date ?? ''}
-        placeholder="1952, mars 1952, vers 1850"
-        maxLength={40}
-        autoComplete="off"
-        className={input}
+      <DateField
+        prefix="date"
+        label={`Date ${of}`}
+        initial={spec.date}
+        inputClass={input}
+        {...(marksDeath ? { onInput: marksDeath } : {})}
       />
       <input
         name="place"
