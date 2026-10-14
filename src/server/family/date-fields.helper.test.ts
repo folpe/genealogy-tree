@@ -91,6 +91,25 @@ describe('readDateFields', () => {
   });
 });
 
+describe('readDateFields, messages', () => {
+  it('dit ce qui ne va pas, selon le mode', () => {
+    const message = (values: Record<string, string>) => {
+      const result = readDateFields(fields(values), 'birth');
+      return result.ok ? undefined : result.message;
+    };
+    expect(message({ birth: '2019-02-30' })).toMatch(/jour/);
+    expect(message({ birthApprox: 'on', birthPrecision: 'vers', birthYear: '0' })).toBe(
+      'Année impossible : entre 1 et 9999',
+    );
+    expect(
+      message({ birthApprox: 'on', birthPrecision: 'entre', birthYear: '0', birthYearEnd: '5' }),
+    ).toBe('Année impossible : entre 1 et 9999');
+    expect(
+      message({ birthApprox: 'on', birthPrecision: 'entre', birthYear: '9', birthYearEnd: '5' }),
+    ).toBe('La première année doit précéder la seconde');
+  });
+});
+
 describe('dateFieldValues', () => {
   it.each<FuzzyDate>([
     { precision: 'exacte', year: 2019, month: 11, day: 9 },

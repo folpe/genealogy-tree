@@ -58,6 +58,8 @@ function Preview({ prefix, values }: { prefix: string; values: Values }) {
   return <p className="text-[13px] text-ink-2">{formatFuzzyDate(result.date)}</p>;
 }
 
+type Change = (key: string) => (event: FormEvent<HTMLInputElement | HTMLSelectElement>) => void;
+
 export function DateField({
   prefix,
   label,
@@ -71,16 +73,16 @@ export function DateField({
   label: string;
   initial: FuzzyDate | undefined;
   inputClass: string;
-  /** Une saisie (décès : coche « décédé »). */
+  /** Une date saisie (décès : coche « décédé ») ; changer la précision seule n'en est pas une. */
   onInput?: (event: FormEvent<HTMLElement>) => void;
 }) {
   const id = useId();
   const n = dateFieldNames(prefix);
   const [values, setValues] = useState<Values>(() => dateFieldValues(prefix, initial));
-  const set = (key: string) => (event: FormEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const change: Change = (key) => (event) => {
     const value = event.currentTarget.value;
     setValues((v) => ({ ...v, [key]: value }));
-    onInput?.(event);
+    if (key !== n.precision) onInput?.(event);
   };
   const approx = values[n.approx] === 'on';
   const shown = shownKeys(prefix, values);
@@ -88,60 +90,20 @@ export function DateField({
   return (
     <div className="flex flex-col gap-2">
       {approx ? (
-        <div className="flex flex-wrap gap-2">
-          <select
-            name={n.precision}
-            aria-label={`${label} : précision`}
-            value={values[n.precision]}
-            onChange={set(n.precision)}
-            className={`${inputClass} flex-[1_1_100%]`}
-          >
-            {APPROX_PRECISIONS.map((p) => (
-              <option key={p} value={p}>
-                {PRECISION_LABELS[p]}
-              </option>
-            ))}
-          </select>
-          {values[n.precision] === 'mois' ? (
-            <select
-              name={n.month}
-              aria-label={`${label} : mois`}
-              value={values[n.month]}
-              onChange={set(n.month)}
-              className={`${inputClass} flex-1`}
-            >
-              <option value="">Mois</option>
-              {MONTHS.map((month, i) => (
-                <option key={month} value={String(i + 1)}>
-                  {month}
-                </option>
-              ))}
-            </select>
-          ) : undefined}
-          <YearInput
-            name={n.year}
-            label={values[n.precision] === 'entre' ? `${label} : de` : `${label} : année`}
-            value={values[n.year] ?? ''}
-            onInput={set(n.year)}
-            className={inputClass}
-          />
-          {values[n.precision] === 'entre' ? (
-            <YearInput
-              name={n.yearEnd}
-              label={`${label} : à`}
-              value={values[n.yearEnd] ?? ''}
-              onInput={set(n.yearEnd)}
-              className={inputClass}
-            />
-          ) : undefined}
-        </div>
+        <ApproxInputs
+          prefix={prefix}
+          label={label}
+          values={values}
+          change={change}
+          inputClass={inputClass}
+        />
       ) : (
         <input
           type="date"
           name={n.exact}
           aria-label={label}
           value={values[n.exact]}
-          onChange={set(n.exact)}
+          onChange={change(n.exact)}
           className={`${inputClass} text-left [&::-webkit-date-and-time-value]:text-left`}
         />
       )}
@@ -150,6 +112,7 @@ export function DateField({
           id={`${id}-approx`}
           type="checkbox"
           name={n.approx}
+          aria-label={`${label} : date approximative`}
           checked={approx}
           onChange={(event) => setValues((v) => toggled(prefix, v, event.target.checked))}
           className="size-5 accent-ink"
@@ -162,6 +125,73 @@ export function DateField({
       <div aria-live="polite">
         <Preview prefix={prefix} values={values} />
       </div>
+    </div>
+  );
+}
+
+/** Mode approximatif : la précision, le mois si besoin, une ou deux années. */
+function ApproxInputs({
+  prefix,
+  label,
+  values,
+  change,
+  inputClass,
+}: {
+  prefix: string;
+  label: string;
+  values: Values;
+  change: Change;
+  inputClass: string;
+}) {
+  const n = dateFieldNames(prefix);
+  const precision = values[n.precision];
+  return (
+    <div className="flex flex-wrap gap-2">
+      <select
+        name={n.precision}
+        aria-label={`${label} : précision`}
+        value={precision}
+        onChange={change(n.precision)}
+        className={`${inputClass} flex-[1_1_100%]`}
+      >
+        {APPROX_PRECISIONS.map((p) => (
+          <option key={p} value={p}>
+            {PRECISION_LABELS[p]}
+          </option>
+        ))}
+      </select>
+      {precision === 'mois' ? (
+        <select
+          name={n.month}
+          aria-label={`${label} : mois`}
+          value={values[n.month]}
+          onChange={change(n.month)}
+          className={`${inputClass} flex-1`}
+        >
+          <option value="">Mois</option>
+          {MONTHS.map((month, i) => (
+            <option key={month} value={String(i + 1)}>
+              {month}
+            </option>
+          ))}
+        </select>
+      ) : undefined}
+      <YearInput
+        name={n.year}
+        label={precision === 'entre' ? `${label} : de` : `${label} : année`}
+        value={values[n.year] ?? ''}
+        onInput={change(n.year)}
+        className={inputClass}
+      />
+      {precision === 'entre' ? (
+        <YearInput
+          name={n.yearEnd}
+          label={`${label} : à`}
+          value={values[n.yearEnd] ?? ''}
+          onInput={change(n.yearEnd)}
+          className={inputClass}
+        />
+      ) : undefined}
     </div>
   );
 }

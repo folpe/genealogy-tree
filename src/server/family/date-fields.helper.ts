@@ -57,10 +57,13 @@ const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
 const NUMBER = /^\d{1,4}$/;
 const EXACT = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-function checked(candidate: unknown): DateFieldsResult {
+const IMPOSSIBLE_DAY = 'Date impossible : vérifie le jour, le mois et l’année';
+const IMPOSSIBLE_YEAR = 'Année impossible : entre 1 et 9999';
+
+function checked(candidate: unknown, message = IMPOSSIBLE_YEAR): DateFieldsResult {
   const parsed = fuzzyDateSchema.safeParse(candidate);
   if (parsed.success) return { ok: true, date: parsed.data };
-  return { ok: false, message: 'Date impossible : vérifie le jour, le mois et l’année' };
+  return { ok: false, message };
 }
 
 function readExact(value: string): DateFieldsResult {
@@ -68,7 +71,7 @@ function readExact(value: string): DateFieldsResult {
   const match = EXACT.exec(value);
   if (!match) return { ok: false, message: 'Date illisible : choisis-la dans le calendrier' };
   const [, year, month, day] = match.map(Number);
-  return checked({ precision: 'exacte', year, month, day });
+  return checked({ precision: 'exacte', year, month, day }, IMPOSSIBLE_DAY);
 }
 
 const isApprox = (value: string): value is ApproxPrecision =>
@@ -89,10 +92,10 @@ function readApprox(fields: Record<string, unknown>, prefix: string): DateFields
   if (precision === 'entre') {
     const end = text(fields[n.yearEnd]);
     if (!NUMBER.test(end)) return { ok: false, message: 'Indique la deuxième année' };
-    const result = checked({ precision, from: Number(year), to: Number(end) });
-    return result.ok
-      ? result
-      : { ok: false, message: 'La première année doit précéder la seconde' };
+    if (Number(year) > Number(end)) {
+      return { ok: false, message: 'La première année doit précéder la seconde' };
+    }
+    return checked({ precision, from: Number(year), to: Number(end) });
   }
   return checked({ precision, year: Number(year) });
 }

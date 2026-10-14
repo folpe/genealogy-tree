@@ -78,6 +78,8 @@ test('une date approximative se saisit avec sa précision et se relit sans perte
   await page.getByRole('button', { name: /^Décès : En vie/ }).click();
   await page.getByText('Date approximative').click();
   await page.getByLabel('Date du décès : précision').selectOption('vers');
+  // Choisir la précision n'est pas encore une date : « décédé » reste décoché.
+  await expect(page.getByLabel('Décédé ou décédée')).not.toBeChecked();
   // Saisir une année coche « décédé » : ce qu'on écrit se voit.
   await page.getByLabel('Date du décès : année').fill('2020');
   await expect(page.getByLabel('Décédé ou décédée')).toBeChecked();
