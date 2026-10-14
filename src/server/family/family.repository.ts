@@ -1,15 +1,18 @@
 // tdd-cover: e2e src/server/family/family.repository.integration.test.ts
 
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { AppError } from '../_shared/errors';
 import {
   events,
+  invitations,
+  memberships,
   parentChild,
   persons,
   places,
   residences,
   sourcedFacts,
   unions,
+  users,
 } from '../db/schema';
 import type { Db } from '../db/types';
 
@@ -36,15 +39,101 @@ export async function loadFamilyGraph(db: Db): Promise<FamilyGraph> {
     db.select().from(parentChild),
     db.select().from(sourcedFacts),
   ]);
+  // Corbeille : une fiche supprimée disparaît, avec ce qui ne tient qu'à elle. Rien
+  // n'est effacé en base ; une restauration ramène tout.
+  const trashed = new Set(p.filter((row) => row.deletedAt !== null).map((row) => row.id)); // allow-null: colonne Postgres
+  const kept = (id: string | null) => id === null || !trashed.has(id); // allow-null: partenaire inconnu
   return rowsToGraph({
-    persons: p,
-    events: e,
+    persons: p.filter((row) => kept(row.id)),
+    events: e.filter((row) => kept(row.personId)),
     places: pl,
-    residences: r,
-    unions: u,
-    parentChildren: pc,
-    sourcedFacts: sf,
+    residences: r.filter((row) => kept(row.personId)),
+    unions: u.filter((row) => kept(row.partnerAId) && kept(row.partnerBId)),
+    parentChildren: pc.filter((row) => kept(row.parentId) && kept(row.childId)),
+    sourcedFacts: sf.filter((row) => kept(row.personId)),
   });
+}
+
+export type TrashOutcome = 'trashed' | 'not_found' | 'has_children' | 'linked';
+
+/**
+ * Met une fiche à la corbeille, sous verrou : enfants, compte relié et invitation en
+ * attente sont revérifiés au moment d'écrire, un ajout simultané ne passe pas entre.
+ */
+export async function trashPersonLocked(
+  db: Db,
+  personId: string,
+  trash: { at: Date; by: string; childrenAllowed: boolean },
+): Promise<TrashOutcome> {
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .select({ id: persons.id })
+      .from(persons)
+      .where(and(eq(persons.id, personId), isNull(persons.deletedAt)))
+      .for('update');
+    if (!row) return 'not_found';
+    const [member] = await tx
+      .select({ id: memberships.id })
+      .from(memberships)
+      .where(eq(memberships.personId, personId));
+    const [invitation] = await tx
+      .select({ id: invitations.id })
+      .from(invitations)
+      .where(
+        and(
+          eq(invitations.personId, personId),
+          isNull(invitations.usedAt),
+          isNull(invitations.revokedAt),
+        ),
+      );
+    if (member || invitation) return 'linked';
+    if (!trash.childrenAllowed) {
+      // Un enfant déjà à la corbeille ne compte pas, comme dans l'arbre.
+      const [child] = await tx
+        .select({ id: parentChild.childId })
+        .from(parentChild)
+        .innerJoin(persons, eq(persons.id, parentChild.childId))
+        .where(
+          and(
+            eq(parentChild.parentId, personId),
+            inArray(parentChild.kind, [...FILIATION_KINDS]),
+            isNull(persons.deletedAt),
+          ),
+        );
+      if (child) return 'has_children';
+    }
+    await tx
+      .update(persons)
+      .set({ deletedAt: trash.at, deletedBy: trash.by })
+      .where(eq(persons.id, personId));
+    return 'trashed';
+  });
+}
+
+/** Sort une fiche de la corbeille ; `false` si elle n'y était pas. */
+export async function restoreTrashed(db: Db, personId: string): Promise<boolean> {
+  const rows = await db
+    .update(persons)
+    .set({ deletedAt: null, deletedBy: null }) // allow-null: colonnes vidées
+    .where(and(eq(persons.id, personId), isNotNull(persons.deletedAt)))
+    .returning({ id: persons.id });
+  return rows.length === 1;
+}
+
+/** Les fiches à la corbeille, les plus récentes d'abord, avec qui les y a mises. */
+export async function loadTrash(db: Db) {
+  return db
+    .select({
+      id: persons.id,
+      firstName: persons.firstName,
+      lastName: persons.lastName,
+      deletedAt: persons.deletedAt,
+      deletedByName: users.name,
+    })
+    .from(persons)
+    .leftJoin(users, eq(users.id, persons.deletedBy))
+    .where(isNotNull(persons.deletedAt))
+    .orderBy(desc(persons.deletedAt));
 }
 
 /** Insère un graphe complet en une transaction : tout ou rien (seed, migration Notion). */
@@ -81,7 +170,8 @@ export async function insertRelative(
     const [anchor] = await tx
       .select({ id: persons.id })
       .from(persons)
-      .where(eq(persons.id, guard.anchorId))
+      // Une fiche à la corbeille ne reçoit plus de lien, même mise là en parallèle.
+      .where(and(eq(persons.id, guard.anchorId), isNull(persons.deletedAt)))
       .for('update');
     // Supprimée entre la lecture et l'écriture : rien ne s'écrit.
     if (!anchor) {
@@ -182,7 +272,7 @@ export async function updatePersonField(
     const [row] = await tx
       .select({ id: persons.id })
       .from(persons)
-      .where(eq(persons.id, person.id))
+      .where(and(eq(persons.id, person.id), isNull(persons.deletedAt)))
       .for('update');
     if (!row) {
       throw new AppError({ message: 'Fiche introuvable', code: 'FAMILY_NOT_FOUND', status: 404 });

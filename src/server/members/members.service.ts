@@ -323,7 +323,8 @@ export async function claimOwnPerson(
   const [person] = await deps.db
     .select({ id: persons.id })
     .from(persons)
-    .where(eq(persons.id, parsed.data));
+    // Une fiche à la corbeille ne se réclame pas.
+    .where(and(eq(persons.id, parsed.data), isNull(persons.deletedAt)));
   if (!person) {
     throw new AppError({ message: 'Fiche introuvable', code: 'MEMBERS_NOT_FOUND', status: 404 });
   }

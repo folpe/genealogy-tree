@@ -124,6 +124,13 @@ export const persons = pgTable('persons', {
   notes: text('notes'),
   photoMediaId: text('photo_media_id').references(() => media.id, { onDelete: 'set null' }),
   legacyNotionId: text('legacy_notion_id').unique(),
+  /**
+   * Corbeille : la fiche disparaît de l'arbre sans être effacée ; un admin la
+   * restaure. Absente : fiche active.
+   */
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  /** Compte qui l'a mise à la corbeille (texte : le compte peut disparaître). */
+  deletedBy: text('deleted_by'),
   /** Verrou optimiste de l'éditeur (phase 6). */
   version: integer('version').notNull().default(1),
   createdAt: createdAt(),
