@@ -71,7 +71,7 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 ### Lot 7 : mobile
 
 - [ ] Layout mobile conforme à MobileAlbum : arbre plein écran, barre de recherche et cloche en haut, barre d'onglets flottante en bas, fiche en bottom sheet.
-- [ ] Gestes : pan, pinch, tap, appui long pour les actions rapides ; cibles >= 44 px.
+- [x] Gestes : pan, pinch, tap, appui long pour les actions rapides ; cibles >= 44 px. Appui long, clic droit ou Maj + F10 : menu accroché à la bulle (ajouts selon la policy, ouvrir, centrer, ancêtres), pas de survol (journal du 2026-10-14).
 - [ ] Safe areas iOS, `100dvh`, clavier virtuel sans casse de mise en page.
 
 ### Lot 8 : écran Connexion

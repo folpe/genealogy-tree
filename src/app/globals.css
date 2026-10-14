@@ -105,3 +105,19 @@
   background-size: calc(46px * var(--cam-k, 1)) calc(46px * var(--cam-k, 1));
   background-position: var(--cam-x, 0) var(--cam-y, 0);
 }
+
+/*
+ * Actions rapides d'une bulle (DESIGN.md, section 10) : le menu naît de la bulle, en
+ * moins de 150 ms ; sous mouvement réduit, un fondu seul.
+ */
+@keyframes quick-in {
+  from {
+    opacity: 0;
+    scale: 0.92;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}

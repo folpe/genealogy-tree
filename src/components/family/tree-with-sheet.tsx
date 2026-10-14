@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { DropdownMenu } from 'radix-ui';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Drawer } from 'vaul';
 import { type AddRelativeResult, relationshipAction } from '@/actions/family.actions';
@@ -11,13 +12,19 @@ import { fanHref } from '@/lib/fan/fan.params';
 import { treeHref } from '@/lib/tree/tree.params';
 import { type PathHighlight, pathHighlight } from '@/lib/tree/tree.path';
 import type { RelationshipView, TreeForViewer } from '@/server/family/family.service';
-import { AddRelative } from './add-relative';
-import { relativeOptions } from './add-relative.helper';
+import { AddRelative, AddRelativeDialog } from './add-relative';
+import {
+  type AddIntent,
+  addableRelations,
+  relativeAnchor,
+  relativeOptions,
+} from './add-relative.helper';
 import { FamilyTree } from './family-tree';
 import { PersonSheet } from './family-views';
 import { useOpenFicheRequests } from './open-fiche';
 import { personLabel } from './person.helper';
 import type { TreeDrawing } from './tree-drawing';
+import { quickItem } from './tree-quick-menu';
 
 // L'arbre et sa fiche (plan phase 5, lot 4) : un tap ouvre la fiche sans quitter
 // l'arbre, en panneau à droite sur grand écran, en feuille (vaul) sur mobile. La fiche
@@ -91,6 +98,21 @@ export function TreeWithSheet({
   });
   const [link, setLink] = useState<{ view: RelationshipView; highlight: PathHighlight }>();
   const [cardHeight, setCardHeight] = useState(0);
+  /** Ajout demandé par une action rapide : sur quelle fiche, quel lien. */
+  const [adding, setAdding] = useState<{ anchorId: string; intent: AddIntent }>();
+  const quickActions = useCallback(
+    (id: string) => (
+      <QuickActions
+        tree={tree}
+        personId={id}
+        onOpen={open}
+        onAdd={(intent) => setAdding({ anchorId: id, intent })}
+      />
+    ),
+    [tree, open],
+  );
+  const addingPerson = adding ? tree.persons.find((p) => p.id === adding.anchorId) : undefined;
+  const addingTo = addingPerson ? relativeAnchor(addingPerson) : undefined;
   // Une autre vue de l'arbre (recentrage, profondeur) : le lien éclairé ne vaut plus.
   const [linkView, setLinkView] = useState(viewKey);
   if (linkView !== viewKey) {
@@ -143,7 +165,18 @@ export function TreeWithSheet({
           onOpen={open}
           highlight={link?.highlight}
           coveredTop={link ? cardHeight : 0}
+          quickActions={quickActions}
         />
+        {addingTo && adding ? (
+          <AddRelativeDialog
+            key={addingTo.id}
+            anchor={addingTo}
+            options={relativeOptions(tree, addingTo.id)}
+            intent={adding.intent}
+            onClose={() => setAdding(undefined)}
+            action={addAction}
+          />
+        ) : undefined}
       </div>
       {/* Monté une seule fois : en panneau, sauf sur un écran qu'on sait étroit. */}
       {panel && wide !== false ? (
@@ -238,15 +271,13 @@ function PersonPanel({
         {rights}
       </p>
       {onLink ? <LinkButton key={personId} personId={personId} onLink={onLink} /> : undefined}
-      {person.level === 'minor' ? undefined : (
-        <AddRelative
-          key={personId}
-          anchor={{ id: personId, firstName: person.firstName, lastName: person.lastName }}
-          options={relativeOptions(tree, personId)}
-          intent={undefined}
-          action={addAction}
-        />
-      )}
+      <AddRelative
+        key={personId}
+        anchor={relativeAnchor(person)}
+        options={relativeOptions(tree, personId)}
+        intent={undefined}
+        action={addAction}
+      />
       <nav
         aria-label={`Autour de ${name}`}
         className="flex flex-wrap justify-center gap-x-5 gap-y-1 border-t border-rule pt-4"
@@ -265,6 +296,53 @@ function PersonPanel({
         </Link>
       </nav>
     </div>
+  );
+}
+
+/**
+ * Actions rapides d'une bulle (maquette Arbre) : les ajouts que la policy permet, puis
+ * les chemins de la fiche. Hors de sa lignée, seulement les chemins.
+ */
+function QuickActions({
+  tree,
+  personId,
+  onOpen,
+  onAdd,
+}: {
+  tree: TreeForViewer;
+  personId: string;
+  onOpen: (id: string) => void;
+  onAdd: (intent: AddIntent) => void;
+}) {
+  const relations = addableRelations(relativeOptions(tree, personId));
+  return (
+    <>
+      {relations.map(([relation, label]) => (
+        <DropdownMenu.Item
+          key={relation}
+          className={quickItem}
+          onSelect={() => onAdd({ relation })}
+        >
+          {label}
+        </DropdownMenu.Item>
+      ))}
+      {relations.length > 0 ? (
+        <DropdownMenu.Separator className="mx-3 my-1 h-px bg-rule" />
+      ) : undefined}
+      <DropdownMenu.Item className={quickItem} onSelect={() => onOpen(personId)}>
+        Ouvrir la fiche
+      </DropdownMenu.Item>
+      <DropdownMenu.Item asChild className={quickItem}>
+        <Link href={treeHref({ view: 'couple', p: personId, past: false })}>
+          Centrer l’arbre ici
+        </Link>
+      </DropdownMenu.Item>
+      <DropdownMenu.Item asChild className={quickItem}>
+        <Link href={fanHref({ p: personId, generations: FAN_GENERATIONS.initial })}>
+          Ses ancêtres
+        </Link>
+      </DropdownMenu.Item>
+    </>
   );
 }
 

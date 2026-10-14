@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { treeForViewer } from '../../../tests/fixtures/tree-for-viewer';
-import { parseAddIntent, relativeOptions } from './add-relative.helper';
+import { addableRelations, parseAddIntent, relativeOptions } from './add-relative.helper';
 
 describe('relativeOptions', () => {
   const hugo = treeForViewer('m-hugo');
@@ -30,6 +30,28 @@ describe('relativeOptions', () => {
 
   it('hors de sa lignée : pas d’ajout direct', () => {
     expect(relativeOptions(treeForViewer('m-isabelle'), 'bernard').canAdd).toBe(false);
+  });
+
+  it('une fiche de mineur, même modifiable, ne propose pas d’ajout : son nom est masqué', () => {
+    const luc = treeForViewer('m-luc');
+    expect(luc.editableIds).toContain('jade');
+    expect(relativeOptions(luc, 'jade').canAdd).toBe(false);
+  });
+});
+
+describe('addableRelations', () => {
+  it('les trois liens, sans parent quand il y en a déjà deux, rien hors de sa lignée', () => {
+    const folpe = treeForViewer('m-folpe');
+    expect(addableRelations(relativeOptions(folpe, 'tom')).map(([r]) => r)).toEqual([
+      'parent',
+      'child',
+      'partner',
+    ]);
+    expect(addableRelations(relativeOptions(treeForViewer('m-hugo'), 'hugo'))).toEqual([
+      ['child', '+ Enfant'],
+      ['partner', '+ Conjoint'],
+    ]);
+    expect(addableRelations(relativeOptions(treeForViewer('m-isabelle'), 'bernard'))).toEqual([]);
   });
 });
 

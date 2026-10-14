@@ -6,7 +6,13 @@ import { Dialog } from 'radix-ui';
 import { useActionState, useId, useState } from 'react';
 import type { AddRelativeResult } from '@/actions/family.actions';
 import type { Gender } from '@/server/family/family.types';
-import type { AddIntent, RelationKind, RelativeOptions } from './add-relative.helper';
+import {
+  type AddIntent,
+  type Anchor,
+  addableRelations,
+  type RelationKind,
+  type RelativeOptions,
+} from './add-relative.helper';
 import { DateField } from './date-field';
 
 // « + Parent », « + Enfant », « + Conjoint » sur une fiche de sa lignée (maquette
@@ -14,7 +20,6 @@ import { DateField } from './date-field';
 // la policy et les invariants : l'écran ne fait que proposer.
 
 type Action = (state: AddRelativeResult | undefined, data: FormData) => Promise<AddRelativeResult>;
-type Anchor = { id: string; firstName: string; lastName: string };
 
 const TITLES: Record<RelationKind, string> = {
   parent: 'un parent',
@@ -37,7 +42,8 @@ export function AddRelative({
   intent,
   action,
 }: {
-  anchor: Anchor;
+  /** Absente pour une fiche de mineur (`relativeAnchor`) : rien à ajouter. */
+  anchor: Anchor | undefined;
   options: RelativeOptions;
   /** Ajout demandé par l'URL : le dialogue s'ouvre déjà réglé. */
   intent: AddIntent | undefined;
@@ -46,14 +52,8 @@ export function AddRelative({
   const initial =
     intent && (intent.relation !== 'parent' || !options.parentsFull) ? intent : undefined;
   const [open, setOpen] = useState<AddIntent | undefined>(initial);
-  if (!options.canAdd) return undefined;
-  const relations = (
-    [
-      ['parent', '+ Parent'],
-      ['child', '+ Enfant'],
-      ['partner', '+ Conjoint'],
-    ] satisfies [RelationKind, string][]
-  ).filter(([relation]) => relation !== 'parent' || !options.parentsFull);
+  const relations = addableRelations(options);
+  if (!anchor || relations.length === 0) return undefined;
   return (
     <section aria-label="Ajouter un proche" className="flex flex-wrap gap-2">
       {relations.map(([relation, label]) => (
@@ -66,24 +66,50 @@ export function AddRelative({
           {label}
         </button>
       ))}
-      <Dialog.Root open={open !== undefined} onOpenChange={(next) => !next && setOpen(undefined)}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/30" />
-          <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] max-w-lg overflow-y-auto rounded-t-[var(--radius-card)] bg-card p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-float focus-visible:outline-none md:inset-x-4 md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:rounded-[var(--radius-card)]">
-            {open ? (
-              <RelativeForm
-                // Un nouveau formulaire à chaque ouverture : rien ne reste d'un ajout précédent.
-                key={`${open.relation}-${open.gender ?? ''}`}
-                anchor={anchor}
-                options={options}
-                intent={open}
-                action={action}
-              />
-            ) : undefined}
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+      <AddRelativeDialog
+        anchor={anchor}
+        options={options}
+        intent={open}
+        onClose={() => setOpen(undefined)}
+        action={action}
+      />
     </section>
+  );
+}
+
+/** Le dialogue seul, ouvert d'ici ou par une action rapide de l'arbre. */
+export function AddRelativeDialog({
+  anchor,
+  options,
+  intent,
+  onClose,
+  action,
+}: {
+  anchor: Anchor;
+  options: RelativeOptions;
+  /** Ajout demandé ; absent, le dialogue est fermé. */
+  intent: AddIntent | undefined;
+  onClose: () => void;
+  action: Action;
+}) {
+  return (
+    <Dialog.Root open={intent !== undefined} onOpenChange={(next) => !next && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/30" />
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] max-w-lg overflow-y-auto rounded-t-[var(--radius-card)] bg-card p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-float focus-visible:outline-none md:inset-x-4 md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:rounded-[var(--radius-card)]">
+          {intent ? (
+            <RelativeForm
+              // Un nouveau formulaire à chaque ouverture : rien ne reste d'un ajout précédent.
+              key={`${intent.relation}-${intent.gender ?? ''}`}
+              anchor={anchor}
+              options={options}
+              intent={intent}
+              action={action}
+            />
+          ) : undefined}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 

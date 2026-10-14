@@ -4,6 +4,7 @@ import Link, { useLinkStatus } from 'next/link';
 import {
   type KeyboardEvent,
   memo,
+  type ReactNode,
   type Ref,
   useCallback,
   useEffect,
@@ -32,6 +33,7 @@ import { PersonBubble } from './person-bubble';
 import type { BranchHandle, TreeDrawing, TreeNode } from './tree-drawing';
 import { readTreeMemory, writeTreeMemory } from './tree-memory.storage';
 import { TreeMinimap } from './tree-minimap';
+import { QuickMenu, useQuickPress } from './tree-quick-menu';
 import { useFoldedTree } from './use-folded-tree';
 import { useRelayout } from './use-relayout';
 import { useTreeCamera } from './use-tree-camera';
@@ -137,6 +139,7 @@ const TreeItem = memo(function TreeItem({
   register,
   onFocus,
   onKeyDown,
+  quick,
 }: {
   node: TreeNode;
   active: boolean;
@@ -149,6 +152,8 @@ const TreeItem = memo(function TreeItem({
   register: (id: string, element: HTMLElement | undefined) => void;
   onFocus: (id: string) => void;
   onKeyDown: (id: string, event: KeyboardEvent<HTMLAnchorElement>) => void;
+  /** Actions rapides proposées : le raccourci est annoncé. */
+  quick: boolean;
 }) {
   const tone = node.me ? 'text-accent' : node.deceased ? 'text-ink-2' : 'text-ink';
   return (
@@ -161,6 +166,8 @@ const TreeItem = memo(function TreeItem({
       aria-label={node.label}
       aria-expanded={expanded}
       aria-selected={selected}
+      aria-keyshortcuts={quick ? 'Shift+F10' : undefined}
+      data-person={node.id}
       data-on-path={onPath}
       tabIndex={active ? 0 : -1}
       draggable={false}
@@ -174,7 +181,8 @@ const TreeItem = memo(function TreeItem({
         event.preventDefault();
         onOpen(node.id);
       }}
-      className={`group absolute flex w-[120px] flex-col items-center outline-none transition-opacity ${onPath === false ? 'opacity-30' : ''}`}
+      // L'appui long ouvre les actions rapides, pas l'aperçu de lien d'iOS.
+      className={`group absolute flex w-[120px] flex-col items-center outline-none transition-opacity [-webkit-touch-callout:none] ${onPath === false ? 'opacity-30' : ''}`}
       style={{ left: node.x - NODE_HALF_WIDTH, top: node.y - BUBBLE_RADIUS }}
     >
       <PendingRing />
@@ -372,6 +380,7 @@ export function FamilyTree({
   highlight,
   coveredTop = 0,
   focusOn,
+  quickActions,
 }: {
   /** Premier dessin, calculé au rendu serveur. */
   drawing: TreeDrawing;
@@ -393,6 +402,8 @@ export function FamilyTree({
   focusOn?: string | undefined;
   /** Hauteur couverte en haut du canevas (carte du lien) : le cadrage l'évite. */
   coveredTop?: number;
+  /** Éléments du menu des actions rapides d'une bulle ; sans lui, pas de menu. */
+  quickActions?: ((id: string) => ReactNode) | undefined;
 }) {
   const fold = useFoldedTree(initial, graph);
   const { nodes, width, height } = fold.drawing;
@@ -507,10 +518,12 @@ export function FamilyTree({
     [byId, camera],
   );
 
+  const quick = useQuickPress(quickActions !== undefined);
+  const { onKey: quickKey } = quick;
   const { folded, branchesOf, setFolded } = fold;
   const onKeyDown = useCallback(
     (id: string, event: KeyboardEvent<HTMLAnchorElement>) => {
-      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.altKey || event.ctrlKey || event.metaKey || quickKey(id, event)) return;
       // « - » replie les branches sous la bulle, « + » les déplie (DESIGN.md, section 11).
       const keys = branchesOf.get(id) ?? [];
       // D'après la dernière demande : « - » puis « + » coup sur coup s'annulent.
@@ -533,7 +546,7 @@ export function FamilyTree({
       // Bulle virtualisée, pas encore rendue : le focus suit après le rendu.
       else pendingFocus.current = target;
     },
-    [byId, rows, branchesOf, folded, setFolded],
+    [byId, rows, branchesOf, folded, setFolded, quickKey],
   );
 
   // Les plis retenus reviennent une fois la caméra en place, autour de la bulle repère.
@@ -592,6 +605,7 @@ export function FamilyTree({
     const keys = branchesOf.get(id);
     return keys ? keys.some((k) => !folded.has(k)) : undefined;
   };
+  const quickNode = quick.quickId ? byId.get(quick.quickId) : undefined;
   const home =
     me && camera ? () => camera.flyTo(cameraOn(me, Math.max(camera.get().k, 0.75))) : undefined;
 
@@ -602,6 +616,7 @@ export function FamilyTree({
         aria-label="Canevas de l’arbre"
         // Niveau des échelles de départ ; la caméra le tient ensuite à jour.
         data-detail="mid"
+        {...quick.canvas}
         // Le focus d'une bulle ne doit jamais faire défiler le canevas : la caméra s'en charge.
         onScroll={(event) => {
           event.currentTarget.scrollTop = 0;
@@ -646,6 +661,7 @@ export function FamilyTree({
                 register={register}
                 onFocus={onFocus}
                 onKeyDown={onKeyDown}
+                quick={quickActions !== undefined}
               />
             ))}
           </div>
@@ -658,6 +674,17 @@ export function FamilyTree({
               onToggle={toggleBranch}
             />
           ))}
+          {quickNode && quickActions ? (
+            <QuickMenu
+              key={quickNode.id}
+              at={{ x: quickNode.x, y: quickNode.y, radius: BUBBLE_RADIUS }}
+              label={quickNode.fullName}
+              bubble={() => elements.current.get(quickNode.id)}
+              onClose={quick.close}
+            >
+              {quickActions(quickNode.id)}
+            </QuickMenu>
+          ) : undefined}
         </div>
       </section>
       {camera ? (

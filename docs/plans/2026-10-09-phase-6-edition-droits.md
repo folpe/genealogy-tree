@@ -38,7 +38,7 @@ Sortie : un membre crée, modifie et supprime des fiches dans son périmètre ; 
 
 - [x] Version minimale avancée (2026-10-13) : « + Parent », « + Enfant », « + Conjoint » sur la fiche, dans le périmètre seulement (policy `editableIds`, revérifiée à l'écriture), invariants du graphe, dates en saisie libre, lieu réutilisé, verrou contre un troisième parent. Pas encore : modification, suppression, recherche anti doublon, photos, ligne `activity` (lot 4, migration à valider).
 
-- [ ] Actions rapides sur le nœud (survol desktop, appui long mobile) : "+ Parent", "+ Enfant", "+ Conjoint", "Modifier" ou "Suggérer" selon la policy (maquette Arbre).
+- [ ] Actions rapides sur le nœud (survol desktop, appui long mobile) : "+ Parent", "+ Enfant", "+ Conjoint", "Modifier" ou "Suggérer" selon la policy (maquette Arbre). Fait (2026-10-14) : appui long, clic droit, Maj + F10, ajouts selon la policy ; reste « Modifier » et « Suggérer ».
 - [ ] `components/EditDrawer/` : tiroir desktop, bottom sheet mobile, react-hook-form + Zod, raison affichée ("Ta lignée directe", "Fiche ouverte") ou destinataire de la suggestion.
 - [ ] Recherche d'une personne existante avant création (anti doublon), fusion de doublons réservée aux admins.
 - [ ] Dates à précision variable (`exacte`, `mois`, `annee`, `vers`, `avant`, `apres`, `entre`) avec saisie naturelle ("vers 1850").

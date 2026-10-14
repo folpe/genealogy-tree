@@ -1,3 +1,4 @@
+import type { RedactedPerson } from '@/server/access/access.redact';
 import type { TreeForViewer } from '@/server/family/family.service';
 import type { Gender } from '@/server/family/family.types';
 import { personLabel } from './person.helper';
@@ -8,6 +9,14 @@ import { personLabel } from './person.helper';
 export type RelationKind = 'parent' | 'child' | 'partner';
 export type AddIntent = { relation: RelationKind; gender?: Gender };
 type Choice = { id: string; label: string };
+/** La fiche d'où l'on ajoute : son nom de famille pré-remplit celui du nouveau. */
+export type Anchor = { id: string; firstName: string; lastName: string };
+
+/** Une fiche de mineur montre un nom masqué : on n'ajoute rien depuis elle. */
+export function relativeAnchor(person: RedactedPerson): Anchor | undefined {
+  if (person.level === 'minor') return undefined;
+  return { id: person.id, firstName: person.firstName, lastName: person.lastName };
+}
 
 export type RelativeOptions = {
   canAdd: boolean;
@@ -43,13 +52,26 @@ export function relativeOptions(tree: TreeForViewer, anchorId: string): Relative
         : [];
     })
     .sort((a, b) => Number(b.ongoing) - Number(a.ongoing));
+  const person = tree.persons.find((p) => p.id === anchorId);
   return {
-    canAdd: editable.has(anchorId),
+    canAdd: editable.has(anchorId) && person !== undefined && relativeAnchor(person) !== undefined,
     parentsFull: parents.length >= 2,
     singleParent:
       parents.length === 1 && parents[0] && editable.has(parents[0].id) ? parents[0] : undefined,
     partners,
   };
+}
+
+const RELATIONS: [RelationKind, string][] = [
+  ['parent', '+ Parent'],
+  ['child', '+ Enfant'],
+  ['partner', '+ Conjoint'],
+];
+
+/** Les liens à proposer, avec leur libellé : la fiche et les actions rapides de l'arbre. */
+export function addableRelations(options: RelativeOptions): [RelationKind, string][] {
+  if (!options.canAdd) return [];
+  return RELATIONS.filter(([relation]) => relation !== 'parent' || !options.parentsFull);
 }
 
 const INTENTS: Record<string, AddIntent> = {

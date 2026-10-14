@@ -5,7 +5,11 @@ import { notFound } from 'next/navigation';
 import { addRelativeAction } from '@/actions/family.actions';
 import { claimPersonAction } from '@/actions/members.actions';
 import { AddRelative } from '@/components/family/add-relative';
-import { parseAddIntent, relativeOptions } from '@/components/family/add-relative.helper';
+import {
+  parseAddIntent,
+  relativeAnchor,
+  relativeOptions,
+} from '@/components/family/add-relative.helper';
 import { BackToTree } from '@/components/family/back-to-tree';
 import { PersonSheet } from '@/components/family/family-views';
 import { personLabel } from '@/components/family/person.helper';
@@ -42,15 +46,13 @@ export default async function PersonPage({
         <BackToTree />
       </nav>
       <PersonSheet tree={tree} personId={id} relation={tree.relations[id]} />
-      {person.level === 'minor' ? undefined : (
-        <AddRelative
-          key={id}
-          anchor={{ id, firstName: person.firstName, lastName: person.lastName }}
-          options={relativeOptions(tree, id)}
-          intent={parseAddIntent(query['ajouter'])}
-          action={addRelativeAction}
-        />
-      )}
+      <AddRelative
+        key={id}
+        anchor={relativeAnchor(person)}
+        options={relativeOptions(tree, id)}
+        intent={parseAddIntent(query['ajouter'])}
+        action={addRelativeAction}
+      />
       {account.isAdmin && !account.personId ? (
         <ClaimPersonForm action={claimPersonAction} personId={id} label={personLabel(person)} />
       ) : undefined}
