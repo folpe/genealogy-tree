@@ -4,6 +4,11 @@
 
 /** Assez long pour ne pas prendre un tap appuyé, assez court pour ne pas faire attendre. */
 export const LONG_PRESS_MS = 450;
+/**
+ * Le clic émis au lever du doigt arrive aussitôt ; s'il ne vient pas (menu modal,
+ * iOS), le clic suivant, au clavier par exemple, n'est plus avalé.
+ */
+export const CLICK_AFTER_MS = 400;
 /** Le doigt tremble ; au-delà, c'est un glissé : la caméra a la main. */
 const TOLERANCE_PX = 8;
 
@@ -22,6 +27,7 @@ export type LongPress = {
 export function createLongPress(onLongPress: (id: string) => void): LongPress {
   let pending: { origin: Point; timer: ReturnType<typeof setTimeout> } | undefined;
   let fired = false;
+  let disarm: ReturnType<typeof setTimeout> | undefined;
   const cancel = () => {
     if (pending) clearTimeout(pending.timer);
     pending = undefined;
@@ -29,6 +35,7 @@ export function createLongPress(onLongPress: (id: string) => void): LongPress {
   return {
     down(id, pointer) {
       cancel();
+      clearTimeout(disarm);
       fired = false;
       // Un deuxième doigt : c'est un pincement.
       if (pointer.pointerType === 'mouse' || !pointer.isPrimary) return;
@@ -44,7 +51,14 @@ export function createLongPress(onLongPress: (id: string) => void): LongPress {
       const { origin } = pending;
       if (Math.hypot(point.x - origin.x, point.y - origin.y) > TOLERANCE_PX) cancel();
     },
-    up: cancel,
+    up() {
+      cancel();
+      if (!fired) return;
+      clearTimeout(disarm);
+      disarm = setTimeout(() => {
+        fired = false;
+      }, CLICK_AFTER_MS);
+    },
     cancel,
     swallowClick() {
       const swallow = fired;
