@@ -19,10 +19,10 @@ export function RevealTitle({
     <h1
       ref={ref}
       tabIndex={-1}
-      // Les mots en blocs se liraient collés : le titre se dit d'un seul tenant.
-      aria-label={text}
       className={`font-display text-[34px] leading-[1.1] tracking-[-0.01em] outline-none sm:text-[40px] ${className}`}
     >
+      {/* Les mots en blocs se liraient collés : le titre se dit d'un seul tenant. */}
+      <span className="sr-only">{text}</span>
       {words.map((word, index) => (
         // Un même mot peut revenir dans un titre : sa place le distingue.
         // biome-ignore lint/suspicious/noArrayIndexKey: liste figée, rendue une fois.

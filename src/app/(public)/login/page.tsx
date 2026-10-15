@@ -6,10 +6,21 @@ import { LoginForm } from './login-form';
 export const metadata: Metadata = { title: 'Connexion' };
 
 // Maquette Connexion : lien magique, puis passkey proposée (/login/passkey).
-export default function LoginPage() {
+// Un lien expiré ou déjà servi revient ici avec `?error=…` (better-auth).
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string | string[] }>;
+}) {
+  const { error } = await searchParams;
   return (
     <AuthShell>
       <LoginForm
+        notice={
+          error
+            ? 'Ce lien n’est plus valable : il a déjà servi, ou il a expiré. Demande-en un nouveau.'
+            : undefined
+        }
         footer={
           <div className="flex flex-col gap-2 text-center text-sm text-ink-2">
             <p>

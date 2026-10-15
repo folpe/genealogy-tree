@@ -30,14 +30,19 @@ const LOGIN_INTRO: Intro = {
 
 /** Où le lien magique ramène : la proposition de passkey, qui renvoie à l'arbre. */
 const AFTER_LINK = '/login/passkey';
+/** Lien expiré ou déjà servi : better-auth y ajoute `?error=…`, lu par la page. */
+const LINK_FAILED = '/login';
 
 export function LoginForm({
   defaultEmail = '',
   intro = LOGIN_INTRO,
+  notice,
   footer,
 }: {
   defaultEmail?: string;
   intro?: Intro;
+  /** Message d'accueil de l'étape email (lien expiré). */
+  notice?: string | undefined;
   /** Sous l'étape email seulement (lien vers la demande d'accès). */
   footer?: ReactNode;
 }) {
@@ -45,7 +50,7 @@ export function LoginForm({
   const [email, setEmail] = useState(defaultEmail);
   const [pending, setPending] = useState(false);
   const [resent, setResent] = useState(false);
-  const [error, setError] = useState<string | undefined>();
+  const [error, setError] = useState<string | undefined>(notice);
   const heading = useRef<HTMLHeadingElement>(null);
   const focusHeading = useRef(false);
 
@@ -69,6 +74,7 @@ export function LoginForm({
     const { error: failure } = await authClient.signIn.magicLink({
       email,
       callbackURL: AFTER_LINK,
+      errorCallbackURL: LINK_FAILED,
     });
     setPending(false);
     if (failure) setError('L’envoi n’a pas abouti. Réessaie dans une minute.');
@@ -124,7 +130,12 @@ function EmailStep(props: {
   async function signInWithPasskey() {
     const result = await authClient.signIn.passkey();
     if (result?.error) {
-      props.onError('Aucune passkey reconnue sur cet appareil. Reçois plutôt un lien par email.');
+      // Fermer la fenêtre de Face ID n'est pas une absence de passkey.
+      props.onError(
+        'code' in result.error && result.error.code === 'AUTH_CANCELLED'
+          ? 'Connexion annulée. Réessaie, ou reçois plutôt un lien par email.'
+          : 'Aucune passkey reconnue sur cet appareil. Reçois plutôt un lien par email.',
+      );
       return;
     }
     router.push('/tree');

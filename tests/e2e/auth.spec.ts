@@ -76,6 +76,9 @@ test('un lien ne sert qu’une fois', async ({ page, browser }) => {
   const other = await browser.newContext();
   const replay = await other.newPage();
   await replay.goto(link);
-  await expect(replay).not.toHaveURL(/\/login\/passkey$|\/tree$/);
+  await expect(replay).toHaveURL(/\/login\?error=/);
+  await expect(replay.getByRole('main').getByRole('alert')).toHaveText(
+    /Ce lien n’est plus valable/,
+  );
   await other.close();
 });

@@ -30,6 +30,7 @@ describe('LoginForm', () => {
     expect(magicLink).toHaveBeenCalledWith({
       email: 'luc@exemple.fr',
       callbackURL: '/login/passkey',
+      errorCallbackURL: '/login',
     });
     const heading = screen.getByRole('heading', { level: 1, name: 'Regarde tes emails' });
     expect(heading).toHaveFocus();
