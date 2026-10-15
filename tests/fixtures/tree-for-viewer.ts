@@ -26,6 +26,7 @@ export function treeForViewer(memberId: string): TreeForViewer {
     editableIds: editableIds(ctx, viewer),
     relations: {},
     trashableIds: [],
+    inLawFamilies: {},
     rights: rightsNotices(ctx, viewer, view.persons),
   };
 }

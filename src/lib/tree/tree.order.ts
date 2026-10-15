@@ -6,7 +6,7 @@ import type { DisplayedGraph } from '../../server/family/family.display';
 // l'ordre d'un arbre généalogique : autour de la personne au centre, chaque fratrie de
 // ses ascendants d'un tenant, la lignée directe au bord intérieur (le côté du premier
 // partenaire à gauche, celui du second à droite), et les familles d'origine des
-// conjoints après la nôtre, à l'extérieur.
+// conjoints à l'extérieur de la nôtre, du côté de leur conjoint.
 
 export type OrderedBlock = { id: string; persons: string[] };
 
@@ -19,14 +19,15 @@ export function familyOrder(
   const g = familyGraph(drawn, blocks);
   const blood = bloodOf(g, focusId);
   const visited = new Set<string>();
-  const deferred: string[] = [];
+  /** Famille d'origine d'un conjoint (`origin`), à ranger du côté de ce conjoint (`via`). */
+  const deferred: { origin: string; via: string }[] = [];
 
   const descendants = (blockId: string): string[] => {
     if (visited.has(blockId)) return [];
     visited.add(blockId);
     for (const person of g.blocks.get(blockId) ?? []) {
       const origin = g.parentBlock.get(person);
-      if (origin && !blood.has(person)) deferred.push(origin);
+      if (origin && !blood.has(person)) deferred.push({ origin, via: blockId });
     }
     return [blockId, ...g.childrenOf(blockId).flatMap((c) => descendants(g.blockOf(c)))];
   };
@@ -87,11 +88,29 @@ export function familyOrder(
     });
     return [...up, ...descendants(blockId)];
   };
+  // Celle d'un conjoint rangé à gauche de la personne au centre part au bord gauche :
+  // à droite, ses traits barreraient toute la rangée. Une famille venue d'une famille
+  // déjà au bord gauche se range encore à l'extérieur, juste avant elle.
+  const centerAt = focusId ? order.indexOf(g.blockOf(focusId)) : -1;
+  const onLeft = new Set(order.slice(0, Math.max(centerAt, 0)));
+  /** Bloc d'une famille rangée au bord gauche → le premier bloc de cette famille. */
+  const leftGroup = new Map<string, string>();
+  const outerLeft: string[] = [];
   for (let next = deferred.shift(); next !== undefined; next = deferred.shift()) {
-    order.push(...family(next));
+    const placed = family(next.origin);
+    const [head] = placed;
+    if (!head) continue;
+    if (!onLeft.has(next.via) && !leftGroup.has(next.via)) {
+      order.push(...placed);
+      continue;
+    }
+    const parentHead = leftGroup.get(next.via);
+    const at = parentHead ? outerLeft.indexOf(parentHead) : outerLeft.length;
+    outerLeft.splice(at, 0, ...placed);
+    for (const block of placed) leftGroup.set(block, head);
   }
   for (const block of blocks) order.push(...family(block.id));
-  return order;
+  return [...outerLeft, ...order];
 }
 
 type FamilyLinks = {

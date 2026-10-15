@@ -21,7 +21,7 @@ import {
   relativeAnchor,
   relativeOptions,
 } from './add-relative.helper';
-import { FamilyTree } from './family-tree';
+import { type FamilyLink, FamilyTree } from './family-tree';
 import { PersonSheet } from './family-views';
 import { useOpenFicheRequests } from './open-fiche';
 import { personLabel } from './person.helper';
@@ -79,11 +79,14 @@ export function TreeWithSheet({
   drawing,
   viewKey,
   addAction,
+  families,
 }: {
   tree: TreeForViewer;
   drawing: TreeDrawing;
   viewKey: string;
   addAction: AddAction;
+  /** Toute la famille : « + sa famille » sur chaque conjoint venu avec la sienne. */
+  families?: Record<string, FamilyLink> | undefined;
 }) {
   const search = useSearchParams();
   const asked = search.get('fiche') ?? undefined;
@@ -188,6 +191,7 @@ export function TreeWithSheet({
           coveredTop={link ? cardHeight : 0}
           quickActions={quickActions}
           reveal={reveal}
+          families={families}
         />
         {addingTo && adding ? (
           <AddRelativeDialog

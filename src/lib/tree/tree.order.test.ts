@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { aChildOf, anUnion, aPerson } from '../../../tests/fixtures/builders';
 import { extendedFamily } from '../../../tests/fixtures/extended-family';
 import { selectDisplayedGraph } from '../../server/family/family.display';
 import { familyOrder } from './tree.order';
 
 // Ordre généalogique des blocs (couples soudés) : la fratrie paternelle à gauche, la
 // lignée directe à son bord intérieur, puis le couple des parents, puis la fratrie
-// maternelle ; les familles d'origine des conjoints viennent après, à l'extérieur.
+// maternelle ; les familles d'origine des conjoints à l'extérieur, du côté du conjoint.
 
 const drawn = selectDisplayedGraph(extendedFamily(), { focusId: 'moi' });
 
@@ -47,9 +48,10 @@ describe('familyOrder', () => {
     expect([...order].sort()).toEqual(blocks.map((b) => b.id).sort());
   });
 
-  it('les grands-parents : paternels, puis maternels, puis les familles des conjoints', () => {
-    expect(increasing(ranked(['gp-p+gm-p', 'gp-m+gm-m', 'gp-mt+gm-mt']))).toBe(true);
-    expect(increasing(ranked(['gp-m+gm-m', 'gp-c+gm-c']))).toBe(true);
+  it('les grands-parents : paternels, puis maternels, les familles des conjoints autour', () => {
+    // Le mari de la tante paternelle est à gauche : ses parents, au bord gauche.
+    expect(increasing(ranked(['gp-mt+gm-mt', 'gp-p+gm-p', 'gp-m+gm-m']))).toBe(true);
+    expect(increasing(ranked(['gp-m+gm-m', 'gp-mm+gm-mm', 'gp-c+gm-c']))).toBe(true);
   });
 
   it('les parents entre les deux fratries, chaque fratrie d’un tenant', () => {
@@ -63,11 +65,12 @@ describe('familyOrder', () => {
     expect(increasing(order)).toBe(true);
   });
 
-  it('les familles des conjoints après la nôtre, sur chaque rangée', () => {
+  it('les familles des conjoints à l’extérieur de la nôtre, du côté de leur conjoint', () => {
     const order = familyOrder(drawn, blocks, 'moi');
+    // À gauche : barrer toute la rangée pour rejoindre la droite croiserait chaque trait.
+    expect(order.indexOf('frere-mt')).toBeLessThan(order.indexOf('oncle-p+epouse-oncle-p'));
     const last = Math.max(...['tante-m2', 'pere+mere'].map((id) => order.indexOf(id)));
-    for (const inLaw of ['frere-mt', 'soeur-mm'])
-      expect(order.indexOf(inLaw)).toBeGreaterThan(last);
+    expect(order.indexOf('soeur-mm')).toBeGreaterThan(last);
     expect(order.indexOf('soeur-c')).toBeGreaterThan(order.indexOf('cousin-m2'));
   });
 
@@ -107,5 +110,27 @@ describe('familyOrder sur des remariages croisés', () => {
     // Atteints sans personne au centre : par la boucle finale.
     expect([...familyOrder(crossed, crossedBlocks, undefined)].sort()).toEqual(['f+d', 'n+w']);
     expect([...familyOrder(crossed, crossedBlocks, 'w')].sort()).toEqual(['f+d', 'n+w']);
+  });
+});
+
+describe('familyOrder sur des familles de conjoints imbriquées', () => {
+  it('la famille venue d’une famille du bord gauche se range encore à l’extérieur', () => {
+    // Le frère du mari de la tante paternelle épouse quelqu'un venu avec ses parents.
+    const g = extendedFamily();
+    g.persons.push(aPerson('epouse-fmt'), aPerson('gp-e'), aPerson('gm-e'));
+    g.unions.push(anUnion('u-fmt', 'frere-mt', 'epouse-fmt'), anUnion('u-gp-e', 'gp-e', 'gm-e'));
+    g.parentChildren.push(
+      aChildOf('gp-e', 'epouse-fmt', { unionId: 'u-gp-e' }),
+      aChildOf('gm-e', 'epouse-fmt', { unionId: 'u-gp-e' }),
+    );
+    const nested = [
+      ...blocks.filter((b) => b.id !== 'frere-mt'),
+      { id: 'frere-mt+epouse-fmt', persons: ['frere-mt', 'epouse-fmt'] },
+      { id: 'gp-e+gm-e', persons: ['gp-e', 'gm-e'] },
+    ];
+    const order = familyOrder(selectDisplayedGraph(g, { focusId: 'moi' }), nested, 'moi');
+    const at = (ids: string[]) => ids.map((id) => order.indexOf(id));
+    expect(increasing(at(['gp-e+gm-e', 'gp-mt+gm-mt', 'gp-p+gm-p']))).toBe(true);
+    expect([...order].sort()).toEqual(nested.map((b) => b.id).sort());
   });
 });

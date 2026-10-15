@@ -158,7 +158,7 @@ describe('generationLevels', () => {
 
   it('range la famille Marchand par génération, conjoints au même niveau', () => {
     expect(byLevel(generationLevels(index))).toEqual([
-      ['emile', 'henri', 'louise', 'marthe'],
+      ['emile', 'gaston', 'henri', 'louise', 'marthe', 'yvonne'],
       ['bernard', 'claude', 'jacques', 'jeanne', 'marie', 'odette', 'paul'],
       ['anne', 'claire', 'isabelle', 'luc', 'sophie'],
       ['hugo', 'lea', 'maxime', 'tom'],
