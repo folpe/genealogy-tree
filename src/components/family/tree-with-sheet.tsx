@@ -11,6 +11,7 @@ import { FAN_GENERATIONS } from '@/components/fan/fan.helper';
 import { fanHref } from '@/lib/fan/fan.params';
 import { treeHref } from '@/lib/tree/tree.params';
 import { type PathHighlight, pathHighlight } from '@/lib/tree/tree.path';
+import { animateFicheOpen } from '@/motion/fiche';
 import { animatePills } from '@/motion/path';
 import type { RelationshipView, TreeForViewer } from '@/server/family/family.service';
 import { AddRelative, AddRelativeDialog } from './add-relative';
@@ -139,6 +140,8 @@ export function TreeWithSheet({
       onClose={close}
       onLink={tree.viewerPersonId && tree.viewerPersonId !== person.id ? showLink : undefined}
       addAction={addAction}
+      // Sur téléphone, la feuille monte déjà : pas de trajet depuis la bulle.
+      flip={wide === true}
     />
   ) : undefined;
   return (
@@ -224,6 +227,7 @@ function PersonPanel({
   onClose,
   onLink,
   addAction,
+  flip,
 }: {
   tree: TreeForViewer;
   personId: string;
@@ -232,12 +236,24 @@ function PersonPanel({
   /** Absent pour sa propre fiche, ou sans fiche reliée au compte. */
   onLink: ((view: RelationshipView) => void) | undefined;
   addAction: AddAction;
+  /** L'avatar vient de la bulle de l'arbre (grand écran). */
+  flip: boolean;
 }) {
+  const root = useRef<HTMLDivElement>(null); // allow-null: contrat des refs de React
+  // Lu au moment de l'ouverture : la largeur d'écran, connue après l'hydratation, ne
+  // rejoue pas l'entrée d'une fiche déjà ouverte (lien direct).
+  const flipNow = useRef(flip);
+  flipNow.current = flip;
+  // Chaque fiche ouverte joue son entrée ; la suivante arrête la précédente.
+  useLayoutEffect(() => {
+    if (!root.current) return;
+    return animateFicheOpen(root.current, { personId, flip: flipNow.current });
+  }, [personId]);
   const person = tree.persons.find((p) => p.id === personId);
   if (!person) return undefined;
   const name = personLabel(person);
   return (
-    <div className="relative flex flex-col gap-6">
+    <div ref={root} data-cascade className="relative flex flex-col gap-6">
       <button
         type="button"
         onClick={onClose}

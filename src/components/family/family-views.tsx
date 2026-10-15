@@ -201,12 +201,15 @@ function SheetHeader({
       : undefined;
   const sourced = person.level === 'full' && person.sourcedFields.length > 0;
   return (
-    <header className="flex flex-col items-center gap-1.5 text-center">
-      {editable && person.level === 'full' ? (
-        <PhotoPicker personId={person.id}>{bubble}</PhotoPicker>
-      ) : (
-        bubble
-      )}
+    <header data-cascade className="flex flex-col items-center gap-1.5 text-center">
+      {/* L'avatar vient de la bulle de l'arbre à l'ouverture (src/motion/fiche.ts). */}
+      <div data-fiche-avatar>
+        {editable && person.level === 'full' ? (
+          <PhotoPicker personId={person.id}>{bubble}</PhotoPicker>
+        ) : (
+          bubble
+        )}
+      </div>
       {editable && person.level === 'full' ? (
         <EditableName
           personId={person.id}
@@ -357,7 +360,7 @@ export function PersonSheet({
         heading={heading}
         editable={editable}
       />
-      <dl className="flex flex-col [&>div:first-child]:border-t-0">
+      <dl data-cascade className="flex flex-col [&>div:first-child]:border-t-0">
         {editable && person.level === 'full' ? (
           <EditableFacts person={person} />
         ) : (
