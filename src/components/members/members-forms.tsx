@@ -3,7 +3,7 @@
 import { useActionState } from 'react';
 import type { ActionResult } from '@/actions/members.actions';
 
-// Formulaires des écrans Membres, Admin et demande d'accès. Fonctionnels et sobres :
+// Formulaires des écrans Membres et Admin. Fonctionnels et sobres :
 // la mise en forme des maquettes Membres arrive en phase 6.
 
 type Action = (state: ActionResult | undefined, data: FormData) => Promise<ActionResult>;
@@ -30,54 +30,6 @@ function Feedback({ state }: { state: ActionResult | undefined }) {
       {state.message}
     </p>
   ) : undefined;
-}
-
-export function RequestAccessForm({ action }: { action: Action }) {
-  const [state, submit, pending] = useActionState(action, undefined);
-  if (state?.ok) {
-    return (
-      <div className="mt-6">
-        <h2 className="font-display text-2xl">Merci, on te répond vite</h2>
-        <p className="mt-3 text-[15px] text-ink-2">
-          Dès qu’un administrateur valide ta demande, tu reçois un lien de connexion par email. En
-          général, sous 48 heures.
-        </p>
-      </div>
-    );
-  }
-  return (
-    <form action={submit} className="mt-6 flex flex-col gap-3">
-      <label htmlFor="name" className={labelClass}>
-        Prénom et nom
-      </label>
-      <input id="name" name="name" required autoComplete="name" className={fieldClass} />
-      <label htmlFor="email" className={labelClass}>
-        Email
-      </label>
-      <input
-        id="email"
-        name="email"
-        type="email"
-        required
-        autoComplete="email"
-        className={fieldClass}
-      />
-      <label htmlFor="relation" className={labelClass}>
-        Qui es-tu dans la famille ?
-      </label>
-      <textarea
-        id="relation"
-        name="relation"
-        required
-        rows={3}
-        className="w-full rounded-[var(--radius-field)] border border-line bg-surface p-4 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-ink"
-      />
-      <button type="submit" disabled={pending} className={primary}>
-        Envoyer ma demande
-      </button>
-      <Feedback state={state} />
-    </form>
-  );
 }
 
 export function InviteForm({

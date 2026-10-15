@@ -1,31 +1,34 @@
-// tdd-cover: e2e src/components/members/members-forms.test.tsx
+// tdd-cover: e2e src/app/(public)/request-access/request-access-form.test.tsx
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { requestAccessAction } from '@/actions/members.actions';
-import { RequestAccessForm } from '@/components/members/members-forms';
+import { AuthShell } from '@/components/auth/auth-shell';
+import { RequestAccessForm } from './request-access-form';
 
 export const metadata: Metadata = { title: 'Demande d’accès' };
 
 export default function RequestAccessPage() {
   return (
-    <main className="canvas-grid flex min-h-dvh items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-[var(--radius-card)] bg-card p-8 shadow-card">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-          Demande d’accès
-        </p>
-        <h1 className="mt-2 font-display text-[32px] leading-tight">Rejoins la famille</h1>
-        <p className="mt-3 text-[15px] text-ink-2">
-          Un administrateur vérifie ta demande et te relie à ta fiche. Le plus simple reste de
-          demander à un proche déjà inscrit de t’inviter.
-        </p>
-        <RequestAccessForm action={requestAccessAction} />
-        <Link
-          href="/login"
-          className="mt-6 inline-block text-sm font-medium text-ink-2 underline underline-offset-4"
+    <AuthShell>
+      <Link
+        href="/login"
+        className="mb-[18px] inline-flex h-11 items-center gap-2 self-start rounded-full border border-line bg-card pr-4 pl-2.5 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden="true"
         >
-          Revenir à la connexion
-        </Link>
-      </div>
-    </main>
+          <path d="M15 6l-6 6 6 6" />
+        </svg>
+        Retour à la connexion
+      </Link>
+      <RequestAccessForm action={requestAccessAction} />
+    </AuthShell>
   );
 }

@@ -148,3 +148,102 @@
     opacity: 1;
   }
 }
+
+/*
+ * Écran de connexion (spec 9) : le signe se dessine trait par trait, le petit arbre du
+ * canevas pousse rangée par rangée, le titre monte mot à mot. En CSS seul : la page ne
+ * charge pas GSAP (journal du 2026-10-15, GSAP sans import différé). Les traits portent
+ * `pathLength="1"`.
+ */
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    translate: 0 105%;
+  }
+}
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    scale: 0.85;
+  }
+}
+@keyframes step-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+.brand-draw :is(path, circle) {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 0.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+/* Le tronc, puis les deux branches, puis les trois têtes. */
+.brand-draw :nth-child(2) {
+  animation-delay: 0.35s;
+}
+.brand-draw :nth-child(3) {
+  animation-delay: 0.45s;
+}
+.brand-draw :nth-child(4) {
+  animation-delay: 0.7s;
+}
+.brand-draw :nth-child(5) {
+  animation-delay: 0.8s;
+}
+.brand-draw :nth-child(6) {
+  animation-delay: 0.9s;
+}
+
+.sketch-bubble {
+  animation: bubble-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(0.5s + var(--row) * 0.3s);
+}
+.sketch-link {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 0.5s ease-out forwards;
+  animation-delay: calc(0.75s + var(--row) * 0.3s);
+}
+.sketch-ghost {
+  animation: fade-in 0.5s both;
+  animation-delay: calc(0.75s + var(--row) * 0.3s);
+}
+
+/* Le masque garde la place des jambages : le mot monte de sous sa ligne. */
+.reveal-mask {
+  display: inline-block;
+  overflow: clip;
+  vertical-align: top;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+.reveal-word {
+  display: inline-block;
+  animation: rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(0.15s + var(--word) * 0.07s);
+}
+
+.step-in {
+  animation: step-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-draw :is(path, circle),
+  .sketch-link {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .reveal-word,
+  .sketch-bubble,
+  .sketch-ghost,
+  .step-in {
+    animation: fade-in 0.15s both;
+  }
+}

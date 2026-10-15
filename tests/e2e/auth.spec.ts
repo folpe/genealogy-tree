@@ -12,6 +12,19 @@ async function askForLink(page: Page, email: string) {
   await expect(page.getByRole('heading', { name: 'Regarde tes emails' })).toBeVisible();
 }
 
+test('la proposition de passkey demande une session', async ({ page }) => {
+  await page.goto('/login/passkey');
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+test('la demande d’accès se fait depuis la connexion et y ramène', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByRole('link', { name: 'Demander l’accès' }).click();
+  await expect(page.getByRole('heading', { name: 'Rejoins la famille' })).toBeVisible();
+  await page.getByRole('link', { name: 'Retour à la connexion' }).click();
+  await expect(page.getByRole('heading', { name: 'Entre dans l’arbre' })).toBeVisible();
+});
+
 test('une page protégée renvoie vers la connexion', async ({ page }) => {
   await page.goto('/tree');
   await expect(page).toHaveURL(/\/login$/);
@@ -35,10 +48,18 @@ test('une adresse inconnue voit la même confirmation, sans recevoir d’email',
   expect(countEmails(email)).toBe(0);
 });
 
-test('le propriétaire entre par son lien et arrive sur l’arbre', async ({ page }) => {
+test('le propriétaire entre par son lien, se voit proposer une passkey, puis arrive sur l’arbre', async ({
+  page,
+}) => {
   const before = countEmails(E2E_ADMIN_EMAIL);
   await askForLink(page, E2E_ADMIN_EMAIL);
   await page.goto(await nextMagicLink(E2E_ADMIN_EMAIL, before));
+
+  await expect(page).toHaveURL(/\/login\/passkey$/);
+  await expect(
+    page.getByRole('heading', { name: 'La prochaine fois, un simple regard suffit' }),
+  ).toBeVisible();
+  await page.getByRole('link', { name: 'Plus tard' }).click();
 
   await expect(page).toHaveURL(/\/tree$/);
   await expect(page.getByRole('heading', { name: 'L’arbre de la famille' })).toBeVisible();
@@ -50,11 +71,14 @@ test('un lien ne sert qu’une fois', async ({ page, browser }) => {
   await askForLink(page, E2E_ISABELLE_EMAIL);
   const link = await nextMagicLink(E2E_ISABELLE_EMAIL, before);
   await page.goto(link);
-  await expect(page).toHaveURL(/\/tree$/);
+  await expect(page).toHaveURL(/\/login\/passkey$/);
 
   const other = await browser.newContext();
   const replay = await other.newPage();
   await replay.goto(link);
-  await expect(replay).not.toHaveURL(/\/tree$/);
+  await expect(replay).toHaveURL(/\/login\?error=/);
+  await expect(replay.getByRole('main').getByRole('alert')).toHaveText(
+    /Ce lien n’est plus valable/,
+  );
   await other.close();
 });

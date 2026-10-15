@@ -1,36 +1,42 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { AuthShell } from '@/components/auth/auth-shell';
 import { LoginForm } from './login-form';
 
 export const metadata: Metadata = { title: 'Connexion' };
 
-// Maquette Connexion : lien magique et passkey (better-auth). La mise en scène
-// finale (canevas animé, étapes en URL) arrive en phase 5.
-export default function LoginPage() {
+// Maquette Connexion : lien magique, puis passkey proposée (/login/passkey).
+// Un lien expiré ou déjà servi revient ici avec `?error=…` (better-auth).
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string | string[] }>;
+}) {
+  const { error } = await searchParams;
   return (
-    <main className="canvas-grid flex min-h-dvh items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-[var(--radius-card)] bg-card p-8 shadow-card">
-        <p className="font-display text-2xl font-medium">Ances-Tree</p>
-        <p className="mt-8 text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-          Bon retour
-        </p>
-        <h1 className="mt-2 font-display text-[32px] leading-tight">Entre dans l’arbre</h1>
-        <p className="mt-3 text-[15px] text-ink-2">
-          Pas de mot de passe. On t’envoie un lien de connexion par email.
-        </p>
-
-        <LoginForm />
-
-        <p className="mt-8 border-t border-rule pt-6 text-sm text-ink-2">
-          Un espace privé : seuls les membres invités voient l’arbre.{' '}
-          <Link
-            href="/request-access"
-            className="font-semibold text-ink underline underline-offset-4"
-          >
-            Pas encore invité ? Demander l’accès
-          </Link>
-        </p>
-      </div>
-    </main>
+    <AuthShell>
+      <LoginForm
+        notice={
+          error
+            ? 'Ce lien n’est plus valable : il a déjà servi, ou il a expiré. Demande-en un nouveau.'
+            : undefined
+        }
+        footer={
+          <div className="flex flex-col gap-2 text-center text-sm text-ink-2">
+            <p>
+              Pas encore invité ?{' '}
+              <Link
+                href="/request-access"
+                className="font-semibold text-accent underline underline-offset-4 hover:text-accent-strong"
+              >
+                Demander l’accès
+              </Link>
+            </p>
+            {/* Sur grand écran, le canevas le dit déjà. */}
+            <p className="lg:hidden">Un espace privé : seuls les membres invités voient l’arbre.</p>
+          </div>
+        }
+      />
+    </AuthShell>
   );
 }
