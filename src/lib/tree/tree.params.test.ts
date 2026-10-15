@@ -64,9 +64,14 @@ describe('familles des conjoints (Toute la famille)', () => {
 
   it('déplier ou replier la famille d’un conjoint ramène la caméra sur lui', () => {
     const params = { view: 'all' as const, past: false, families: ['mari-tm1'] };
-    expect(familyToggleHref(params, 'conjoint')).toBe(
+    expect(familyToggleHref(params, 'conjoint', false)).toBe(
       '/tree?view=all&famille=mari-tm1%2Cconjoint&focus=conjoint',
     );
-    expect(familyToggleHref(params, 'mari-tm1')).toBe('/tree?view=all&focus=mari-tm1');
+    expect(familyToggleHref(params, 'mari-tm1', true)).toBe('/tree?view=all&focus=mari-tm1');
+  });
+
+  it('une famille ouverte par une fiche demandée se replie', () => {
+    const params = parseTreeParams({ view: 'all', fiche: 'gp-c' });
+    expect(familyToggleHref(params, 'conjoint', true)).toBe('/tree?view=all&focus=conjoint');
   });
 });

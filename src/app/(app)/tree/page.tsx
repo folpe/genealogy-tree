@@ -65,7 +65,7 @@ export default async function TreePage({
         families={Object.fromEntries(
           Object.entries(tree.inLawFamilies).map(([spouse, family]) => [
             spouse,
-            { ...family, href: familyToggleHref(params, spouse) },
+            { ...family, href: familyToggleHref(params, spouse, family.open) },
           ]),
         )}
         viewKey={treeHref(params)}

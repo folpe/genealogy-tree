@@ -45,6 +45,10 @@ test('une fiche demandée dans une famille repliée l’ouvre', async ({ page })
   ).toBeVisible();
   // Sa bulle est dessinée (sur mobile, la feuille rend l'arbre inerte derrière elle).
   await expect(page.locator('[data-person="gaston"]')).toHaveCount(1);
+  // Ouverte par la fiche, elle se replie comme une autre : le lien la retire.
+  const toggle = page.locator('[data-family="jacques"]');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(toggle).toHaveAttribute('href', '/tree?view=all&focus=jacques');
 });
 
 test('les parents d’un conjoint sont la famille de sang de ses enfants', async ({ page }) => {

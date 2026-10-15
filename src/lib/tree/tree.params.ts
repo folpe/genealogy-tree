@@ -62,12 +62,11 @@ export function treeHref({ view, p, past, depth, families }: TreeParams): string
 /**
  * Déplie ou replie la famille d'origine d'un conjoint (Toute la famille). L'arbre se
  * replace : la caméra revient sur le conjoint (`focus`), d'où la famille part.
+ * `open` : l'état affiché, qui compte aussi une famille ouverte par une fiche demandée.
  */
-export function familyToggleHref(params: TreeParams, spouseId: string): string {
-  const current = params.families ?? [];
-  const families = current.includes(spouseId)
-    ? current.filter((id) => id !== spouseId)
-    : [...current, spouseId];
+export function familyToggleHref(params: TreeParams, spouseId: string, open: boolean): string {
+  const current = (params.families ?? []).filter((id) => id !== spouseId);
+  const families = open ? current : [...current, spouseId];
   const base = treeHref({ ...params, view: 'all', families });
   return `${base}${base.includes('?') ? '&' : '?'}focus=${encodeURIComponent(spouseId)}`;
 }

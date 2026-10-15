@@ -76,8 +76,7 @@ export function familyOrder(
     });
   }
   // Les familles d'origine des conjoints, chacune avec ses ascendants, puis le reste.
-  // Celle d'un conjoint rangé à gauche de la personne au centre part au bord gauche :
-  // à droite, ses traits barreraient toute la rangée. Marqué avant de remonter : deux blocs peuvent être chacun l'origine de l'autre
+  // Marqué avant de remonter : deux blocs peuvent être chacun l'origine de l'autre
   // (remariages croisés), la remontée doit s'arrêter.
   const climbing = new Set<string>();
   const family = (blockId: string): string[] => {
@@ -89,18 +88,26 @@ export function familyOrder(
     });
     return [...up, ...descendants(blockId)];
   };
+  // Celle d'un conjoint rangé à gauche de la personne au centre part au bord gauche :
+  // à droite, ses traits barreraient toute la rangée. Une famille venue d'une famille
+  // déjà au bord gauche se range encore à l'extérieur, juste avant elle.
   const centerAt = focusId ? order.indexOf(g.blockOf(focusId)) : -1;
   const onLeft = new Set(order.slice(0, Math.max(centerAt, 0)));
+  /** Bloc d'une famille rangée au bord gauche → le premier bloc de cette famille. */
+  const leftGroup = new Map<string, string>();
   const outerLeft: string[] = [];
   for (let next = deferred.shift(); next !== undefined; next = deferred.shift()) {
     const placed = family(next.origin);
-    if (!onLeft.has(next.via)) {
+    const [head] = placed;
+    if (!head) continue;
+    if (!onLeft.has(next.via) && !leftGroup.has(next.via)) {
       order.push(...placed);
       continue;
     }
-    // Les familles venues d'elle restent de son côté.
-    for (const block of placed) onLeft.add(block);
-    outerLeft.push(...placed);
+    const parentHead = leftGroup.get(next.via);
+    const at = parentHead ? outerLeft.indexOf(parentHead) : outerLeft.length;
+    outerLeft.splice(at, 0, ...placed);
+    for (const block of placed) leftGroup.set(block, head);
   }
   for (const block of blocks) order.push(...family(block.id));
   return [...outerLeft, ...order];
