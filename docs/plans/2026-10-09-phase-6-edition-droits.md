@@ -1,7 +1,7 @@
 # Phase 6 : édition intégrée, droits par proximité et contribution
 
 - **Date :** 2026-10-09
-- **Spec :** [refonte Ances-Tree](../specs/2026-10-09-refonte-ances-tree.md), sections 5, 6, 7, 13
+- **Spec :** [refonte Racines](../specs/2026-10-09-refonte-racines.md), sections 5, 6, 7, 13
 - **Visuels :** [DESIGN.md](../design/DESIGN.md), maquettes `docs/design/maquettes/` : `Arbre` (actions rapides, encart de droits, réglage de vue Hugo / Isabelle), `Suggestion`, `Activite`, `Membres` (vues membre et admin), `EmailVeille`
 - **Statut :** à faire
 

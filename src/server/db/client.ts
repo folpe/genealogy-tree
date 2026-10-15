@@ -11,12 +11,12 @@ import type { Db } from './types';
 // ne garde pas les requêtes préparées d'une transaction à l'autre.
 
 declare global {
-  var __ancesTreeDb: Db | undefined;
+  var __racinesDb: Db | undefined;
 }
 
 export function getDb(): Db {
-  if (globalThis.__ancesTreeDb) return globalThis.__ancesTreeDb;
+  if (globalThis.__racinesDb) return globalThis.__racinesDb;
   const db = drizzle(postgres(serverEnv().DATABASE_URL, { prepare: false }), { schema });
-  globalThis.__ancesTreeDb = db;
+  globalThis.__racinesDb = db;
   return db;
 }

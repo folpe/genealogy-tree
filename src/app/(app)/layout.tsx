@@ -8,7 +8,7 @@ import { CommandPalette } from '@/components/app/command-palette';
 import { NavPills } from '@/components/app/nav-pills';
 import { PageZone } from '@/components/app/page-zone';
 import { APP_NAME } from '@/lib/brand';
-import { parseTheme, THEME_COOKIE } from '@/lib/theme/theme';
+import { readThemeCookie } from '@/lib/theme/theme';
 import { getAuth } from '@/server/auth/auth.instance';
 import { requireSession } from '@/server/auth/session';
 import { getMembersDeps } from '@/server/members/members.instance';
@@ -47,7 +47,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <AccountMenu
             account={account}
             hasPasskey={passkeys.length > 0}
-            theme={parseTheme(jar.get(THEME_COOKIE)?.value)}
+            theme={readThemeCookie(jar)}
           />
         </div>
       </header>

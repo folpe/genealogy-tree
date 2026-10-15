@@ -1,7 +1,7 @@
 # Plan phase 2 : domaine en TDD
 
 - **Date :** 2026-10-09
-- **Spec :** [docs/specs/2026-10-09-refonte-ances-tree.md](../specs/2026-10-09-refonte-ances-tree.md), sections 5, 6, 8 et 16
+- **Spec :** [docs/specs/2026-10-09-refonte-racines.md](../specs/2026-10-09-refonte-racines.md), sections 5, 6, 8 et 16
 - **Décisions :** [docs/DECISIONS.md](../DECISIONS.md), ADR 06 (graphe avec nœuds d'union), 08 (droits par proximité), 11 (direction visuelle, pour le vocabulaire affiché)
 - **Statut :** lots 1 à 8 faits, PR #64 à #68 à merger
 

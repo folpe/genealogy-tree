@@ -1,7 +1,7 @@
 # Phase 8 : récits et témoignages
 
 - **Date :** 2026-10-09
-- **Spec :** [refonte Ances-Tree](../specs/2026-10-09-refonte-ances-tree.md), section 11
+- **Spec :** [refonte Racines](../specs/2026-10-09-refonte-racines.md), section 11
 - **Visuels :** [DESIGN.md](../design/DESIGN.md), maquettes `docs/design/maquettes/Recits.dc.html` et `RecitsSombre.dc.html`
 - **Statut :** à faire
 

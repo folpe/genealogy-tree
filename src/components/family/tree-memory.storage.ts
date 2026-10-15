@@ -4,7 +4,7 @@ import { parseMemory, type TreeMemory } from '@/lib/tree/tree.memory';
 // Mémoire de l'arbre pour l'onglet (sessionStorage) : une commodité, jamais une
 // donnée à garder. Navigation privée ou stockage bloqué : l'arbre s'ouvre au départ.
 
-const KEY = 'ances-tree:tree';
+const KEY = 'racines:tree';
 
 /**
  * Passé ce délai depuis le chargement, l'arbre masqué se montre seul (repli de

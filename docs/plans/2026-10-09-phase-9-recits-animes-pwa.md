@@ -1,7 +1,7 @@
 # Phase 9 : récits animés, export vidéo, poster et PWA
 
 - **Date :** 2026-10-09
-- **Spec :** [refonte Ances-Tree](../specs/2026-10-09-refonte-ances-tree.md), sections 9, 10 ("Plus tard"), 11
+- **Spec :** [refonte Racines](../specs/2026-10-09-refonte-racines.md), sections 9, 10 ("Plus tard"), 11
 - **Visuels :** [DESIGN.md](../design/DESIGN.md), maquette `docs/design/maquettes/Recits.dc.html` (scène 16:9, sous-titres, chapitres)
 - **Statut :** à faire
 

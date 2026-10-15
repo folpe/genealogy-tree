@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react';
 // sa bulle. Un événement de fenêtre suffit : pas d'état partagé entre la coque et la
 // page, et sans arbre à l'écran personne ne répond, la recherche navigue alors.
 
-const OPEN_FICHE = 'ances-tree:open-fiche';
+const OPEN_FICHE = 'racines:open-fiche';
 
 type Request = { id: string; handled: boolean };
 

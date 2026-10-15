@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { parseTheme, THEME_COOKIE, THEME_MAX_AGE_S } from '@/lib/theme/theme';
+import { LEGACY_THEME_COOKIE, parseTheme, THEME_COOKIE, THEME_MAX_AGE_S } from '@/lib/theme/theme';
 import { requireSession } from '@/server/auth/session';
 
 // Préférences d'affichage du lecteur. Le thème vit dans un cookie : le serveur le lit
@@ -9,7 +9,9 @@ import { requireSession } from '@/server/auth/session';
 
 export async function setThemeAction(theme: unknown): Promise<void> {
   await requireSession();
-  (await cookies()).set(THEME_COOKIE, parseTheme(theme), {
+  const jar = await cookies();
+  jar.delete(LEGACY_THEME_COOKIE);
+  jar.set(THEME_COOKIE, parseTheme(theme), {
     maxAge: THEME_MAX_AGE_S,
     sameSite: 'lax',
     httpOnly: true,

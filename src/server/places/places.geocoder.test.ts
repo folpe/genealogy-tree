@@ -90,7 +90,7 @@ describe('nominatimGeocoder', () => {
       },
     };
   };
-  const userAgent = 'ances-tree/test (+https://famille.test)';
+  const userAgent = 'racines/test (+https://famille.test)';
 
   it('cherche une ville dans un pays, en français, en se présentant', async () => {
     const { fetch, calls } = recordedFetch(nominatimPorto);

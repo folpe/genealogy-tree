@@ -38,7 +38,7 @@ describe('NavPills', () => {
   it('« Arbre » ramène à la vue que l’on quittait', () => {
     pathname.mockReturnValue('/ancestors');
     sessionStorage.setItem(
-      'ances-tree:tree',
+      'racines:tree',
       JSON.stringify({ anchorId: 'luc', dx: 0, dy: 0, k: 1, folded: [], view: '/tree?view=all' }),
     );
     render(<NavPills placement="header" />);

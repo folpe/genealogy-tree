@@ -1,7 +1,7 @@
 # Plan phase 3 : socle Next 16, Neon, auth et migration Notion
 
 - **Date :** 2026-10-09
-- **Spec :** [docs/specs/2026-10-09-refonte-ances-tree.md](../specs/2026-10-09-refonte-ances-tree.md), sections 3 à 6, 13, 15 et 15.1
+- **Spec :** [docs/specs/2026-10-09-refonte-racines.md](../specs/2026-10-09-refonte-racines.md), sections 3 à 6, 13, 15 et 15.1
 - **Décisions :** [docs/DECISIONS.md](../DECISIONS.md), ADR 01 (Next 16 sur Vercel), 02 (app unique), 03 (abandon de Notion, Neon), 04 et 08 (comptes sur invitation, droits par proximité), 12 (domaine `famille.folpe.me`)
 - **Design :** tokens et composants dans [docs/design/DESIGN.md](../design/DESIGN.md) (en cours d'écriture)
 - **Statut :** à faire, après la phase 2

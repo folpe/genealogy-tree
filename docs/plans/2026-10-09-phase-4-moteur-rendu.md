@@ -1,7 +1,7 @@
 # Phase 4 : moteur de rendu de l'arbre
 
 - **Date :** 2026-10-09
-- **Spec :** [refonte Ances-Tree](../specs/2026-10-09-refonte-ances-tree.md), sections 4, 8, 8.1, 9, 14
+- **Spec :** [refonte Racines](../specs/2026-10-09-refonte-racines.md), sections 4, 8, 8.1, 9, 14
 - **Visuels :** [DESIGN.md](../design/DESIGN.md), maquettes `docs/design/maquettes/Arbre.dc.html`, `ArbreSombre.dc.html`, `Mobile.dc.html`
 - **Statut :** en cours (lots 1 à 4 faits le 2026-10-12)
 
