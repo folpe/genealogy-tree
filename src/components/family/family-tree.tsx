@@ -327,6 +327,46 @@ const BranchToggle = memo(function BranchToggle({
   );
 });
 
+/** Famille d'origine d'un conjoint (Toute la famille) : repliée derrière lui ou dépliée. */
+export type FamilyLink = { href: string; open: boolean; size: number };
+
+/**
+ * « + sa famille » (choix de Folpe, 2026-10-16) : posée au-dessus de la bulle du conjoint,
+ * là d'où sa famille descendrait, à taille d'écran constante (cible de 44 px).
+ */
+const FamilyToggle = memo(function FamilyToggle({
+  node,
+  link,
+}: {
+  node: TreeNode;
+  link: FamilyLink;
+}) {
+  const people = `${link.size} ${link.size > 1 ? 'personnes' : 'personne'}`;
+  return (
+    <Link
+      href={link.href}
+      prefetch={false}
+      scroll={false}
+      data-family={node.id}
+      aria-expanded={link.open}
+      aria-label={
+        link.open
+          ? `Replier la famille de ${node.fullName}`
+          : `Montrer la famille de ${node.fullName}, ${people}`
+      }
+      className={`${FAR_HIDDEN} group/family absolute grid h-11 min-w-11 -translate-x-1/2 -translate-y-full scale-[calc(1/var(--cam-k,1))] place-items-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink`}
+      style={{ left: node.x, top: node.y - BUBBLE_RADIUS - 4, transformOrigin: 'bottom center' }}
+    >
+      <span
+        aria-hidden="true"
+        className="grid h-7 place-items-center rounded-full bg-card px-2.5 text-xs font-semibold whitespace-nowrap text-ink-2 shadow-float group-hover/family:text-ink"
+      >
+        {link.open ? '− sa famille' : `+ sa famille · ${link.size}`}
+      </span>
+    </Link>
+  );
+});
+
 /** Marge d'écran sous laquelle une bulle prise au clavier fait bouger la caméra. */
 const REVEAL_MARGIN = 80;
 const ZOOM_STEP = 1.4;
@@ -433,6 +473,7 @@ export function FamilyTree({
   focusOn,
   quickActions,
   reveal,
+  families,
 }: {
   /** Premier dessin, calculé au rendu serveur. */
   drawing: TreeDrawing;
@@ -461,6 +502,8 @@ export function FamilyTree({
    * fiche ; l'avatar de la fiche part alors d'une bulle à l'écran.
    */
   reveal?: { id: string; onArrive: () => void } | undefined;
+  /** Toute la famille : la famille d'origine de chaque conjoint venu avec elle. */
+  families?: Record<string, FamilyLink> | undefined;
 }) {
   const fold = useFoldedTree(initial, graph);
   const { nodes, width, height } = fold.drawing;
@@ -656,14 +699,17 @@ export function FamilyTree({
   }, [camera, nodes, folded, viewKey]);
 
   // Nouvelle vue (ou nouvelles données) servie par le serveur : la caméra rejoint la
-  // personne au centre ; les bulles glissent vers leur nouvelle place (useRelayout).
+  // bulle demandée (« + sa famille » : le conjoint), sinon la personne au centre ; les
+  // bulles glissent vers leur nouvelle place (useRelayout).
   const shownInitial = useRef(initial);
   useEffect(() => {
     if (!camera || shownInitial.current === initial) return;
     shownInitial.current = initial;
-    const center = initial.nodes.find((n) => n.id === (centerId ?? focusId));
+    const center = [focusOn, centerId, focusId]
+      .map((id) => initial.nodes.find((n) => n.id === id))
+      .find((node) => node !== undefined);
     if (center) camera.flyTo(cameraOn(center, camera.get().k));
-  }, [camera, initial, centerId, focusId]);
+  }, [camera, initial, focusOn, centerId, focusId]);
 
   const toggleBranch = useCallback(
     (branch: BranchHandle) => setFolded([branch.id], !folded.has(branch.id)),
@@ -752,6 +798,14 @@ export function FamilyTree({
               />
             ))}
           </div>
+          {families
+            ? nodes.flatMap((node) => {
+                const link = families[node.id];
+                return link
+                  ? [<FamilyToggle key={`famille-${node.id}`} node={node} link={link} />]
+                  : [];
+              })
+            : undefined}
           {handles.map((branch) => (
             <BranchToggle
               key={branch.id}
