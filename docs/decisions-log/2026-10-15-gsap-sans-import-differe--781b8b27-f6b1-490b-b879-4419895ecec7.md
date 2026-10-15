@@ -3,8 +3,8 @@ schemaVersion: 1
 id: "adr:781b8b27-f6b1-490b-b879-4419895ecec7"
 createdAt: "2026-10-15T14:00:00.000Z"
 title: "GSAP chargé avec l'arbre et l'éventail, sans import différé"
-status: proposed
-deciders: []
+status: accepted
+deciders: ["folpe", "claude"]
 supersedes: []
 ---
 

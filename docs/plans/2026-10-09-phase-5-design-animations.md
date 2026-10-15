@@ -46,8 +46,8 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 
 - [ ] `src/motion/` : enregistrement unique des plugins (DrawSVG, Flip, SplitText, InertiaPlugin, Draggable), presets de durée et d'easing (doux, jamais élastique excessif), `gsap.matchMedia()` pour `prefers-reduced-motion` (fondus courts uniquement).
   - [x] `src/motion/gsap.ts` : point d'entrée unique, DrawSVG et Inertia enregistrés, mouvement réduit lu au même endroit (caméra, relayout, éventail, chemin). Flip, SplitText et Draggable s'y ajouteront avec leur premier usage ; les durées restent près de chaque animation.
-- [ ] Chargement différé de GSAP et des plugins hors du chemin critique (import dynamique après le premier rendu).
-  - [x] Mesuré (2026-10-15) : ~32 Ko gzip, chargés seulement par `/tree` et `/ancestors` (découpage par route) ; sur ces pages GSAP est le chemin critique (caméra, entrée). Proposé : pas d'import dynamique (journal du 2026-10-15, GSAP sans import différé), à valider par Folpe.
+- [x] Chargement différé de GSAP et des plugins hors du chemin critique (import dynamique après le premier rendu) : écarté après mesure, décision validée par Folpe le 2026-10-15.
+  - [x] Mesuré (2026-10-15) : ~32 Ko gzip, chargés seulement par `/tree` et `/ancestors` (découpage par route) ; sur ces pages GSAP est le chemin critique (caméra, entrée). Retenu : pas d'import dynamique (journal du 2026-10-15, GSAP sans import différé).
 - [ ] Animations de la spec 9 : logo dessiné et titre révélé (Connexion), arbre qui pousse génération par génération au premier chargement, liens dessinés (DrawSVG), nœud créé qui apparaît à sa place (branché en phase 6).
   - [x] Arbre qui pousse au premier affichage de l'onglet : génération par génération, bulles en échelle et fondu, traits tracés (DrawSVG), poignées en fondu (`src/motion/entry.ts`, vagues de `tree.entry.ts`). Marqué avant l'affichage par un script sous nonce : l'arbre rendu au serveur ne clignote pas ; repli CSS s'il ne vient pas. Fondu seul avec le mouvement réduit.
 
