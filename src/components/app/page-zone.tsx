@@ -7,7 +7,8 @@ import { type ReactNode, useEffect, useRef } from 'react';
 // Zone de page de l'écran d'app : elle seule défile, et seulement si la page est longue.
 // Le défilement n'étant plus celui de la fenêtre, le navigateur ne le remet plus en
 // haut : une nouvelle page repart du haut. Sur téléphone, son bas laisse la place à la
-// barre d'onglets : rien ne passe dessous.
+// barre d'onglets : rien ne passe dessous. Clavier ouvert, il laisse la place au clavier,
+// et le champ en cours remonte au-dessus (`--keyboard-inset`, voir keyboard-inset.ts).
 
 export function PageZone({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -22,7 +23,7 @@ export function PageZone({ children }: { children: ReactNode }) {
     <div
       ref={zone}
       data-page-zone
-      className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[var(--tab-bar-space)] md:pb-0"
+      className="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-pb-[var(--keyboard-inset,0px)] pb-[max(var(--tab-bar-space),var(--keyboard-inset,0px))] md:pb-0"
     >
       {children}
     </div>

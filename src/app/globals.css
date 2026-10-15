@@ -84,6 +84,13 @@
     color-scheme: dark;
   }
 
+  /* Un champ ramené en vue (clavier virtuel, focus) ne colle pas au bord. */
+  input,
+  textarea,
+  select {
+    scroll-margin-block: 1rem;
+  }
+
   body {
     background-color: var(--color-paper);
     color: var(--color-ink);
