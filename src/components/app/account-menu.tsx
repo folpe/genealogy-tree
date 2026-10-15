@@ -82,11 +82,10 @@ export function AccountMenu({
   return (
     <div className="relative">
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger
-          aria-label={`Mon compte, ${account.name}`}
-          className="grid size-11 place-items-center rounded-full border-2 border-card bg-bubble font-display text-[17px] shadow-bubble focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-        >
-          {account.initials}
+        <DropdownMenu.Trigger className="grid size-11 place-items-center rounded-full border-2 border-card bg-bubble font-display text-[17px] shadow-bubble focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
+          {/* Les initiales dessinent l'avatar ; le nom du bouton dit à qui il est. */}
+          <span aria-hidden="true">{account.initials}</span>
+          <span className="sr-only">Mon compte, {account.name}</span>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content

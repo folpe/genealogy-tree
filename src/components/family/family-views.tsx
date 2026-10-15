@@ -77,7 +77,6 @@ function PersonChip({
   return (
     <Link
       href={`/people/${person.id}`}
-      aria-label={me ? `${personLabel(person)}, toi` : personLabel(person)}
       {...(onClick ? { onClick } : {})}
       className="flex h-[38px] items-center gap-2 rounded-full bg-paper py-1 pr-3.5 pl-1 text-sm text-ink transition-colors hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
     >
@@ -88,7 +87,10 @@ function PersonChip({
         size="chip"
         name=""
       />
-      {me ? 'Toi' : person.firstName}
+      {/* Nommée par son contenu (WCAG 2.5.3) : le nom complet ; le prénom affiché n'en
+          est que la forme courte. */}
+      <span className="sr-only">{me ? `${personLabel(person)}, toi` : personLabel(person)}</span>
+      <span aria-hidden="true">{me ? 'Toi' : person.firstName}</span>
     </Link>
   );
 }
@@ -360,37 +362,57 @@ export function PersonSheet({
         heading={heading}
         editable={editable}
       />
-      <dl data-cascade className="flex flex-col [&>div:first-child]:border-t-0">
-        {editable && person.level === 'full' ? (
-          <EditableFacts person={person} />
-        ) : (
-          <>
-            <FactRow label="Naissance" value={shows ? lifeEvent(person.birth) : undefined} />
-            <FactRow
-              label="Décès"
-              value={
-                shows && person.death ? (lifeEvent(person.death) ?? 'Date inconnue') : undefined
-              }
-            />
-            <FactRow
-              label="Réside à"
-              value={person.level === 'full' ? person.residence : undefined}
-            />
-          </>
-        )}
-        <PeopleRow label="Parents" people={r.parents} tree={tree} onPick={onPick} />
-        <PeopleRow label="Frères et sœurs" people={r.siblings} tree={tree} onPick={onPick} />
-        <PeopleRow
-          label="Demi-frères et sœurs"
-          people={r.halfSiblings}
-          tree={tree}
-          onPick={onPick}
-        />
-        <UnionsRow unions={r.unions} tree={tree} onPick={onPick} />
-        <PeopleRow label="Enfants" people={r.children} tree={tree} onPick={onPick} />
-        <PeopleRow label="A aussi été élevé par" people={r.raisedBy} tree={tree} onPick={onPick} />
-        <PeopleRow label="A élevé" people={r.raised} tree={tree} onPick={onPick} />
-        {person.level !== 'full' ? undefined : editable ? (
+      {/* Les faits modifiables sont des boutons, pas des termes : ils encadrent la liste
+          de définitions (dt / dd) plutôt que d'y entrer. */}
+      <div data-cascade className="flex flex-col [&>*:first-child]:border-t-0">
+        {editable && person.level === 'full' ? <EditableFacts person={person} /> : undefined}
+        <dl
+          data-cascade
+          className={`flex flex-col ${editable ? '' : '[&>div:first-child]:border-t-0'}`}
+        >
+          {editable ? undefined : (
+            <>
+              <FactRow label="Naissance" value={shows ? lifeEvent(person.birth) : undefined} />
+              <FactRow
+                label="Décès"
+                value={
+                  shows && person.death ? (lifeEvent(person.death) ?? 'Date inconnue') : undefined
+                }
+              />
+              <FactRow
+                label="Réside à"
+                value={person.level === 'full' ? person.residence : undefined}
+              />
+            </>
+          )}
+          <PeopleRow label="Parents" people={r.parents} tree={tree} onPick={onPick} />
+          <PeopleRow label="Frères et sœurs" people={r.siblings} tree={tree} onPick={onPick} />
+          <PeopleRow
+            label="Demi-frères et sœurs"
+            people={r.halfSiblings}
+            tree={tree}
+            onPick={onPick}
+          />
+          <UnionsRow unions={r.unions} tree={tree} onPick={onPick} />
+          <PeopleRow label="Enfants" people={r.children} tree={tree} onPick={onPick} />
+          <PeopleRow
+            label="A aussi été élevé par"
+            people={r.raisedBy}
+            tree={tree}
+            onPick={onPick}
+          />
+          <PeopleRow label="A élevé" people={r.raised} tree={tree} onPick={onPick} />
+          {person.level === 'full' && !editable && person.notes ? (
+            // Maquette Arbre : la note ferme la fiche, sous un filet, en texte secondaire.
+            <div className="border-t border-rule py-3.5">
+              <dt className="sr-only">Note</dt>
+              <dd className="text-sm leading-relaxed whitespace-pre-line text-ink-2">
+                {person.notes}
+              </dd>
+            </div>
+          ) : undefined}
+        </dl>
+        {person.level === 'full' && editable ? (
           <EditableRow
             personId={person.id}
             field="notes"
@@ -398,16 +420,8 @@ export function PersonSheet({
             display={person.notes}
             spec={{ kind: 'note', value: person.notes }}
           />
-        ) : person.notes ? (
-          // Maquette Arbre : la note ferme la fiche, sous un filet, en texte secondaire.
-          <div className="border-t border-rule py-3.5">
-            <dt className="sr-only">Note</dt>
-            <dd className="text-sm leading-relaxed whitespace-pre-line text-ink-2">
-              {person.notes}
-            </dd>
-          </div>
         ) : undefined}
-      </dl>
+      </div>
       {tree.trashableIds.includes(person.id) ? (
         <TrashButton personId={person.id} name={personLabel(person)} />
       ) : undefined}

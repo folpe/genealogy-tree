@@ -21,11 +21,8 @@ test('Hugo voit son lien avec Isabelle, éclairé dans l’arbre', async ({ page
   const tree = page.locator('[role="tree"]');
   // Le chemin, plus Henri et Louise, ancêtres communs au sommet.
   await expect(tree.locator('[data-on-path="true"]')).toHaveCount(7);
-  await expect(tree.locator('[aria-label^="Henri "]')).toHaveAttribute('data-on-path', 'true');
-  await expect(tree.locator('[aria-label^="Sophie Marchand"]')).toHaveAttribute(
-    'data-on-path',
-    'false',
-  );
+  await expect(tree.locator('[data-person="henri"]')).toHaveAttribute('data-on-path', 'true');
+  await expect(tree.locator('[data-person="sophie"]')).toHaveAttribute('data-on-path', 'false');
   if (onDesktop(info)) {
     await expect(page.getByRole('treeitem', { name: /^Paul Marchand/ })).toBeInViewport();
   }
@@ -75,7 +72,7 @@ for (const width of [360, undefined]) {
     expect(framed).toHaveLength(7);
     for (const bubble of framed) {
       const box = await boxOf(bubble);
-      const name = await bubble.getAttribute('aria-label');
+      const name = await bubble.getAttribute('data-person');
       expect(box.y, `${name} sous la carte`).toBeGreaterThanOrEqual(cardBox.y + cardBox.height);
       expect(box.y + box.height, `${name} dans le canevas`).toBeLessThanOrEqual(
         canvas.y + canvas.height,

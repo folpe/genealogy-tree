@@ -182,7 +182,10 @@ test('zoom sémantique : de près, le nom complet ; le texte reste net', async (
     await settled(page);
   }
   await expect(canvas).toHaveAttribute('data-detail', 'near');
-  await expect(me.getByText('Isabelle Lefèvre')).toBeVisible();
+  // Le nom complet affiché ; le nom de la bulle, pour la lecture, est à part.
+  await expect(
+    me.getByText('Isabelle Lefèvre', { exact: true }).filter({ visible: true }),
+  ).toBeVisible();
   await expect(me.getByText('Toi', { exact: true })).toBeHidden();
   // Calque figé à son échelle de départ pendant le geste seulement, sinon le texte est flou.
   await expect(page.locator('[data-camera-layer]')).toHaveCSS('will-change', 'auto');

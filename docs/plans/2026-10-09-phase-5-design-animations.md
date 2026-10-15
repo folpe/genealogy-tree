@@ -101,9 +101,10 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 
 - [ ] Écrans Connexion, Arbre et Mobile validés par Folpe côte à côte avec les maquettes, clair et sombre.
 - [ ] Contraste AA sur tout le texte, focus visible partout, navigation clavier complète de la fiche et de ⌘K.
+  - [x] Audit axe-core (`tests/e2e/a11y.spec.ts`, WCAG 2.2 A et AA) vert en clair et en sombre, mobile et ordinateur : connexion, demande d'accès, arbre, fiche ouverte (panneau, feuille, page), recherche. Corrigé au passage : zoom du navigateur rendu (DECISIONS 17, remplace l'ADR 07) ; bulles, pastilles, faits modifiables, recherche et avatar nommés par leur contenu (WCAG 2.5.3) ; faits modifiables sortis de la liste de définitions. Clavier : flèches de l'arbre, Maj + F10, ⌘K, Entrée, Échap couverts par les e2e. Reste : la visibilité du focus, relue à l'œil, n'a pas de contrôle automatique.
 - [ ] Aucune animation sous `prefers-reduced-motion` hormis des fondus courts.
 - [x] GSAP absent du bundle initial de `/login`, LCP < 2,5 s en 4G simulée. Mesuré le 2026-10-15 (build de production, 4G lente 150 ms / 1,6 Mb/s, processeur ralenti 4 fois) : 2,4 s avant correction, le titre animé faisant le LCP ; 0,9 s après, l'étape du chargement n'entrant plus en fondu. Garde-fou e2e dans `auth.spec.ts`.
-- [ ] Aucun flash de thème au chargement.
+- [x] Aucun flash de thème au chargement. Vérifié en production le 2026-10-15 : le cookie posé, `<html>` arrive du serveur avec `data-theme` et la couleur de barre qui va avec (ancien cookie `ances-tree-theme` compris) ; sans cookie, ni attribut ni script : le CSS suit le système.
 
 ## Risques
 

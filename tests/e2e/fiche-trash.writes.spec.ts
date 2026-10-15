@@ -15,7 +15,7 @@ test('Anne met Tom à la corbeille, l’admin le restaure', async ({ browser }) 
   await confirm.getByRole('button', { name: 'Mettre à la corbeille' }).click();
   await expect(anne).toHaveURL(/\/tree/);
   await anne.goto('/tree?view=all');
-  await expect(anne.locator('[role="treeitem"][aria-label^="Tom"]')).toHaveCount(0);
+  await expect(anne.locator('[data-person="tom"]')).toHaveCount(0);
 
   const admin = await browser.newPage();
   await signIn(admin, E2E_ADMIN_EMAIL);
@@ -26,7 +26,7 @@ test('Anne met Tom à la corbeille, l’admin le restaure', async ({ browser }) 
   await expect(trash).not.toContainText('Tom');
 
   await anne.goto('/tree?view=all');
-  await expect(anne.locator('[role="treeitem"][aria-label^="Tom"]')).toHaveCount(1);
+  await expect(anne.locator('[data-person="tom"]')).toHaveCount(1);
 });
 
 test('une fiche avec des enfants ne propose pas la corbeille à un membre', async ({ page }) => {
