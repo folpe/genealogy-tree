@@ -402,7 +402,13 @@ function bringIntoView(
   const x = node.x * state.k + state.x;
   const y = node.y * state.k + state.y;
   const inside = Math.abs(x) < w / 2 - BUBBLE && Math.abs(y) < h / 2 - BUBBLE;
-  if (inside) return onArrive?.();
+  if (inside && onArrive) {
+    // Une recherche dont la bulle est déjà à l'écran : un vol en cours vers une autre
+    // personne s'arrête ici, sa fiche n'est plus demandée (jeton du panneau).
+    camera.stop();
+    return onArrive();
+  }
+  if (inside) return;
   camera.flyTo(cameraOn(node, Math.max(state.k, 0.75)), onArrive);
 }
 

@@ -97,11 +97,16 @@ export function TreeWithSheet({
   // Une personne cherchée (⌘K) : la caméra va d'abord à sa bulle, la fiche s'ouvre à
   // l'arrivée (lot 5) ; l'avatar de la fiche part ainsi d'une bulle à l'écran.
   const [reveal, setReveal] = useState<{ id: string; onArrive: () => void }>();
+  /** Seule la dernière recherche ouvre sa fiche : une plus ancienne arrive trop tard. */
+  const latestSearch = useRef(0);
   useOpenFicheRequests((id) => {
     if (!tree.drawn.personIds.includes(id)) return false;
+    latestSearch.current += 1;
+    const ticket = latestSearch.current;
     setReveal({
       id,
       onArrive: () => {
+        if (ticket !== latestSearch.current) return;
         setReveal(undefined);
         showFiche(id);
       },
