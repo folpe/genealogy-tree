@@ -57,7 +57,8 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 - [x] `components/PersonSheet/` : panneau latéral desktop (420 px max) et bottom sheet mobile (vaul, poignée, coins 28 px), conforme aux maquettes Arbre et MobileAlbum.
 - [ ] Contenu : avatar 120 px, kicker de lien de parenté relatif à l'utilisateur ("Ton demi-frère"), nom, nom de naissance, dates selon la visibilité, badge "Sourcé", lignes à filets (lieu, parents, frères et sœurs dont demi-, conjoint, enfants, "A aussi été élevé par"), note.
   - [x] Avatar, kicker de lien, nom, dates selon la visibilité, parents, unions, enfants ; raccourcis (fiche complète, ancêtres, centrer) et ajout de proches. Reste : frères et sœurs, « A aussi été élevé par », badge « Sourcé », note.
-- [ ] Encart de droits : "Dans ta lignée : tu modifies directement", "Ancêtre commun...", "Fiche ouverte...", "Hors de ta lignée : ta suggestion ira à X" ; texte fourni par le serveur à partir de la policy.
+- [x] Encart de droits : "Dans ta lignée : tu modifies directement", "Ancêtre commun...", "Fiche ouverte...", "Hors de ta lignée : ta suggestion ira à X" ; texte fourni par le serveur à partir de la policy.
+  - [x] `rightsOf` et `rightsNotice` (`src/server/access/access.rights.ts`) : ta fiche, administrateur, ancêtre commun (ancêtre aussi d'un membre d'une autre branche), fiche ouverte, dans ta lignée, hors lignée avec les prénoms des gardiens (ou les administrateurs). `TreeForViewer.rights` les porte ; `RightsNoticeBox` les affiche dans le panneau et sur `/people/[id]`. Suggestions et veille de lignée annoncées au futur (« bientôt, tes suggestions iront à… ») tant que la phase 6 ne les a pas livrées.
 - [ ] Ouverture : l'avatar du nœud devient la photo de la fiche (Flip), contenu en cascade.
 - [x] Deep link `/people/[id]` et `?fiche=<id>` sur l'arbre (`?p` est déjà la personne au centre ; `history.pushState` suivi par Next plutôt que nuqs), le retour navigateur ferme la fiche.
 
@@ -69,7 +70,7 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 ### Lot 6 : lien de parenté animé
 
 - [x] `components/RelationshipFinder/` : bouton "Notre lien" sur la fiche, carte en haut du canevas avec la phrase ("Maxime est ton demi-frère."), étapes en pilules, ancêtres communs.
-- [ ] Chemin : arêtes du chemin en accent et dessinées (DrawSVG), reste de l'arbre estompé, caméra cadrée sur le chemin.
+- [x] Chemin : arêtes du chemin en accent et dessinées (DrawSVG), reste de l'arbre estompé, caméra cadrée sur le chemin.
   - [x] Arêtes en accent, reste estompé, caméra cadrée sous la carte.
   - [x] Tracé DrawSVG (lot 3) : le chemin s'allume pas à pas de Toi vers la cible, chaque trait dans le sens du parcours (`steps` de `pathHighlight`), pilules d'étapes au même rythme ; posé d'un coup avec le mouvement réduit.
   - [x] Lien long (lot 7) : cadré en entier, ancêtres communs compris, sous la carte et hors de la colonne des boutons (`Cover`), jusqu'en vue de loin sous la limite des gestes, sans bond au geste suivant ; « Me retrouver » masqué pendant un lien ; étapes sur une ligne qui défile sur téléphone. Vérifié à 360 px, sur Pixel 7 et sur ordinateur.

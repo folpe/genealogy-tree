@@ -1,4 +1,5 @@
 import { buildAccessContext, editableIds } from '../../src/server/access/access.policy';
+import { rightsNotices } from '../../src/server/access/access.rights';
 import { viewTreeAs } from '../../src/server/access/access.view';
 import { selectDisplayedGraph } from '../../src/server/family/family.display';
 import { buildFamilyIndex, generationLevels } from '../../src/server/family/family.helper';
@@ -25,5 +26,6 @@ export function treeForViewer(memberId: string): TreeForViewer {
     editableIds: editableIds(ctx, viewer),
     relations: {},
     trashableIds: [],
+    rights: rightsNotices(ctx, viewer, view.persons),
   };
 }

@@ -2,6 +2,7 @@
 import { AppError } from '../_shared/errors';
 import { buildAccessContext, editableIds } from '../access/access.policy';
 import { showsProfilePhoto } from '../access/access.redact';
+import { type RightsNotice, rightsNotices } from '../access/access.rights';
 import { type TreeView, viewTreeAs } from '../access/access.view';
 import { adminRecordViews } from '../db/schema';
 import type { Db } from '../db/types';
@@ -50,6 +51,8 @@ export type TreeForViewer = Omit<TreeView, 'audited'> & {
   relations: Record<string, string>;
   /** Fiches que le lecteur peut mettre à la corbeille (même règle que le service). */
   trashableIds: string[];
+  /** Encart de droits de chaque fiche, calculé par la policy (RightsNotice). */
+  rights: Record<string, RightsNotice>;
 };
 
 export type TreeViewKind = 'all' | 'couple' | 'descendants' | 'hourglass';
@@ -152,6 +155,7 @@ export async function getTreeForViewer(
     centerInCouple,
     editableIds: editableIds(ctx, viewer),
     trashableIds: view.persons.flatMap((p) => (trashRefusal(ctx, viewer, p.id) ? [] : [p.id])),
+    rights: rightsNotices(ctx, viewer, view.persons),
     relations: relationsFrom(
       index,
       viewer.personId,

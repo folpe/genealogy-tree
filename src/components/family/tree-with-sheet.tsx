@@ -24,6 +24,7 @@ import { FamilyTree } from './family-tree';
 import { PersonSheet } from './family-views';
 import { useOpenFicheRequests } from './open-fiche';
 import { personLabel } from './person.helper';
+import { RightsNoticeBox } from './rights-notice';
 import type { TreeDrawing } from './tree-drawing';
 import { quickItem } from './tree-quick-menu';
 
@@ -235,12 +236,6 @@ function PersonPanel({
   const person = tree.persons.find((p) => p.id === personId);
   if (!person) return undefined;
   const name = personLabel(person);
-  const rights =
-    person.id === tree.viewerPersonId
-      ? 'C’est ta fiche.'
-      : tree.editableIds.includes(person.id)
-        ? 'Dans ta lignée : tu la complètes directement.'
-        : 'Hors de ta lignée : les suggestions à la famille arrivent bientôt.';
   return (
     <div className="relative flex flex-col gap-6">
       <button
@@ -266,13 +261,7 @@ function PersonPanel({
         relation={tree.relations[personId]}
         onPick={onPick}
       />
-      <p className="flex items-start gap-2.5 rounded-2xl bg-paper px-4 py-3 text-[13px] leading-relaxed text-ink-2">
-        <span
-          aria-hidden="true"
-          className={`mt-1.5 size-2 shrink-0 rounded-full ${tree.editableIds.includes(person.id) ? 'bg-ink' : 'bg-accent'}`}
-        />
-        {rights}
-      </p>
+      <RightsNoticeBox notice={tree.rights[personId]} />
       {onLink ? <LinkButton key={personId} personId={personId} onLink={onLink} /> : undefined}
       <AddRelative
         key={personId}
