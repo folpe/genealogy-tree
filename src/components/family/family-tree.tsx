@@ -35,7 +35,12 @@ import { animatePath } from '@/motion/path';
 import type { DisplayedGraph } from '@/server/family/family.display';
 import { PersonBubble } from './person-bubble';
 import type { BranchHandle, TreeDrawing, TreeNode } from './tree-drawing';
-import { readTreeMemory, TREE_ENTRY_ATTRIBUTE, writeTreeMemory } from './tree-memory.storage';
+import {
+  readTreeMemory,
+  TREE_ENTRY_ATTRIBUTE,
+  TREE_ENTRY_FALLBACK_MS,
+  writeTreeMemory,
+} from './tree-memory.storage';
 import { TreeMinimap } from './tree-minimap';
 import { QuickMenu, useQuickPress } from './tree-quick-menu';
 import { useFoldedTree } from './use-folded-tree';
@@ -318,6 +323,9 @@ const BranchToggle = memo(function BranchToggle({
 const REVEAL_MARGIN = 80;
 const ZOOM_STEP = 1.4;
 
+/** Marge avant le repli de l'entrée : la règle CSS s'applique un peu après le chargement. */
+const ENTRY_LATE_MARGIN_MS = 300;
+
 /** Colonne des boutons de caméra, marge comprise (46 px + `right-4`) : un cadrage l'évite. */
 const CONTROLS_WIDTH = 46 + 16;
 
@@ -480,6 +488,8 @@ export function FamilyTree({
     if (!root.hasAttribute(TREE_ENTRY_ATTRIBUTE)) return;
     // Rendu à GSAP dans la même tâche : aucune image entre les deux.
     root.removeAttribute(TREE_ENTRY_ATTRIBUTE);
+    // Hydratation tardive : le repli a déjà montré l'arbre, on ne le refait pas pousser.
+    if (performance.now() > TREE_ENTRY_FALLBACK_MS - ENTRY_LATE_MARGIN_MS) return;
     const { nodes, links, branches } = drawing.current;
     const waves = entryWaves(nodes, links, branches);
     return animateTreeEntry(waves, elements.current, layer.current ?? undefined);

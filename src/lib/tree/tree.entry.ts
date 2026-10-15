@@ -34,10 +34,14 @@ export function entryWaves(
     persons[node.row]?.push(node.id);
     rowY[node.row] = Math.min(rowY[node.row] ?? Number.POSITIVE_INFINITY, node.y);
   }
+  // Une rangée commence un quart d'écart au-dessus du centre de ses bulles : l'arc d'un
+  // couple éloigné part au-dessus d'elles, il appartient pourtant à leur rangée.
+  const gaps = rowY.slice(1).map((y, r) => y - (rowY[r] ?? y));
+  const lead = gaps.length > 0 ? Math.min(...gaps) / 4 : 0;
   /** La génération la plus basse qui commence au-dessus de `y` ; la première sinon. */
   const rowAbove = (y: number | undefined) => {
     let row = 0;
-    if (y !== undefined) for (let r = 0; r < rows; r += 1) if ((rowY[r] ?? y) <= y) row = r;
+    if (y !== undefined) for (let r = 0; r < rows; r += 1) if ((rowY[r] ?? y) - lead <= y) row = r;
     return row;
   };
   const linkWaves = empty();

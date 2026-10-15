@@ -27,6 +27,12 @@ describe('entryWaves', () => {
     ]);
   });
 
+  it('range l’arc d’un couple éloigné, qui part au-dessus des bulles, avec ce couple', () => {
+    // Arc d'union au-dessus d'une rangée : 38 px au-dessus du centre des bulles de Luc.
+    const links = [{ id: 'union:u-luc-x', d: 'M100,202 C100,126 300,126 300,202' }];
+    expect(entryWaves(nodes, links).links).toEqual([[], ['union:u-luc-x'], []]);
+  });
+
   it('range une poignée de branche avec la génération au-dessus d’elle', () => {
     const handles = [{ id: 'u-paul-jeanne', y: 140 }];
     expect(entryWaves(nodes, [], handles).handles).toEqual([['u-paul-jeanne'], [], []]);

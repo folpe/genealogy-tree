@@ -139,6 +139,7 @@
  */
 :root[data-tree-entry] :is([data-person], [data-link], [data-branch]) {
   opacity: 0;
+  /* Même délai que TREE_ENTRY_FALLBACK_MS. */
   animation: tree-entry-fallback 0s 2.5s forwards;
 }
 
