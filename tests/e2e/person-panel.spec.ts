@@ -60,13 +60,20 @@ test('à l’ouverture, l’avatar part de la bulle touchée, puis se pose', asy
   test.skip(info.project.name === 'mobile', 'Sur téléphone, la feuille monte : la cascade seule.');
   await signIn(page, 'hugo@famille.test');
   await settled(page);
-  await page.getByRole('treeitem', { name: /^Luc Marchand/ }).click();
+  const luc = page.getByRole('treeitem', { name: /^Luc Marchand/ });
+  // Pendant l'entrée de l'arbre, la bulle est encore estompée : pas de vol depuis elle.
+  await expect(luc).toHaveCSS('opacity', '1');
+  await luc.click();
   const avatar = page.locator('aside [data-fiche-avatar]');
-  // Au premier instant, l'avatar est encore posé sur la bulle : décalé et réduit.
-  const start = await avatar.evaluate((element) => element.style.transform);
-  expect(start).toMatch(/translate|matrix/);
-  // Puis il revient à sa place, sans transformation résiduelle.
-  await expect.poll(() => avatar.evaluate((element) => element.style.transform)).toBe('');
+  // En vol : une copie au-dessus de la page (le panneau défile et la couperait), posée
+  // près de la bulle ; l'avatar réel attend, caché.
+  const flight = page.locator('[data-fiche-flight]');
+  await expect(flight).toHaveCount(1);
+  expect(await avatar.evaluate((element) => element.style.visibility)).toBe('hidden');
+  if (process.env['E2E_SHOTS']) await page.screenshot({ path: process.env['E2E_SHOTS'] });
+  // À l'arrivée, la copie disparaît et l'avatar reprend sa place.
+  await expect(flight).toHaveCount(0);
+  await expect.poll(() => avatar.evaluate((element) => element.style.visibility)).toBe('');
   await expect(page.locator('aside')).toContainText('Ton père');
 });
 

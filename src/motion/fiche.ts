@@ -40,31 +40,22 @@ export function animateFicheOpen(
   const avatar = panel.querySelector<HTMLElement>('[data-fiche-avatar]');
   if (reducedMotion()) {
     const fade = gsap.from(panel, { opacity: 0, duration: REDUCED_FADE_S, clearProps: 'opacity' });
-    return () => fade.kill();
+    return () => {
+      fade.progress(1);
+      fade.kill();
+    };
   }
   const source = flip && avatar ? visibleBubble(personId) : undefined;
-  // Chaque élément une fois : ni un bloc qui contient lui-même une cascade (ses éléments
-  // arrivent un par un), ni l'avatar quand il a son propre trajet depuis la bulle.
+  // Chaque élément une fois : ni un bloc qui est ou contient lui-même une cascade (ses
+  // éléments arrivent un par un), ni l'avatar quand il a son propre trajet.
   const items = [...panel.querySelectorAll<HTMLElement>('[data-cascade] > *')].filter(
-    (item) => !item.querySelector('[data-cascade]') && !(source && item === avatar),
+    (item) =>
+      !item.matches('[data-cascade]') &&
+      !item.querySelector('[data-cascade]') &&
+      !(source && item === avatar),
   );
   const timeline = gsap.timeline();
-  if (avatar && source) {
-    const from = source.getBoundingClientRect();
-    const to = avatar.getBoundingClientRect();
-    timeline.from(
-      avatar,
-      {
-        x: from.left + from.width / 2 - (to.left + to.width / 2),
-        y: from.top + from.height / 2 - (to.top + to.height / 2),
-        scale: from.width / to.width,
-        duration: FLIP_S,
-        ease: 'power3.inOut',
-        clearProps: 'transform',
-      },
-      0,
-    );
-  }
+  const flight = avatar && source ? flyFrom(source, avatar, timeline) : undefined;
   timeline.from(
     items,
     {
@@ -80,5 +71,51 @@ export function animateFicheOpen(
   return () => {
     timeline.progress(1);
     timeline.kill();
+    flight?.();
   };
+}
+
+/**
+ * Le trajet de l'avatar se fait sur une copie posée au-dessus de la page : le panneau
+ * défile, il couperait tout ce qui dépasse de sa boîte. L'avatar réel attend, invisible,
+ * puis prend la place de sa copie à l'arrivée. Rend de quoi tout remettre en ordre.
+ */
+function flyFrom(source: HTMLElement, avatar: HTMLElement, timeline: gsap.core.Timeline) {
+  const from = source.getBoundingClientRect();
+  const to = avatar.getBoundingClientRect();
+  const copy = avatar.cloneNode(true);
+  if (!(copy instanceof HTMLElement)) return undefined;
+  copy.removeAttribute('data-fiche-avatar');
+  copy.setAttribute('data-fiche-flight', '');
+  copy.setAttribute('aria-hidden', 'true');
+  copy.inert = true;
+  Object.assign(copy.style, {
+    position: 'fixed',
+    left: `${to.left}px`,
+    top: `${to.top}px`,
+    width: `${to.width}px`,
+    height: `${to.height}px`,
+    margin: '0',
+    zIndex: '60',
+    pointerEvents: 'none',
+  });
+  document.body.append(copy);
+  avatar.style.visibility = 'hidden';
+  const land = () => {
+    copy.remove();
+    avatar.style.removeProperty('visibility');
+  };
+  timeline.from(
+    copy,
+    {
+      x: from.left + from.width / 2 - (to.left + to.width / 2),
+      y: from.top + from.height / 2 - (to.top + to.height / 2),
+      scale: from.width / to.width,
+      duration: FLIP_S,
+      ease: 'power3.inOut',
+      onComplete: land,
+    },
+    0,
+  );
+  return land;
 }

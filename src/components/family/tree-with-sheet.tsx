@@ -240,11 +240,15 @@ function PersonPanel({
   flip: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null); // allow-null: contrat des refs de React
+  // Lu au moment de l'ouverture : la largeur d'écran, connue après l'hydratation, ne
+  // rejoue pas l'entrée d'une fiche déjà ouverte (lien direct).
+  const flipNow = useRef(flip);
+  flipNow.current = flip;
   // Chaque fiche ouverte joue son entrée ; la suivante arrête la précédente.
   useLayoutEffect(() => {
     if (!root.current) return;
-    return animateFicheOpen(root.current, { personId, flip });
-  }, [personId, flip]);
+    return animateFicheOpen(root.current, { personId, flip: flipNow.current });
+  }, [personId]);
   const person = tree.persons.find((p) => p.id === personId);
   if (!person) return undefined;
   const name = personLabel(person);
