@@ -54,9 +54,10 @@ export function TreeViewControls({
     'flex h-11 shrink-0 items-center rounded-full px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
 
   return (
-    // Au-dessus de l'arbre plein écran du téléphone ; une carte « Notre lien » ouverte prend
-    // leur place, ses vues reviennent à sa fermeture.
-    <div className="relative z-10 flex flex-wrap items-center gap-x-4 gap-y-2 max-md:group-has-[[data-link-card]]/tree:hidden">
+    // Au-dessus de l'arbre plein écran du téléphone, sans lui prendre les gestes entre les
+    // pastilles ; une carte « Notre lien » ouverte prend leur place, ses vues reviennent à
+    // sa fermeture.
+    <div className="relative z-10 flex flex-wrap items-center gap-x-4 gap-y-2 max-md:pointer-events-none max-md:*:pointer-events-auto max-md:group-has-[[data-link-card]]/tree:hidden">
       <nav aria-label="Vue de l’arbre" className="-mx-1 flex gap-1 overflow-x-auto px-1">
         {VIEWS.filter(({ view }) => view !== 'couple' || centerInCouple).map(({ view, label }) => {
           const current = shownView === view;

@@ -28,7 +28,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // en entier ; une page longue (fiche, membres) défile dans sa zone, l'arbre jamais.
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden">
-      <header className="relative z-20 flex shrink-0 items-center gap-2.5 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-1 md:grid md:grid-cols-[1fr_auto_1fr] md:pr-[max(2rem,env(safe-area-inset-right))] md:pl-[max(2rem,env(safe-area-inset-left))] md:pt-[18px]">
+      <header className="relative z-20 flex max-md:pointer-events-none max-md:[&_a]:pointer-events-auto max-md:[&_button]:pointer-events-auto shrink-0 items-center gap-2.5 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-1 md:grid md:grid-cols-[1fr_auto_1fr] md:pr-[max(2rem,env(safe-area-inset-right))] md:pl-[max(2rem,env(safe-area-inset-left))] md:pt-[18px]">
         <Link
           href="/tree"
           className="shrink-0 rounded-full font-display text-xl leading-none whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
@@ -61,7 +61,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 /** Le signe de la marque (maquette Mobile) : un arbre de trois branches, en pastille. */
 function BrandMark() {
   return (
-    <span className="grid size-10 place-items-center rounded-full bg-ink text-on-ink md:hidden">
+    <span className="grid size-11 place-items-center rounded-full bg-ink text-on-ink md:hidden">
       <svg
         width="22"
         height="22"
