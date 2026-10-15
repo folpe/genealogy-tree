@@ -27,7 +27,8 @@
     "bench": "vitest bench --run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "bun scripts/db-seed.ts"
+    "db:seed": "bun scripts/db-seed.ts",
+    "brand:icons": "bun scripts/brand-icons.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "~1.6.33",

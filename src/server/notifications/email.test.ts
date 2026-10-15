@@ -8,13 +8,13 @@ describe('createEmailSender', () => {
     const send = vi.fn().mockResolvedValue({ data: { id: 'e1' }, error: null });
     const log = vi.fn();
     const sender = createEmailSender({
-      from: 'Ances-Tree <famille@folpe.me>',
+      from: 'Racines <famille@folpe.me>',
       isProduction: true,
       transport: { send },
       log,
     });
     await sender(message);
-    expect(send).toHaveBeenCalledWith({ from: 'Ances-Tree <famille@folpe.me>', ...message });
+    expect(send).toHaveBeenCalledWith({ from: 'Racines <famille@folpe.me>', ...message });
     expect(log).not.toHaveBeenCalled();
   });
 

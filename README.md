@@ -1,4 +1,6 @@
-# Ances-Tree
+# Racines
+
+Anciennement Ances-Tree (renommée le 2026-10-15, voir docs/DECISIONS.md, 15).
 
 Arbre généalogique familial. Refonte en cours vers Next.js 16, Neon et Vercel sur `famille.folpe.me` (avancement : [docs/ROADMAP.md](docs/ROADMAP.md)). L'ancienne app (Farm, Notion, Netlify) reste en ligne sur Netlify jusqu'à la bascule ; son code est dans `legacy/`.
 

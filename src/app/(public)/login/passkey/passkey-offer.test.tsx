@@ -40,4 +40,10 @@ describe('PasskeyOffer', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('depuis le menu de ton compte');
     expect(screen.getByRole('link', { name: 'Plus tard' })).toBeVisible();
   });
+
+  it('remet à plus tard sans laisser la proposition dans l’historique', async () => {
+    render(<PasskeyOffer firstName="Léa" />);
+    await userEvent.click(screen.getByRole('link', { name: 'Plus tard' }));
+    expect(replace).toHaveBeenCalledWith('/tree');
+  });
 });

@@ -68,7 +68,7 @@ export default defineConfig({
       BETTER_AUTH_URL: E2E_BASE_URL,
       NEXT_PUBLIC_APP_URL: E2E_BASE_URL,
       AUTH_BOOTSTRAP_ADMIN_EMAIL: E2E_ADMIN_EMAIL,
-      EMAIL_FROM: 'Ances-Tree <famille@famille.test>',
+      EMAIL_FROM: 'Racines <famille@famille.test>',
     },
   },
 });

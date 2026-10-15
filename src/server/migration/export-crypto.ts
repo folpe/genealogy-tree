@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { APP_NAME } from '@/lib/brand';
 
 // Chiffrement au repos de l'export Notion et des photos (spec section 15.1) :
 // AES-256-GCM, authentifié, un vecteur aléatoire par fichier. La clé vit dans
@@ -24,7 +25,7 @@ export function encryptExport(clear: Buffer, keyHex: string): Buffer {
 
 export function decryptExport(sealed: Buffer, keyHex: string): Buffer {
   if (!sealed.subarray(0, MAGIC.length).equals(MAGIC)) {
-    throw new Error('Ce fichier n’est pas un export chiffré d’Ances-Tree');
+    throw new Error(`Ce fichier n’est pas un export chiffré de ${APP_NAME}`);
   }
   const ivStart = MAGIC.length;
   const tagStart = ivStart + IV_BYTES;
