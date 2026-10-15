@@ -43,12 +43,35 @@ describe('zoomAt', () => {
     expect(zoomAt(camera, { x: 0, y: 0 }, 10, { kMin: 0.2, kMax: 3 }).k).toBe(3);
     expect(zoomAt(camera, { x: 0, y: 0 }, 0.01, { kMin: 0.2, kMax: 3 }).k).toBe(0.2);
   });
+
+  it('parti d’une vue plus lointaine que la limite (un lien cadré), ne saute pas', () => {
+    const far = cameraOn({ x: 0, y: 0 }, 0.3);
+    // On écarte les doigts un peu : la vue se rapproche sans bond jusqu'à la limite.
+    expect(zoomAt(far, { x: 0, y: 0 }, 0.33, { kMin: 0.5, kMax: 3 }).k).toBeCloseTo(0.33);
+    // On les resserre : la vue ne s'éloigne pas plus que là d'où elle part.
+    expect(zoomAt(far, { x: 0, y: 0 }, 0.2, { kMin: 0.5, kMax: 3 }).k).toBeCloseTo(0.3);
+  });
 });
 
 describe('bornes', () => {
   it('le centre du canevas reste au-dessus du placement', () => {
     expect(cameraBounds(content, 0.5)).toEqual({ xMin: -1000, xMax: 0, yMin: -500, yMax: 0 });
     expect(clampCamera({ x: 100, y: -900, k: 0.5 }, content)).toEqual({ x: 0, y: -500, k: 0.5 });
+  });
+
+  it('sous une carte, c’est le centre de la zone libre qui reste au-dessus du placement', () => {
+    const cover = { top: 200, right: 60 };
+    expect(cameraBounds(content, 0.5, cover)).toEqual({
+      xMin: -1030,
+      xMax: -30,
+      yMin: -400,
+      yMax: 100,
+    });
+    expect(clampCamera({ x: 0, y: 300, k: 0.5 }, content, cover)).toEqual({
+      x: -30,
+      y: 100,
+      k: 0.5,
+    });
   });
 
   it('résiste au-delà d’une borne sans jamais dépasser l’élasticité', () => {
@@ -163,18 +186,37 @@ describe('cameraFraming', () => {
   it('laisse libre le haut de l’écran sous une carte posée dessus', () => {
     const rect = { x0: 0, y0: 0, x1: 200, y1: 200 };
     const viewport = { width: 1000, height: 600 };
-    const camera = cameraFraming(rect, viewport, limits, { top: 200 });
+    const camera = cameraFraming(rect, viewport, limits, { top: 200, right: 0 });
     // Centre de la zone à mi-hauteur de l'espace libre : 100 px sous le centre de l'écran.
     expect(100 * camera.k + camera.y).toBeCloseTo(100);
     expect(camera.k).toBeCloseTo(Math.min(1.2, 400 / 296));
   });
 
-  it('ne grossit pas au-delà de la lecture confortable, ni sous la limite basse', () => {
+  it('laisse libre la colonne des boutons de caméra à droite', () => {
+    const rect = { x0: 0, y0: 0, x1: 200, y1: 200 };
+    const viewport = { width: 400, height: 1000 };
+    const camera = cameraFraming(rect, viewport, limits, { top: 0, right: 100 });
+    // Largeur libre : 300 px ; centre de la zone au milieu de cet espace, 50 px à gauche.
+    expect(camera.k).toBeCloseTo(300 / 296);
+    expect(100 * camera.k + camera.x).toBeCloseTo(-50);
+  });
+
+  it('ne grossit pas au-delà de la lecture confortable, ni sous son plancher', () => {
     expect(
       cameraFraming({ x0: 0, y0: 0, x1: 10, y1: 10 }, { width: 800, height: 800 }, limits).k,
     ).toBe(1.2);
     expect(
       cameraFraming({ x0: 0, y0: 0, x1: 100_000, y1: 10 }, { width: 800, height: 800 }, limits).k,
-    ).toBe(0.2);
+    ).toBe(0.15);
+  });
+
+  it('descend sous la limite des gestes pour montrer tout un lien sous la carte', () => {
+    const camera = cameraFraming(
+      { x0: 0, y0: 0, x1: 200, y1: 600 },
+      { width: 800, height: 500 },
+      { kMin: 0.5, kMax: 2.5 },
+      { top: 250, right: 0 },
+    );
+    expect(camera.k).toBeCloseTo(250 / 696);
   });
 });

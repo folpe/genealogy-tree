@@ -66,7 +66,8 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 
 - [x] `components/RelationshipFinder/` : bouton "Notre lien" sur la fiche, carte en haut du canevas avec la phrase ("Maxime est ton demi-frère."), étapes en pilules, ancêtres communs.
 - [ ] Chemin : arêtes du chemin en accent et dessinées (DrawSVG), reste de l'arbre estompé, caméra cadrée sur le chemin.
-  - [x] Arêtes en accent, reste estompé, caméra cadrée sous la carte. Reste : tracé DrawSVG (lot 3) ; sur mobile, un lien long passe en vue de loin et le bas du chemin peut glisser sous les boutons de caméra (lot 7).
+  - [x] Arêtes en accent, reste estompé, caméra cadrée sous la carte. Reste : tracé DrawSVG (lot 3).
+  - [x] Lien long (lot 7) : cadré en entier, ancêtres communs compris, sous la carte et hors de la colonne des boutons (`Cover`), jusqu'en vue de loin sous la limite des gestes, sans bond au geste suivant ; « Me retrouver » masqué pendant un lien ; étapes sur une ligne qui défile sur téléphone. Vérifié à 360 px, sur Pixel 7 et sur ordinateur.
 
 ### Lot 7 : mobile
 
