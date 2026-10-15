@@ -13,7 +13,8 @@ describe('pathHighlight', () => {
       // Hugo, enfant de Luc et Sophie ; Luc et Anne, enfants de Paul et Jeanne.
       unions,
     );
-    expect([...persons]).toEqual(['hugo', 'luc', 'anne']);
+    // Paul et Jeanne, au sommet du chemin, sont les ancêtres communs : allumés aussi.
+    expect([...persons]).toEqual(['hugo', 'luc', 'anne', 'paul', 'jeanne']);
     expect(links).toEqual(
       new Set([
         'child:u-luc-sophie>hugo',
@@ -39,6 +40,22 @@ describe('pathHighlight', () => {
     );
     // Sophie, Paul et Jeanne ne sont pas sur le chemin, mais leurs branches le sont.
     expect(framed).toEqual(new Set(['hugo', 'luc', 'anne', 'sophie', 'paul', 'jeanne']));
+  });
+
+  it('n’allume pas un parent dont la branche n’est que traversée', () => {
+    const { persons } = pathHighlight(
+      ['hugo', 'u-luc-sophie', 'luc', 'u-paul-jeanne', 'anne'],
+      unions,
+    );
+    // La branche de Sophie vers Hugo s'allume avec celle de Luc ; Sophie reste estompée.
+    expect(persons.has('sophie')).toBe(false);
+  });
+
+  it('ne prend pas pour un sommet une union voisine d’une autre union', () => {
+    // Le chemin filtré sur l'arbre affiché a perdu Luc, entre ses deux couples.
+    const { persons } = pathHighlight(['hugo', 'u-luc-sophie', 'u-paul-jeanne', 'anne'], unions);
+    expect(persons.has('sophie')).toBe(false);
+    expect(persons.has('paul')).toBe(false);
   });
 
   it('un lien direct sans union : la branche du parent seul, dans un sens ou l’autre', () => {

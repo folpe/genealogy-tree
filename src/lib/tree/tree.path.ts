@@ -7,13 +7,23 @@ type UnionShape = { id: string; partnerIds: [string, string | null] };
 export type PathHighlight = {
   persons: Set<string>;
   links: Set<string>;
-  /** À cadrer : le chemin, plus les parents d'où partent ses branches (ancêtres communs). */
+  /** À cadrer : le chemin, plus les parents d'où partent ses branches. */
   framed: Set<string>;
 };
 
 export function pathHighlight(path: string[], unions: UnionShape[]): PathHighlight {
   const byId = new Map(unions.map((u) => [u.id, u]));
   const persons = new Set(path.filter((id) => !byId.has(id)));
+  // Au sommet, le chemin monte d'un enfant et redescend vers un autre : le couple est
+  // celui des ancêtres communs, que la carte nomme ; il s'allume avec le chemin.
+  path.forEach((id, i) => {
+    const union = byId.get(id);
+    const [before, after] = [path[i - 1], path[i + 1]];
+    // Deux personnes de part et d'autre : un chemin filtré peut avoir perdu un maillon.
+    if (!union || !before || !after || byId.has(before) || byId.has(after)) return;
+    if (union.partnerIds.includes(before) || union.partnerIds.includes(after)) return;
+    for (const parent of union.partnerIds) if (parent) persons.add(parent);
+  });
   const links = new Set<string>();
   const framed = new Set(persons);
   /** Un enfant rattaché à une union : son trait, ou les branches de chaque parent. */
