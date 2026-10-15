@@ -404,8 +404,9 @@ function bringIntoView(
   const inside = Math.abs(x) < w / 2 - BUBBLE && Math.abs(y) < h / 2 - BUBBLE;
   if (inside && onArrive) {
     // Une recherche dont la bulle est déjà à l'écran : un vol en cours vers une autre
-    // personne s'arrête ici, sa fiche n'est plus demandée (jeton du panneau).
-    camera.stop();
+    // personne s'arrête ici, sa fiche n'est plus demandée (jeton du panneau). Comme sous
+    // le doigt, un mouvement coupé se conclut (zone visible, netteté, mémoire).
+    if (camera.stop()) camera.release({ x: 0, y: 0 });
     return onArrive();
   }
   if (inside) return;

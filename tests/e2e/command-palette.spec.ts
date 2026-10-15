@@ -166,3 +166,27 @@ test('quitter l’arbre pendant le vol abandonne la fiche cherchée', async ({ p
   expect(pushed.some((url) => url.includes('fiche=jeanne'))).toBe(false);
   await expect(page).toHaveURL(/\/ancestors$/);
 });
+
+test('une recherche vers une bulle visible, pendant un vol, l’arrête net et proprement', async ({
+  page,
+}) => {
+  await signIn(page, 'hugo@famille.test');
+  await settled(page);
+  const zoomIn = page.getByRole('button', { name: 'Zoomer', exact: true });
+  for (let i = 0; i < 6; i += 1) await zoomIn.click();
+  await settled(page);
+  const dialog = page.getByRole('dialog', { name: 'Trouver quelqu’un' });
+  const search = async (query: string, name: RegExp) => {
+    await page.keyboard.press('ControlOrMeta+k');
+    await dialog.getByRole('combobox').fill(query);
+    await expect(dialog.getByRole('option', { name })).toBeVisible();
+    await dialog.getByRole('combobox').press('Enter');
+  };
+  await search('jeanne', /Jeanne Marchand/);
+  // Le vol vers Jeanne part de Hugo : sa bulle est encore à l'écran.
+  await search('hugo', /Hugo Marchand/);
+  await expect(page).toHaveURL(/[?&]fiche=hugo/);
+  // Le mouvement coupé est conclu : le calque ne reste pas figé pour la composition.
+  await expect(page.locator('[data-camera-layer]')).toHaveCSS('will-change', 'auto');
+  await expect(page).toHaveURL(/[?&]fiche=hugo/);
+});
