@@ -131,6 +131,30 @@
     opacity: 0;
   }
 }
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/*
+ * Feuille de la fiche (vaul) sous mouvement réduit : un fondu court au lieu de la glisse.
+ * `:root` devant : vaul injecte ses règles à l'exécution, à spécificité égale elles
+ * l'emporteraient.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root [data-vaul-drawer][data-vaul-snap-points][data-vaul-drawer-direction][data-state="open"] {
+    animation-name: fade-in;
+    animation-duration: 0.15s;
+  }
+  :root [data-vaul-drawer][data-vaul-snap-points][data-vaul-drawer-direction][data-state="closed"] {
+    animation-name: fade-out;
+    animation-duration: 0.15s;
+  }
+  :root [data-vaul-overlay][data-state] {
+    animation-duration: 0.15s;
+  }
+}
 
 /*
  * Premier affichage de l'arbre dans l'onglet (TREE_ENTRY_SCRIPT) : bulles, traits et

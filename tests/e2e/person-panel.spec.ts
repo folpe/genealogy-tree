@@ -68,8 +68,12 @@ test('à l’ouverture, l’avatar part de la bulle touchée, puis se pose', asy
   // En vol : une copie au-dessus de la page (le panneau défile et la couperait), posée
   // près de la bulle ; l'avatar réel attend, caché.
   const flight = page.locator('[data-fiche-flight]');
-  await expect(flight).toHaveCount(1);
-  expect(await avatar.evaluate((element) => element.style.visibility)).toBe('hidden');
+  // Lus dans la même image : la copie en vol et l'avatar réel qui attend, caché.
+  await page.waitForFunction(() => {
+    const copy = document.querySelector('[data-fiche-flight]');
+    const real = document.querySelector<HTMLElement>('aside [data-fiche-avatar]');
+    return copy !== null && real?.style.visibility === 'hidden'; // allow-null: contrat de querySelector
+  });
   if (process.env['E2E_SHOTS']) await page.screenshot({ path: process.env['E2E_SHOTS'] });
   // À l'arrivée, la copie disparaît et l'avatar reprend sa place.
   await expect(flight).toHaveCount(0);
@@ -87,4 +91,19 @@ test('avec le mouvement réduit, la fiche arrive en simple fondu', async ({ page
   const avatar = page.locator('aside [data-fiche-avatar]');
   expect(await avatar.evaluate((element) => element.style.transform)).toBe('');
   await expect(page.locator('aside')).toContainText('Ton père');
+});
+
+test('sur téléphone, avec le mouvement réduit, la feuille arrive en fondu', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'mobile', 'La feuille vaul est celle du téléphone.');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await signIn(page, 'hugo@famille.test');
+  await settled(page);
+  await page.getByRole('treeitem', { name: /^Luc Marchand/ }).click();
+  const sheet = page.locator('[data-vaul-drawer]');
+  await expect(sheet).toBeVisible();
+  // Ni glisse ni rebond : un fondu de 0,15 s.
+  await expect(sheet).toHaveCSS('animation-name', 'fade-in');
+  await expect(sheet).toHaveCSS('animation-duration', '0.15s');
 });

@@ -73,7 +73,7 @@ export function PhotoPicker({ personId, children }: { personId: string; children
         {children}
         <label
           htmlFor={id}
-          className="absolute right-0 bottom-0 flex size-11 cursor-pointer items-center justify-center rounded-full border-2 border-card bg-ink text-on-ink shadow-float transition-transform has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink hover:scale-105"
+          className="absolute right-0 bottom-0 flex size-11 cursor-pointer items-center justify-center rounded-full border-2 border-card bg-ink text-on-ink shadow-float has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink motion-safe:transition-transform motion-safe:hover:scale-105"
         >
           {pending ? (
             <span
