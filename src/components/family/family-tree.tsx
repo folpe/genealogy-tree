@@ -387,6 +387,32 @@ function useRows(nodes: TreeNode[]) {
   }, [nodes]);
 }
 
+/**
+ * La caméra vole jusqu'à la bulle si elle n'est pas déjà bien à l'écran (assez loin des
+ * bords). `onArrive` est appelé dans tous les cas, une fois la bulle visible.
+ */
+function bringIntoView(
+  camera: CameraController,
+  node: TreeNode | undefined,
+  onArrive?: () => void,
+) {
+  if (!node) return onArrive?.();
+  const state = camera.get();
+  const { width: w, height: h } = camera.viewport();
+  const x = node.x * state.k + state.x;
+  const y = node.y * state.k + state.y;
+  const inside = Math.abs(x) < w / 2 - BUBBLE && Math.abs(y) < h / 2 - BUBBLE;
+  if (inside && onArrive) {
+    // Une recherche dont la bulle est déjà à l'écran : un vol en cours vers une autre
+    // personne s'arrête ici, sa fiche n'est plus demandée (jeton du panneau). Comme sous
+    // le doigt, un mouvement coupé se conclut (zone visible, netteté, mémoire).
+    if (camera.stop()) camera.release({ x: 0, y: 0 });
+    return onArrive();
+  }
+  if (inside) return;
+  camera.flyTo(cameraOn(node, Math.max(state.k, 0.75)), onArrive);
+}
+
 export function FamilyTree({
   drawing: initial,
   graph,
@@ -399,6 +425,7 @@ export function FamilyTree({
   coveredTop = 0,
   focusOn,
   quickActions,
+  reveal,
 }: {
   /** Premier dessin, calculé au rendu serveur. */
   drawing: TreeDrawing;
@@ -422,6 +449,11 @@ export function FamilyTree({
   coveredTop?: number;
   /** Éléments du menu des actions rapides d'une bulle ; sans lui, pas de menu. */
   quickActions?: ((id: string) => ReactNode) | undefined;
+  /**
+   * Personne cherchée (⌘K) : la caméra va d'abord à sa bulle, puis `onArrive` ouvre sa
+   * fiche ; l'avatar de la fiche part alors d'une bulle à l'écran.
+   */
+  reveal?: { id: string; onArrive: () => void } | undefined;
 }) {
   const fold = useFoldedTree(initial, graph);
   const { nodes, width, height } = fold.drawing;
@@ -495,20 +527,19 @@ export function FamilyTree({
     const waves = entryWaves(nodes, links, branches);
     return animateTreeEntry(waves, elements.current, layer.current ?? undefined);
   }, [camera]);
-  // Une fiche ouverte ensuite (recherche) : la caméra va à sa bulle si elle n'est pas
+  // Une fiche ouverte (recherche, lien) : la caméra va à sa bulle si elle n'est pas
   // déjà bien à l'écran. Un tap sur une bulle visible ne fait donc rien bouger.
   useEffect(() => {
-    if (!camera || !selectedId) return;
-    const node = nodesById.current.get(selectedId);
-    if (!node) return;
-    const state = camera.get();
-    const { width: w, height: h } = camera.viewport();
-    const x = node.x * state.k + state.x;
-    const y = node.y * state.k + state.y;
-    const margin = BUBBLE;
-    const inside = Math.abs(x) < w / 2 - margin && Math.abs(y) < h / 2 - margin;
-    if (!inside) camera.flyTo(cameraOn(node, Math.max(state.k, 0.75)));
+    if (camera && selectedId) bringIntoView(camera, nodesById.current.get(selectedId));
   }, [camera, selectedId]);
+  // Une personne cherchée : le vol d'abord, la fiche ensuite (arrivée, geste qui coupe
+  // le vol, ou bulle déjà à l'écran).
+  useEffect(() => {
+    if (!reveal) return;
+    const node = nodesById.current.get(reveal.id);
+    if (!camera || !node) return reveal.onArrive();
+    bringIntoView(camera, node, reveal.onArrive);
+  }, [camera, reveal]);
   // Un nouveau lien éclairé : la caméra cadre tout son chemin, ancêtres communs compris,
   // hors de la carte et de la colonne des boutons, et recadre quand la carte a pris sa
   // hauteur. Un pli ensuite ne la déplace pas : les bulles sont relues ici.

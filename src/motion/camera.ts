@@ -39,7 +39,13 @@ export type CameraController = {
   zoomTo: (k: number, around?: Point) => void;
   /** Part du canevas couverte (carte, boutons) : les bornes suivent la zone libre. */
   setCover: (cover: Cover) => void;
-  flyTo: (camera: Camera) => void;
+  /**
+   * Vol jusqu'à `camera`. `onArrive` est appelé une fois : à l'arrivée, aussitôt avec le
+   * mouvement réduit, ou quand le lecteur reprend la main (geste, zoom, vol sans rappel
+   * comme « Me retrouver ») ; on est alors là où il l'a arrêté. Un nouveau vol avec rappel
+   * le remplace sans l'appeler, comme la fin de la caméra (démontage).
+   */
+  flyTo: (camera: Camera, onArrive?: () => void) => void;
   /** Pose la caméra sans animation et conclut le mouvement (nouveau placement). */
   jump: (camera: Camera) => void;
   resize: (viewport: Size) => void;
@@ -75,6 +81,17 @@ export function createCamera({
   const listeners = new Set<(camera: Camera) => void>();
   let tween: gsap.core.Tween | undefined;
   let moving = false;
+  /** Ce qui attend la fin du vol en cours (ouvrir une fiche cherchée). */
+  let arrive: (() => void) | undefined;
+  /** Le vol attendu est remplacé ou la caméra s'arrête : rien n'est appelé. */
+  const abandon = () => {
+    arrive = undefined;
+  };
+  const arrived = () => {
+    const done = arrive;
+    arrive = undefined;
+    done?.();
+  };
 
   const paint = () => {
     layer.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.k})`;
@@ -105,11 +122,13 @@ export function createCamera({
     moving = false;
     layer.style.willChange = 'auto';
     onSettle({ ...state });
+    arrived();
   };
   const stop = () => {
     const interrupted = tween !== undefined || moving;
     tween?.kill();
     tween = undefined;
+    arrived();
     return interrupted;
   };
   /** Sans animation quand l'utilisateur la refuse (DESIGN.md, section 10). */
@@ -163,11 +182,19 @@ export function createCamera({
         onComplete: settle,
       });
     },
-    flyTo(camera) {
+    flyTo(camera, onArrive) {
+      // Une nouvelle demande avec rappel remplace l'attente ; sans rappel, c'est le
+      // lecteur qui reprend la main et l'attente aboutit là où on est (stop).
+      if (onArrive) abandon();
       const target = clampCamera(camera, content, cover);
-      if (reducedMotion()) return instant(target);
+      if (reducedMotion()) {
+        instant(target);
+        onArrive?.();
+        return;
+      }
       const path = flightPath({ ...state }, target, size);
       stop();
+      arrive = onArrive;
       const progress = { t: 0 };
       tween = gsap.to(progress, {
         t: 1,
@@ -198,8 +225,10 @@ export function createCamera({
       size = next;
       limits = scaleLimits(content, size);
       apply();
-      // La zone visible change : la virtualisation doit la connaître.
-      settle();
+      // La zone visible change : la virtualisation doit la connaître. En plein vol, sans
+      // conclure le mouvement : le vol continue et sa fin reste attendue.
+      if (tween) onSettle({ ...state });
+      else settle();
     },
     subscribe(listener) {
       listeners.add(listener);
@@ -207,6 +236,7 @@ export function createCamera({
       return () => listeners.delete(listener);
     },
     dispose() {
+      abandon();
       stop();
       // Le calque survit à la caméra (remontée sur un nouveau placement).
       layer.style.willChange = 'auto';
