@@ -1,5 +1,5 @@
 // tdd-cover: e2e tests/e2e/tree-fold.spec.ts
-import gsap from 'gsap';
+import { gsap, reducedMotion } from './gsap';
 
 // Passage d'un placement à un autre (plan phase 4, lot 5) : chaque bulle qui reste
 // glisse de son ancienne place à la nouvelle, les nouvelles apparaissent en fondu et
@@ -21,7 +21,7 @@ export type Relayout = {
 
 /** Lance la transition ; `done` est appelé quand les bulles parties peuvent être retirées. */
 export function animateRelayout({ moved, entered, leaving, links }: Relayout, done: () => void) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (reducedMotion()) {
     done();
     return () => {};
   }

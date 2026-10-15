@@ -63,6 +63,38 @@ describe('pathHighlight', () => {
     expect(links).toEqual(new Set(['parent:jade>lea', 'parent:lea>jade']));
   });
 
+  it('trace le chemin étape par étape depuis Toi, chaque trait dans le sens du parcours', () => {
+    const { steps } = pathHighlight(
+      ['hugo', 'u-luc-sophie', 'luc', 'u-paul-jeanne', 'anne'],
+      unions,
+    );
+    // Les traits vont du parent vers l'enfant : en remontant, ils se tracent à l'envers.
+    const up = (id: string) => ({ id, reverse: true });
+    const down = (id: string) => ({ id, reverse: false });
+    expect(steps).toEqual([
+      [up('child:u-luc-sophie>hugo'), up('parent:luc>hugo'), up('parent:sophie>hugo')],
+      [down('union:u-luc-sophie')],
+      [up('child:u-paul-jeanne>luc'), up('parent:paul>luc'), up('parent:jeanne>luc')],
+      [down('child:u-paul-jeanne>anne'), down('parent:paul>anne'), down('parent:jeanne>anne')],
+    ]);
+  });
+
+  it('sans union, la branche se trace du parent vers l’enfant, quel que soit le sens', () => {
+    const { steps } = pathHighlight(['jade', 'lea'], []);
+    // Une seule des deux branches existe dans l'arbre : chacune porte son sens.
+    expect(steps).toEqual([
+      [
+        { id: 'parent:jade>lea', reverse: false },
+        { id: 'parent:lea>jade', reverse: true },
+      ],
+    ]);
+  });
+
+  it('de conjoint à conjoint, le trait d’union se trace une fois', () => {
+    const { steps } = pathHighlight(['luc', 'u-luc-sophie', 'sophie'], unions);
+    expect(steps).toEqual([[{ id: 'union:u-luc-sophie', reverse: false }]]);
+  });
+
   it('un chemin vide n’allume rien', () => {
     const { persons, links } = pathHighlight([], unions);
     expect(persons.size + links.size).toBe(0);

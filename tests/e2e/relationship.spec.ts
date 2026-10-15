@@ -95,3 +95,30 @@ for (const width of [360, undefined]) {
     expect(after.x).toBeLessThanOrEqual(0.5);
   });
 }
+
+// Plan phase 5, lot 3 : le chemin se trace de Toi vers la cible (DrawSVG), puis rend au
+// trait son style ; avec le mouvement réduit, il est posé d'un coup.
+const drawing = () =>
+  [...document.querySelectorAll<SVGPathElement>('[data-link]')].some(
+    (path) => path.style.strokeDashoffset !== '',
+  );
+
+test('le chemin se trace, puis rend leur style aux traits', async ({ page }) => {
+  await signIn(page, 'hugo@famille.test');
+  await page.goto('/tree?view=all&fiche=isabelle');
+  await page.getByRole('button', { name: 'Notre lien' }).click();
+  await page.waitForFunction(drawing);
+  await expect.poll(() => page.evaluate(drawing)).toBe(false);
+  await expect(page.locator('[role="tree"] [data-on-path="true"]')).toHaveCount(7);
+});
+
+test('avec le mouvement réduit, le chemin est posé d’un coup', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await signIn(page, 'hugo@famille.test');
+  await page.goto('/tree?view=all&fiche=isabelle');
+  await page.getByRole('button', { name: 'Notre lien' }).click();
+  const card = page.locator('[data-link-card]');
+  await expect(card.getByRole('listitem')).toHaveCount(5);
+  expect(await page.evaluate(drawing)).toBe(false);
+  await expect(card.getByRole('listitem').last()).toHaveCSS('opacity', '1');
+});

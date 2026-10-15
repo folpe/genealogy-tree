@@ -29,6 +29,7 @@ import { DEFAULT_METRICS } from '@/lib/tree/tree.metrics';
 import type { PathHighlight } from '@/lib/tree/tree.path';
 import type { TreeLink } from '@/lib/tree/tree.routes';
 import type { CameraController } from '@/motion/camera';
+import { animatePath } from '@/motion/path';
 import type { DisplayedGraph } from '@/server/family/family.display';
 import { PersonBubble } from './person-bubble';
 import type { BranchHandle, TreeDrawing, TreeNode } from './tree-drawing';
@@ -100,6 +101,7 @@ const TreeLinks = memo(function TreeLinks({
       {links.map((link) => (
         <path
           key={link.id}
+          data-link={link.id}
           d={link.d}
           // De loin, le trait garde son épaisseur à l'écran au lieu de s'effacer.
           className={`fill-none [stroke-linecap:round] transition-opacity group-data-[detail=far]/canvas:[vector-effect:non-scaling-stroke] ${
@@ -495,6 +497,13 @@ export function FamilyTree({
     };
     camera.flyTo(cameraFraming(rect, camera.viewport(), camera.limits(), free));
   }, [camera, highlight, coveredTop]);
+  // Puis le chemin se trace de Toi vers la cible ; posé avant l'affichage, il ne
+  // clignote pas allumé d'abord.
+  useLayoutEffect(() => {
+    const svg = linksRef.current;
+    if (!highlight || !svg) return;
+    return animatePath(svg, highlight.steps);
+  }, [highlight]);
   const leaving = useRelayout({
     drawing: fold.drawing,
     camera,
