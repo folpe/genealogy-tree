@@ -1,6 +1,6 @@
 // tdd-cover: e2e src/server/notifications/email.test.ts
 
-import { APP_NAME } from '@/lib/brand';
+import { APP_NAME } from '../../../lib/brand';
 import {
   EmailLayout,
   FallbackLink,

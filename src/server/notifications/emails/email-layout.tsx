@@ -15,7 +15,7 @@ import {
   Section,
   Text,
 } from 'react-email';
-import { APP_NAME } from '@/lib/brand';
+import { APP_NAME } from '../../../lib/brand';
 
 // Mise en page commune des emails, style Album (DESIGN.md, maquette EmailVeille).
 // Styles en ligne et thème clair uniquement : les clients mail sombres inversent

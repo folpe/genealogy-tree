@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
-import { APP_NAME } from '@/lib/brand';
+import { APP_NAME } from '../../lib/brand';
 
 // Chiffrement au repos de l'export Notion et des photos (spec section 15.1) :
 // AES-256-GCM, authentifié, un vecteur aléatoire par fichier. La clé vit dans
