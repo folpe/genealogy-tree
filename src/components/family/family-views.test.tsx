@@ -113,7 +113,8 @@ describe('PersonSheet', () => {
 
   it('dans sa lignée, la note se touche pour se modifier', () => {
     render(<PersonSheet tree={hugo} personId="maxime" />);
-    expect(screen.getByRole('button', { name: /^Note : Né d’une précédente union/ })).toBeVisible();
+    const note = screen.getByRole('button', { name: 'Note, modifier' });
+    expect(note).toHaveAccessibleDescription(/^Né d’une précédente union de Luc/);
   });
 
   it('pas de note sur une fiche vue de loin', () => {

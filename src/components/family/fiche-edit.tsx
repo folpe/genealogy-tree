@@ -61,8 +61,9 @@ function useEditing(personId: string, field: string, initial: Values) {
     });
   };
   const commit = async (values: Values) => {
+    // Le serveur ôte les blancs des bords : un espace ajouté seul ne change rien.
     const unchanged = Object.keys({ ...initial, ...values }).every(
-      (k) => (values[k] ?? '') === (initial[k] ?? ''),
+      (k) => (values[k] ?? '').trim() === (initial[k] ?? '').trim(),
     );
     if (unchanged) return setEditing(false);
     const failure = await save(personId, field, values);
@@ -357,11 +358,18 @@ export function EditableRow({
         <button
           type="button"
           onClick={() => e.setEditing(true)}
-          aria-label={`${label} : ${display ?? 'à compléter'}, modifier`}
+          // Une note peut être longue : son nom reste court, le texte la décrit.
+          aria-label={
+            spec.kind === 'note' && display
+              ? `${label}, modifier`
+              : `${label} : ${display ?? 'à compléter'}, modifier`
+          }
+          aria-describedby={spec.kind === 'note' && display ? `${id}-value` : undefined}
           className={`group flex w-full gap-4 py-3.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${spec.kind === 'note' ? 'flex-col gap-1.5' : 'items-baseline justify-between'}`}
         >
           <span className="shrink-0 text-sm text-ink-2">{label}</span>
           <span
+            id={`${id}-value`}
             className={`min-w-0 [overflow-wrap:anywhere] decoration-line underline-offset-4 group-hover:underline ${spec.kind === 'note' ? 'whitespace-pre-line text-sm leading-relaxed' : 'text-right text-[15px]'} ${display ? 'text-ink' : 'text-ink-2'}`}
           >
             {display ?? 'À compléter'}
