@@ -82,3 +82,41 @@ test('un lien ne sert qu’une fois', async ({ page, browser }) => {
   );
   await other.close();
 });
+
+test('la connexion se peint d’emblée : sans GSAP, le plus grand texte dès le premier rendu', async ({
+  page,
+  context,
+}) => {
+  // Un téléphone modeste en 4G lente (réglages de Lighthouse mobile) : c'est là qu'une
+  // entrée animée repoussait le LCP au-delà de 2,5 s.
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('Network.enable');
+  await cdp.send('Network.emulateNetworkConditions', {
+    offline: false,
+    latency: 150,
+    downloadThroughput: (1.6 * 1024 * 1024) / 8,
+    uploadThroughput: (750 * 1024) / 8,
+  });
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  const scripts: string[] = [];
+  page.on('response', (response) => {
+    if (response.url().endsWith('.js')) scripts.push(response.url());
+  });
+  await page.goto('/login', { waitUntil: 'load' });
+  // Plan de phase 5 : GSAP absent du bundle de /login (journal du 2026-10-15).
+  const bodies = await Promise.all(
+    scripts.map((url) => page.request.get(url).then((r) => r.text())),
+  );
+  expect(bodies.filter((body) => /registerPlugin|drawSVG/.test(body))).toHaveLength(0);
+  // Aucune entrée animée ne retarde le LCP : il tombe au premier rendu.
+  const paint = await page.evaluate(
+    () =>
+      new Promise<{ fcp: number; lcp: number }>((resolve) => {
+        new PerformanceObserver((list) => {
+          const fcp = performance.getEntriesByName('first-contentful-paint')[0]?.startTime ?? 0;
+          resolve({ fcp, lcp: list.getEntries().at(-1)?.startTime ?? Number.POSITIVE_INFINITY });
+        }).observe({ type: 'largest-contentful-paint', buffered: true });
+      }),
+  );
+  expect(paint.lcp - paint.fcp).toBeLessThan(100);
+});

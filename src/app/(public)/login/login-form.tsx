@@ -50,6 +50,8 @@ export function LoginForm({
   const [pending, setPending] = useState(false);
   const [resent, setResent] = useState(false);
   const [error, setError] = useState<string | undefined>(notice);
+  /** Une étape atteinte par un geste entre en fondu ; celle du chargement est là d'emblée (LCP). */
+  const [moved, setMoved] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const focusHeading = useRef(false);
 
@@ -62,6 +64,7 @@ export function LoginForm({
 
   function goTo(next: Step) {
     focusHeading.current = true;
+    setMoved(true);
     setError(undefined);
     setResent(false);
     setStep(next);
@@ -107,6 +110,7 @@ export function LoginForm({
         if (await sendLink()) goTo({ name: 'sent', email });
       }}
       footer={footer}
+      entering={moved}
     />
   );
 }
@@ -123,6 +127,7 @@ function EmailStep(props: {
   onError: (error: string) => void;
   onSubmit: () => Promise<void>;
   footer: ReactNode;
+  entering: boolean;
 }) {
   async function signInWithPasskey() {
     const result = await authClient.signIn.passkey();
@@ -140,7 +145,7 @@ function EmailStep(props: {
   }
 
   return (
-    <div className="step-in flex flex-col gap-[22px]">
+    <div className={`flex flex-col gap-[22px] ${props.entering ? 'step-in' : ''}`}>
       <div className="flex flex-col gap-2.5">
         <Kicker>{props.intro.kicker}</Kicker>
         <RevealTitle ref={props.heading} text={props.intro.title} />

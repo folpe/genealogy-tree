@@ -222,6 +222,10 @@
   animation-delay: calc(0.15s + var(--word) * 0.07s);
 }
 
+/*
+ * Une étape atteinte par un geste (lien envoyé, demande envoyée, retour). Jamais celle du
+ * chargement : son texte, peint d'emblée, fait le LCP (< 2,5 s en 4G lente).
+ */
 .step-in {
   animation: step-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
