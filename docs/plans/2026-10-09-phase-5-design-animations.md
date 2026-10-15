@@ -45,6 +45,7 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 ### Lot 3 : système d'animation
 
 - [ ] `src/motion/` : enregistrement unique des plugins (DrawSVG, Flip, SplitText, InertiaPlugin, Draggable), presets de durée et d'easing (doux, jamais élastique excessif), `gsap.matchMedia()` pour `prefers-reduced-motion` (fondus courts uniquement).
+  - [x] `src/motion/gsap.ts` : point d'entrée unique, DrawSVG et Inertia enregistrés, mouvement réduit lu au même endroit (caméra, relayout, éventail, chemin). Flip, SplitText et Draggable s'y ajouteront avec leur premier usage ; les durées restent près de chaque animation.
 - [ ] Chargement différé de GSAP et des plugins hors du chemin critique (import dynamique après le premier rendu).
 - [ ] Animations de la spec 9 : logo dessiné et titre révélé (Connexion), arbre qui pousse génération par génération au premier chargement, liens dessinés (DrawSVG), nœud créé qui apparaît à sa place (branché en phase 6).
 
@@ -66,7 +67,8 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 
 - [x] `components/RelationshipFinder/` : bouton "Notre lien" sur la fiche, carte en haut du canevas avec la phrase ("Maxime est ton demi-frère."), étapes en pilules, ancêtres communs.
 - [ ] Chemin : arêtes du chemin en accent et dessinées (DrawSVG), reste de l'arbre estompé, caméra cadrée sur le chemin.
-  - [x] Arêtes en accent, reste estompé, caméra cadrée sous la carte. Reste : tracé DrawSVG (lot 3).
+  - [x] Arêtes en accent, reste estompé, caméra cadrée sous la carte.
+  - [x] Tracé DrawSVG (lot 3) : le chemin s'allume pas à pas de Toi vers la cible, chaque trait dans le sens du parcours (`steps` de `pathHighlight`), pilules d'étapes au même rythme ; posé d'un coup avec le mouvement réduit.
   - [x] Lien long (lot 7) : cadré en entier, ancêtres communs compris, sous la carte et hors de la colonne des boutons (`Cover`), jusqu'en vue de loin sous la limite des gestes, sans bond au geste suivant ; « Me retrouver » masqué pendant un lien ; étapes sur une ligne qui défile sur téléphone. Vérifié à 360 px, sur Pixel 7 et sur ordinateur.
 
 ### Lot 7 : mobile

@@ -11,6 +11,7 @@ import { FAN_GENERATIONS } from '@/components/fan/fan.helper';
 import { fanHref } from '@/lib/fan/fan.params';
 import { treeHref } from '@/lib/tree/tree.params';
 import { type PathHighlight, pathHighlight } from '@/lib/tree/tree.path';
+import { animatePills } from '@/motion/path';
 import type { RelationshipView, TreeForViewer } from '@/server/family/family.service';
 import { AddRelative, AddRelativeDialog } from './add-relative';
 import {
@@ -402,10 +403,13 @@ function RelationshipCard({
   onHeight: (height: number) => void;
 }) {
   const ref = useRef<HTMLElement>(null); // allow-null: contrat des refs de React
+  const steps = useRef<HTMLOListElement>(null); // allow-null: contrat des refs de React
   useLayoutEffect(() => {
     const element = ref.current;
     if (element) onHeight(element.offsetTop + element.offsetHeight);
   }, [onHeight]);
+  // Une carte par lien : ses pilules arrivent au rythme du chemin tracé sur l'arbre.
+  useLayoutEffect(() => animatePills([...(steps.current?.children ?? [])]), []);
   const common =
     view.common.length > 1
       ? `${view.common.slice(0, -1).join(', ')} et ${view.common.at(-1)}`
@@ -443,7 +447,10 @@ function RelationshipCard({
       {/* Sur téléphone, les étapes tiennent sur une ligne qui défile : la carte laisse
           au chemin la hauteur du canevas. */}
       {view.steps.length > 1 ? (
-        <ol className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0">
+        <ol
+          ref={steps}
+          className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0"
+        >
           {view.steps.map((step, i) => (
             <li
               key={step.id}

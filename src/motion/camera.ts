@@ -1,6 +1,4 @@
 // tdd-cover: e2e tests/e2e/tree-camera.spec.ts
-import gsap from 'gsap';
-import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import {
   type Camera,
   type Cover,
@@ -15,8 +13,7 @@ import {
   zoomAt,
 } from '@/lib/tree/tree.camera';
 import type { Point } from '@/lib/tree/tree.metrics';
-
-gsap.registerPlugin(InertiaPlugin);
+import { gsap, reducedMotion } from './gsap';
 
 // Caméra du canevas (ADR 05 : GSAP anime, React rend). L'état vit ici, hors React :
 // chaque frame écrit directement la transformation du calque et la position de la
@@ -66,7 +63,6 @@ export function createCamera({
   initial: Camera;
   onSettle: (camera: Camera) => void;
 }): CameraController {
-  const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let size: Size = { width: viewportElement.clientWidth, height: viewportElement.clientHeight };
   let content = initialContent;
   let limits = scaleLimits(content, size);

@@ -4,11 +4,19 @@
 
 type UnionShape = { id: string; partnerIds: [string, string | null] };
 
+/** Un trait du chemin ; `reverse` : parcouru de l'enfant vers le parent. */
+type PathLink = { id: string; reverse: boolean };
+
+/** Les traits d'un pas du chemin, allumés ensemble. */
+export type PathStep = PathLink[];
+
 export type PathHighlight = {
   persons: Set<string>;
   links: Set<string>;
   /** À cadrer : le chemin, plus les parents d'où partent ses branches. */
   framed: Set<string>;
+  /** Le chemin pas à pas, depuis Toi : l'ordre de son tracé. */
+  steps: PathStep[];
 };
 
 export function pathHighlight(path: string[], unions: UnionShape[]): PathHighlight {
@@ -24,17 +32,18 @@ export function pathHighlight(path: string[], unions: UnionShape[]): PathHighlig
     if (union.partnerIds.includes(before) || union.partnerIds.includes(after)) return;
     for (const parent of union.partnerIds) if (parent) persons.add(parent);
   });
-  const links = new Set<string>();
   const framed = new Set(persons);
   /** Un enfant rattaché à une union : son trait, ou les branches de chaque parent. */
-  const fromUnion = (union: UnionShape, child: string) => {
-    links.add(`child:${union.id}>${child}`);
+  const fromUnion = (union: UnionShape, child: string, reverse: boolean): PathStep => {
+    const step = [{ id: `child:${union.id}>${child}`, reverse }];
     for (const parent of union.partnerIds) {
       if (!parent) continue;
-      links.add(`parent:${parent}>${child}`);
+      step.push({ id: `parent:${parent}>${child}`, reverse });
       framed.add(parent);
     }
+    return step;
   };
+  const steps: PathStep[] = [];
   for (let i = 0; i + 1 < path.length; i += 1) {
     const a = path[i] ?? '';
     const b = path[i + 1] ?? '';
@@ -43,12 +52,17 @@ export function pathHighlight(path: string[], unions: UnionShape[]): PathHighlig
     const union = ua ?? ub;
     const other = ua ? b : a;
     if (union) {
-      if (union.partnerIds.includes(other)) links.add(`union:${union.id}`);
-      else fromUnion(union, other);
+      // Vers l'union depuis un enfant, le chemin remonte ; depuis l'union, il descend.
+      if (union.partnerIds.includes(other))
+        steps.push([{ id: `union:${union.id}`, reverse: false }]);
+      else steps.push(fromUnion(union, other, ub !== undefined));
     } else {
-      links.add(`parent:${a}>${b}`);
-      links.add(`parent:${b}>${a}`);
+      steps.push([
+        { id: `parent:${a}>${b}`, reverse: false },
+        { id: `parent:${b}>${a}`, reverse: true },
+      ]);
     }
   }
-  return { persons, links, framed };
+  const links = new Set(steps.flat().map((link) => link.id));
+  return { persons, links, framed, steps };
 }
