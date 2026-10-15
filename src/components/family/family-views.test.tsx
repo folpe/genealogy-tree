@@ -39,11 +39,14 @@ describe('PersonSheet', () => {
     expect(within(parents).getByRole('link', { name: 'Paul Marchand' })).toBeVisible();
     const children = screen.getByRole('list', { name: 'Enfants' });
     // Pastilles : le prénom à l'écran, le nom complet pour les lecteurs d'écran.
-    expect(
-      within(children)
-        .getAllByRole('link')
-        .map((l) => l.getAttribute('aria-label')),
-    ).toEqual(['Maxime Marchand', 'Léa Marchand', 'Hugo Marchand, toi']);
+    const chips = within(children).getAllByRole('link');
+    expect(chips[0]).toHaveAccessibleName('Maxime Marchand');
+    expect(chips[1]).toHaveAccessibleName('Léa Marchand');
+    expect(chips[2]).toHaveAccessibleName('Hugo Marchand, toi');
+    expect(within(chips[0] as HTMLElement).getByText('Maxime')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    );
     const unions = screen.getByRole('list', { name: 'Unions' });
     const [current, past] = within(unions).getAllByRole('listitem');
     expect(within(current as HTMLElement).getByRole('link')).toHaveAccessibleName(

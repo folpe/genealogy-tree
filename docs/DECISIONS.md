@@ -157,3 +157,11 @@ Journal ADR-lite des choix non évidents. Lire avant de remettre une décision e
 - **Alternatives écartées :** nouveau rôle propriétaire avec `REASSIGN OWNED` (risque sur les migrations et la table de Drizzle, sans gain visible) ; garder les anciens noms de base et de rôle.
 - **À réexaminer si :** Neon permet un jour de renommer le rôle propriétaire.
 
+### 17. Le zoom du navigateur est permis (remplace l'ADR 07)
+
+- **Date :** 2026-10-15
+- **Décision :** le viewport ne porte plus `user-scalable=no` ni `maximum-scale=1` (choix de Folpe, après l'audit axe de la phase 5). Le canevas de l'arbre bloque lui-même le zoom du navigateur (`touch-action: none`) et garde son pincement ; les fiches, formulaires et pages se zooment. Sur écran tactile, les champs passent à 16 px au moins, pour qu'iOS ne zoome pas au focus.
+- **Pourquoi :** WCAG 1.4.4 (agrandir le texte) ; l'ADR 07 prévoyait d'être réexaminée si un audit d'accessibilité l'exigeait, ce que l'audit axe a fait. Les aînés de la famille sont les premiers concernés.
+- **Alternatives écartées :** garder le blocage en excluant la règle de l'audit.
+- **À réexaminer si :** un geste de l'arbre est gêné par le zoom du navigateur sur un appareil réel.
+

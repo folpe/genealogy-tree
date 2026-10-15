@@ -173,7 +173,6 @@ const TreeItem = memo(function TreeItem({
       ref={(element) => register(node.id, element ?? undefined)}
       role="treeitem"
       aria-level={node.row + 1}
-      aria-label={node.label}
       aria-expanded={expanded}
       aria-selected={selected}
       aria-keyshortcuts={quick ? 'Shift+F10' : undefined}
@@ -195,6 +194,9 @@ const TreeItem = memo(function TreeItem({
       className={`group absolute flex w-[120px] flex-col items-center outline-none transition-opacity [-webkit-touch-callout:none] ${onPath === false ? 'opacity-30' : ''}`}
       style={{ left: node.x - NODE_HALF_WIDTH, top: node.y - BUBBLE_RADIUS }}
     >
+      {/* Le nom de la bulle vient de son contenu (WCAG 2.5.3) : la phrase complète, le
+          prénom et les années affichés n'étant que sa forme courte, retirée de la lecture. */}
+      <span className="sr-only">{node.label}</span>
       <PendingRing />
       <span
         data-bubble
@@ -228,17 +230,22 @@ const TreeItem = memo(function TreeItem({
         />
       ) : undefined}
       <span
+        aria-hidden="true"
         className={`mt-1.5 max-w-full truncate font-display text-[17px] ${tone} ${FAR_HIDDEN} ${NEAR_HIDDEN}`}
       >
         {node.name}
       </span>
       <span
+        aria-hidden="true"
         className={`${ONLY_NEAR_CLAMPED} mt-1.5 max-w-full text-center font-display text-[15px] leading-tight ${tone}`}
       >
         {node.fullName}
       </span>
       {node.years ? (
-        <span className={`text-xs text-ink-2 tabular-nums ${FAR_HIDDEN}`}>{node.years}</span>
+        // Les années sont déjà dans le nom de la bulle, à leur place dans la phrase.
+        <span aria-hidden="true" className={`text-xs text-ink-2 tabular-nums ${FAR_HIDDEN}`}>
+          {node.years}
+        </span>
       ) : undefined}
     </Link>
   );

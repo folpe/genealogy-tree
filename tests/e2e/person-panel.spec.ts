@@ -23,7 +23,7 @@ test('un tap ouvre la fiche à côté de l’arbre ; on passe de fiche en fiche'
   await expect(luc).toContainText('Dans ta lignée : tu modifies directement.');
   // L'arbre reste en place derrière (sur mobile, la feuille modale le masque aux
   // lecteurs d'écran : on le cherche dans la page, pas dans l'arbre d'accessibilité).
-  await expect(page.locator('[role="treeitem"][aria-label$="c’est toi"]')).toHaveCount(1);
+  await expect(page.locator('[data-person="hugo"]')).toHaveCount(1);
 
   await luc.getByRole('link', { name: 'Paul Marchand' }).click();
   await expect(page).toHaveURL(/[?&]fiche=paul/);

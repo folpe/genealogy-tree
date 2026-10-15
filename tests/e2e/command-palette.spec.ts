@@ -47,7 +47,7 @@ test('⌘K hors de l’arbre, puis retour de la fiche complète : centré sur la
   // Isabelle n'est pas dans le sablier de Hugo : toute la famille, fiche ouverte.
   await expect(page).toHaveURL(/\/tree\?view=all&fiche=isabelle$/);
   await settled(page);
-  const isabelle = page.locator('[role="treeitem"][aria-label^="Isabelle"]');
+  const isabelle = page.locator('[data-person="isabelle"]');
   if (info.project.name !== 'mobile') await expect(isabelle).toBeInViewport();
 
   await page.getByRole('link', { name: 'Fiche complète' }).click();

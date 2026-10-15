@@ -358,18 +358,22 @@ export function EditableRow({
         <button
           type="button"
           onClick={() => e.setEditing(true)}
-          // Une note peut être longue : son nom reste court, le texte la décrit.
-          aria-label={
-            spec.kind === 'note' && display
-              ? `${label}, modifier`
-              : `${label} : ${display ?? 'à compléter'}, modifier`
-          }
+          // Nommé par son contenu (WCAG 2.5.3) : « Réside à : Toulouse, modifier ». Une
+          // note peut être longue : son nom reste « Note, modifier », le texte la décrit.
           aria-describedby={spec.kind === 'note' && display ? `${id}-value` : undefined}
           className={`group flex w-full gap-4 py-3.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${spec.kind === 'note' ? 'flex-col gap-1.5' : 'items-baseline justify-between'}`}
         >
-          <span className="shrink-0 text-sm text-ink-2">{label}</span>
+          <span className="sr-only">
+            {spec.kind === 'note' && display
+              ? `${label}, modifier`
+              : `${label} : ${display ?? 'à compléter'}, modifier`}
+          </span>
+          <span aria-hidden="true" className="shrink-0 text-sm text-ink-2">
+            {label}
+          </span>
           <span
             id={`${id}-value`}
+            aria-hidden="true"
             className={`min-w-0 [overflow-wrap:anywhere] decoration-line underline-offset-4 group-hover:underline ${spec.kind === 'note' ? 'whitespace-pre-line text-sm leading-relaxed' : 'text-right text-[15px]'} ${display ? 'text-ink' : 'text-ink-2'}`}
           >
             {display ?? 'À compléter'}

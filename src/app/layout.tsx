@@ -43,9 +43,8 @@ export async function generateViewport(): Promise<Viewport> {
   return {
     width: 'device-width',
     initialScale: 1,
-    maximumScale: 1,
-    // ADR 07 : l'arbre gère lui-même le pincement.
-    userScalable: false,
+    // Le zoom du navigateur reste permis (WCAG 1.4.4, DECISIONS 17) : le canevas de
+    // l'arbre le bloque lui-même (`touch-none`) et garde son propre pincement.
     // Les marges sûres d'iOS (encoche, barre d'accueil) deviennent lisibles en CSS.
     viewportFit: 'cover',
     themeColor: themeColor(await readTheme()),

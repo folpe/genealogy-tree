@@ -80,7 +80,7 @@ test('au clavier : Maj + F10 sur la bulle, Échap rend le focus à la bulle', as
   test.skip(info.project.name === 'mobile', 'Clavier : sur ordinateur.');
   await signIn(page, 'hugo@famille.test');
   await openTree(page, '/tree');
-  const me = page.locator('[role="treeitem"][aria-label$="c’est toi"]');
+  const me = page.locator('[data-person="hugo"]');
   await me.focus();
   await expect(me).toHaveAttribute('aria-keyshortcuts', 'Shift+F10');
   await page.keyboard.press('Shift+F10');
