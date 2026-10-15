@@ -139,3 +139,34 @@ test('un pli fait sans bouger l’arbre tient sur deux allers-retours vers une f
     await expect(page.getByRole('treeitem', { name: /^Hugo Marchand/ })).toHaveCount(0);
   }
 });
+
+// Entrée de l'arbre (plan phase 5, lot 3) : au premier affichage de l'onglet, il pousse
+// génération par génération ; au retour d'une fiche, il est déjà là.
+const growing = () =>
+  [...document.querySelectorAll<HTMLElement>('[data-person]')].some(
+    (bubble) => bubble.style.opacity !== '' || bubble.style.transform !== '',
+  );
+
+test('l’arbre pousse au premier affichage, pas au retour d’une fiche', async ({ page }) => {
+  await signIn(page, 'hugo@famille.test');
+  await page.waitForFunction(growing);
+  await expect.poll(() => page.evaluate(growing)).toBe(false);
+  await expect(page.getByRole('treeitem', { name: /c’est toi$/ })).toBeInViewport();
+
+  await page.goto('/people/luc');
+  await page.getByRole('link', { name: 'Retour à l’arbre' }).click();
+  await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+  expect(await page.evaluate(growing)).toBe(false);
+});
+
+test('avec le mouvement réduit, l’arbre arrive en simple fondu', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await signIn(page, 'hugo@famille.test');
+  await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+  const scaled = () =>
+    [...document.querySelectorAll<HTMLElement>('[data-person]')].some(
+      (bubble) => bubble.style.transform !== '',
+    );
+  expect(await page.evaluate(scaled)).toBe(false);
+  await expect.poll(() => page.evaluate(growing)).toBe(false);
+});

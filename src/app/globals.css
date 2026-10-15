@@ -131,3 +131,20 @@
     opacity: 0;
   }
 }
+
+/*
+ * Premier affichage de l'arbre dans l'onglet (TREE_ENTRY_SCRIPT) : bulles, traits et
+ * poignées attendent leur entrée (src/motion/entry.ts), qui retire l'attribut. Si elle ne
+ * vient pas (script en échec), ils se montrent d'eux-mêmes après un court délai.
+ */
+:root[data-tree-entry] :is([data-person], [data-link], [data-branch]) {
+  opacity: 0;
+  /* Même délai que TREE_ENTRY_FALLBACK_MS. */
+  animation: tree-entry-fallback 0s 2.5s forwards;
+}
+
+@keyframes tree-entry-fallback {
+  to {
+    opacity: 1;
+  }
+}

@@ -24,16 +24,23 @@ import {
   VIRTUALIZE_ABOVE,
   visibleWorld,
 } from '@/lib/tree/tree.camera';
+import { entryWaves } from '@/lib/tree/tree.entry';
 import { recallCamera, rememberCamera, type TreeMemory } from '@/lib/tree/tree.memory';
 import { DEFAULT_METRICS } from '@/lib/tree/tree.metrics';
 import type { PathHighlight } from '@/lib/tree/tree.path';
 import type { TreeLink } from '@/lib/tree/tree.routes';
 import type { CameraController } from '@/motion/camera';
+import { animateTreeEntry } from '@/motion/entry';
 import { animatePath } from '@/motion/path';
 import type { DisplayedGraph } from '@/server/family/family.display';
 import { PersonBubble } from './person-bubble';
 import type { BranchHandle, TreeDrawing, TreeNode } from './tree-drawing';
-import { readTreeMemory, writeTreeMemory } from './tree-memory.storage';
+import {
+  readTreeMemory,
+  TREE_ENTRY_ATTRIBUTE,
+  TREE_ENTRY_FALLBACK_MS,
+  writeTreeMemory,
+} from './tree-memory.storage';
 import { TreeMinimap } from './tree-minimap';
 import { QuickMenu, useQuickPress } from './tree-quick-menu';
 import { useFoldedTree } from './use-folded-tree';
@@ -291,6 +298,7 @@ const BranchToggle = memo(function BranchToggle({
     <button
       type="button"
       tabIndex={-1}
+      data-branch={branch.id}
       aria-expanded={!folded}
       aria-label={
         folded
@@ -314,6 +322,9 @@ const BranchToggle = memo(function BranchToggle({
 /** Marge d'écran sous laquelle une bulle prise au clavier fait bouger la caméra. */
 const REVEAL_MARGIN = 80;
 const ZOOM_STEP = 1.4;
+
+/** Marge avant le repli de l'entrée : la règle CSS s'applique un peu après le chargement. */
+const ENTRY_LATE_MARGIN_MS = 300;
 
 /** Colonne des boutons de caméra, marge comprise (46 px + `right-4`) : un cadrage l'évite. */
 const CONTROLS_WIDTH = 46 + 16;
@@ -465,6 +476,24 @@ export function FamilyTree({
   const camera = useTreeCamera({ viewport, layer, content, start, restore, onSettle });
   const nodesById = useRef(byId);
   nodesById.current = byId;
+  // Premier affichage de l'arbre dans l'onglet (marqué avant l'affichage, voir
+  // TREE_ENTRY_SCRIPT) : il pousse. Un retour d'une fiche le retrouve tel quel.
+  const grown = useRef(false);
+  const drawing = useRef(fold.drawing);
+  drawing.current = fold.drawing;
+  useLayoutEffect(() => {
+    if (!camera || grown.current) return;
+    grown.current = true;
+    const root = document.documentElement;
+    if (!root.hasAttribute(TREE_ENTRY_ATTRIBUTE)) return;
+    // Rendu à GSAP dans la même tâche : aucune image entre les deux.
+    root.removeAttribute(TREE_ENTRY_ATTRIBUTE);
+    // Hydratation tardive : le repli a déjà montré l'arbre, on ne le refait pas pousser.
+    if (performance.now() > TREE_ENTRY_FALLBACK_MS - ENTRY_LATE_MARGIN_MS) return;
+    const { nodes, links, branches } = drawing.current;
+    const waves = entryWaves(nodes, links, branches);
+    return animateTreeEntry(waves, elements.current, layer.current ?? undefined);
+  }, [camera]);
   // Une fiche ouverte ensuite (recherche) : la caméra va à sa bulle si elle n'est pas
   // déjà bien à l'écran. Un tap sur une bulle visible ne fait donc rien bouger.
   useEffect(() => {
