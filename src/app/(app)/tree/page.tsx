@@ -27,13 +27,17 @@ export default async function TreePage({
   const center = tree.persons.find((p) => p.id === tree.centerId);
 
   return (
-    <main className="flex h-full flex-col gap-3 px-4 pt-2 pb-4 md:gap-4 md:p-8 md:pt-4">
+    <main className="group/tree flex h-full flex-col gap-3 px-4 pt-2 pb-4 md:gap-4 md:p-8 md:pt-4">
       {/* Sur mobile, l'onglet « Arbre » dit déjà où l'on est : la place va au canevas. */}
       <h1 className="sr-only font-display text-[32px] leading-tight md:not-sr-only">
         L’arbre de la famille
       </h1>
       {tree.viewerPersonId ? undefined : (
-        <p role="note" className="text-sm text-ink-2">
+        <p
+          role="note"
+          // Lisible au-dessus de l'arbre plein écran du téléphone.
+          className="relative z-10 text-sm text-ink-2 max-md:rounded-[var(--radius-card)] max-md:bg-card max-md:px-4 max-md:py-3 max-md:shadow-float"
+        >
           Ton compte n’est relié à aucune fiche : l’arbre ne sait pas d’où partir. Ouvre ta fiche et
           choisis « C’est moi ».
         </p>

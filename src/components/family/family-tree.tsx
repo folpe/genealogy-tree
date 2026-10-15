@@ -328,7 +328,7 @@ function CanvasControls({
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ' +
     'disabled:opacity-40';
   return (
-    <div className="absolute right-4 bottom-4 flex flex-col items-end gap-2">
+    <div className="absolute right-4 bottom-4 flex flex-col items-end gap-2 max-md:bottom-[var(--tab-bar-space)]">
       {home ? (
         <button
           type="button"
@@ -618,7 +618,7 @@ export function FamilyTree({
     me && camera ? () => camera.flyTo(cameraOn(me, Math.max(camera.get().k, 0.75))) : undefined;
 
   return (
-    <div className="relative h-full min-h-[280px] overflow-hidden rounded-[var(--radius-panel)] border border-line">
+    <div className="relative h-full min-h-[280px] overflow-hidden rounded-[var(--radius-panel)] border border-line max-md:rounded-none max-md:border-0">
       <section
         ref={viewport}
         aria-label="Canevas de l’arbre"

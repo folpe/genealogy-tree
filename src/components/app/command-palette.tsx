@@ -144,10 +144,14 @@ function PaletteTrigger() {
     <Dialog.Trigger
       aria-label="Trouver quelqu’un"
       aria-keyshortcuts="Meta+K Control+K"
-      className="flex size-11 items-center justify-center gap-2.5 rounded-full border border-line bg-surface text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink lg:h-[46px] lg:w-auto lg:min-w-[220px] lg:justify-start lg:px-4"
+      // Sur téléphone, une barre de recherche (maquette Mobile) ; sur tablette, l'icône
+      // seule à côté des onglets ; sur grand écran, la barre avec son raccourci.
+      className="flex h-[46px] w-full min-w-0 items-center gap-2.5 rounded-full border border-line bg-surface px-4 text-ink-2 shadow-[0_6px_16px_rgb(31_28_25/0.06)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink md:size-11 md:justify-center md:px-0 md:shadow-none lg:h-[46px] lg:w-auto lg:min-w-[220px] lg:justify-start lg:px-4"
     >
       <SearchIcon />
-      <span className="hidden flex-1 text-left text-[15px] lg:inline">Trouver quelqu’un</span>
+      <span className="flex-1 truncate text-left text-[15px] md:hidden lg:inline">
+        Trouver quelqu’un
+      </span>
       <kbd className="hidden font-sans text-xs text-ink-2 lg:inline">⌘K</kbd>
     </Dialog.Trigger>
   );
