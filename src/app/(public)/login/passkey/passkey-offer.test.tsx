@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { addPasskey, replace } = vi.hoisted(() => ({ addPasskey: vi.fn(), replace: vi.fn() }));
 vi.mock('@/lib/auth-client', () => ({ authClient: { passkey: { addPasskey } } }));
-vi.mock('next/navigation', () => ({ useRouter: () => ({ replace }) }));
+vi.stubGlobal('location', { replace });
 
 import { PasskeyOffer } from './passkey-offer';
 

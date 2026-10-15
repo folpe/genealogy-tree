@@ -1,7 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { FaceIcon, Kicker, pillPrimary, pillSecondary, StepBadge } from '@/components/auth/auth-ui';
 import { RevealTitle } from '@/components/auth/reveal-title';
@@ -9,10 +7,11 @@ import { authClient } from '@/lib/auth-client';
 
 // Étape « passkey » de la maquette Connexion : juste après le lien magique, une passkey
 // sur cet appareil évite l'email la prochaine fois. Refuser ou échouer ne bloque rien.
+// L'arbre s'ouvre par un chargement complet : son entrée ne se joue qu'au premier
+// document de l'onglet (TREE_ENTRY_SCRIPT), pas après une navigation côté client.
 
 /** `firstName` peut être vide : un compte sans nom reçoit un simple « Bienvenue ». */
 export function PasskeyOffer({ firstName }: { firstName: string }) {
-  const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
@@ -25,7 +24,7 @@ export function PasskeyOffer({ firstName }: { firstName: string }) {
       setError('Pas activée cette fois. Tu pourras le faire depuis le menu de ton compte.');
       return;
     }
-    router.replace('/tree');
+    globalThis.location.replace('/tree');
   }
 
   return (
@@ -42,9 +41,9 @@ export function PasskeyOffer({ firstName }: { firstName: string }) {
       <button type="button" onClick={activate} disabled={pending} className={`${pillPrimary} mt-2`}>
         Activer Face ID ou Touch ID
       </button>
-      <Link href="/tree" replace className={pillSecondary}>
+      <a href="/tree" className={pillSecondary}>
         Plus tard
-      </Link>
+      </a>
       {error ? (
         <p role="alert" className="text-sm text-accent">
           {error}

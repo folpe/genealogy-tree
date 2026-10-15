@@ -35,5 +35,10 @@ export async function signIn(page: Page, email: string) {
   await page.getByRole('textbox', { name: 'Ton email' }).fill(email);
   await page.getByRole('button', { name: 'Recevoir mon lien' }).click();
   await page.goto(await nextMagicLink(email, before));
+  // Le lien ramène sur la proposition de passkey ; les tests la remettent à plus tard.
+  await expect(page).toHaveURL(/\/login\/passkey$/);
+  await page.getByRole('link', { name: 'Plus tard' }).click();
   await expect(page).toHaveURL(/\/tree$/);
+  // L'arbre s'ouvre par un chargement complet : attendre qu'il soit hydraté avant d'agir.
+  await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
 }

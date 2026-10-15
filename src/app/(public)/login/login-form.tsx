@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
 import {
   fieldLabel,
@@ -125,8 +124,6 @@ function EmailStep(props: {
   onSubmit: () => Promise<void>;
   footer: ReactNode;
 }) {
-  const router = useRouter();
-
   async function signInWithPasskey() {
     const result = await authClient.signIn.passkey();
     if (result?.error) {
@@ -138,7 +135,8 @@ function EmailStep(props: {
       );
       return;
     }
-    router.push('/tree');
+    // Chargement complet : l'arbre joue son entrée au premier document de l'onglet.
+    globalThis.location.assign('/tree');
   }
 
   return (

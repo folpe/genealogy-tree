@@ -11,7 +11,7 @@ const { magicLink, passkeySignIn, push } = vi.hoisted(() => ({
 vi.mock('@/lib/auth-client', () => ({
   authClient: { signIn: { magicLink, passkey: passkeySignIn } },
 }));
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
+vi.stubGlobal('location', { assign: push });
 
 import { LoginForm } from './login-form';
 
