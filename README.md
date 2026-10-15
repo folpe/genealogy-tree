@@ -4,7 +4,7 @@ Anciennement Ances-Tree (renommée le 2026-10-15, voir docs/DECISIONS.md, 15).
 
 Arbre généalogique familial. Refonte en cours vers Next.js 16, Neon et Vercel sur `famille.folpe.me` (avancement : [docs/ROADMAP.md](docs/ROADMAP.md)). L'ancienne app (Farm, Notion, Netlify) reste en ligne sur Netlify jusqu'à la bascule ; son code est dans `legacy/`.
 
-- Spec de la refonte : [docs/specs/2026-10-09-refonte-ances-tree.md](docs/specs/2026-10-09-refonte-ances-tree.md)
+- Spec de la refonte : [docs/specs/2026-10-09-refonte-racines.md](docs/specs/2026-10-09-refonte-racines.md)
 - Journal de décisions : [docs/decisions-log/](docs/decisions-log/)
 
 ## Prérequis
@@ -27,9 +27,9 @@ bun run start        # sert le build
 Postgres (Neon en ligne). En local, un Postgres jetable suffit :
 
 ```bash
-docker run -d --rm --name ances-tree-pg -e POSTGRES_PASSWORD=test -e POSTGRES_DB=ances_tree \
+docker run -d --rm --name racines-pg -e POSTGRES_PASSWORD=test -e POSTGRES_DB=racines \
   -p 54329:5432 --tmpfs /var/lib/postgresql postgres:18-alpine
-export DATABASE_URL=postgres://postgres:test@localhost:54329/ances_tree
+export DATABASE_URL=postgres://postgres:test@localhost:54329/racines
 
 bun run db:generate        # migration SQL depuis le schéma Drizzle (à relire dans la PR)
 bun run db:migrate         # applique les migrations

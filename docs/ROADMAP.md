@@ -4,7 +4,7 @@ Point d'entrée pour savoir où en est la refonte et ce qu'il reste à faire. Le
 
 | Document | Rôle |
 |---|---|
-| [Spec de la refonte](specs/2026-10-09-refonte-ances-tree.md) | Ce qu'on construit et pourquoi |
+| [Spec de la refonte](specs/2026-10-09-refonte-racines.md) | Ce qu'on construit et pourquoi |
 | [Journal de décisions](decisions-log/) | Un fichier immuable par décision ; [DECISIONS.md](DECISIONS.md) figé pour les ADR 01 à 14 |
 | [Design](design/DESIGN.md) | Tokens, composants, écrans, animations |
 | [Maquettes](design/README.md) | Canvas en ligne et copies `.dc.html` |

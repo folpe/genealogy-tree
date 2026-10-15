@@ -4,7 +4,9 @@ import { z } from 'zod';
 // dans un cookie lu par le serveur, qui pose `data-theme` sur <html> dès le premier
 // octet : pas de flash au chargement.
 
-export const THEME_COOKIE = 'ances-tree-theme';
+export const THEME_COOKIE = 'racines-theme';
+/** Nom d'avant le renommage (2026-10-15) : relu tant qu'un choix ne l'a pas remplacé. */
+export const LEGACY_THEME_COOKIE = 'ances-tree-theme';
 export const THEME_MAX_AGE_S = 60 * 60 * 24 * 365;
 
 const themeSchema = z.enum(['system', 'light', 'dark']);
@@ -13,6 +15,13 @@ export type ThemePreference = z.infer<typeof themeSchema>;
 export function parseTheme(value: unknown): ThemePreference {
   const parsed = themeSchema.safeParse(value);
   return parsed.success ? parsed.data : 'system';
+}
+
+/** Le thème du lecteur, depuis les cookies de la requête (l'ancien nom en repli). */
+export function readThemeCookie(jar: {
+  get: (name: string) => { value: string } | undefined;
+}): ThemePreference {
+  return parseTheme((jar.get(THEME_COOKIE) ?? jar.get(LEGACY_THEME_COOKIE))?.value);
 }
 
 /** Valeur de `data-theme` : absente, `globals.css` suit le système. */

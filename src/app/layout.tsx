@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { connection } from 'next/server';
 import type { ReactNode } from 'react';
 import { KeyboardInset } from '@/components/app/keyboard-inset';
-import { parseTheme, THEME_COOKIE, themeAttribute, themeColor } from '@/lib/theme/theme';
+import { readThemeCookie, themeAttribute, themeColor } from '@/lib/theme/theme';
 import './globals.css';
 import { APP_NAME } from '@/lib/brand';
 
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: APP_NAME, statusBarStyle: 'default' },
 };
 
-const readTheme = async () => parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+const readTheme = async () => readThemeCookie(await cookies());
 
 export async function generateViewport(): Promise<Viewport> {
   return {

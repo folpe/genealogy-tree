@@ -1,4 +1,4 @@
-# Refonte Ances-Tree v2
+# Refonte Racines (ex Ances-Tree) v2
 
 - **Date :** 2026-10-09 (révisée le même jour : modèle de droits par proximité, vues Frise et Carte, Récits)
 - **Statut :** spec validée sur le principe, implémentation non démarrée

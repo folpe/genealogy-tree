@@ -11,29 +11,11 @@ import { requestOpenFiche } from '../family/open-fiche';
 import { isDeceased, personInitials } from '../family/person.helper';
 import { PersonBubble } from '../family/person-bubble';
 import { type PaletteItem, paletteItems, pushRecent, recentItems } from './command-palette.helper';
+import { readRecent, writeRecent } from './recent.storage';
 
 // « Trouver quelqu'un » (plan phase 5, lot 5) : ⌘K ou Ctrl+K partout, ou le bouton de
 // l'en-tête. L'annuaire (déjà filtré par la policy) se charge à la première ouverture,
 // puis la recherche tourne dans le navigateur. Les récents restent sur l'appareil.
-
-const RECENT_KEY = 'ances-tree:recent';
-
-function readRecent(): string[] {
-  try {
-    const value: unknown = JSON.parse(window.localStorage.getItem(RECENT_KEY) ?? '[]');
-    return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeRecent(ids: string[]) {
-  try {
-    window.localStorage.setItem(RECENT_KEY, JSON.stringify(ids));
-  } catch {
-    // Stockage refusé : on perd seulement la liste des récents.
-  }
-}
 
 type Load =
   | { state: 'idle' | 'loading' | 'error' }

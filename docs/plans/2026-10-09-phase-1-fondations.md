@@ -1,7 +1,7 @@
 # Phase 1 : fondations
 
 - **Statut :** terminée le 2026-10-09, branche `chore/phase-1-fondations`
-- **Spec :** [section 17](../specs/2026-10-09-refonte-ances-tree.md#17-feuille-de-route)
+- **Spec :** [section 17](../specs/2026-10-09-refonte-racines.md#17-feuille-de-route)
 - **Sortie attendue :** CI verte sur l'app actuelle (Farm, React 18, Netlify), avec l'outillage de void-starter.
 
 ## Fait

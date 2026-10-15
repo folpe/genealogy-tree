@@ -1,7 +1,7 @@
 # Phase 5 : design system, thèmes et animations
 
 - **Date :** 2026-10-09
-- **Spec :** [refonte Ances-Tree](../specs/2026-10-09-refonte-ances-tree.md), sections 9, 10 (socle et "Quel est notre lien ?"), 12, 14
+- **Spec :** [refonte Racines](../specs/2026-10-09-refonte-racines.md), sections 9, 10 (socle et "Quel est notre lien ?"), 12, 14
 - **Visuels :** [DESIGN.md](../design/DESIGN.md) (source de vérité des tokens et composants), maquettes `docs/design/maquettes/` : `Arbre`, `ArbreSombre`, `Connexion`, `MobileAlbum`, `DirAlbum`, `DirVeillee`
 - **Statut :** en cours
 

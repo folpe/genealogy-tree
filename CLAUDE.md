@@ -1,4 +1,4 @@
-# Racines (ex Ances-Tree)
+# Racines
 
 <!-- void-machine:begin -->
 
@@ -40,7 +40,7 @@ Arbre généalogique familial en refonte : app actuelle Farm + React 18 + Notion
 ## Avant de travailler
 
 1. Lire [docs/ROADMAP.md](docs/ROADMAP.md) pour savoir quelle phase est en cours, puis le plan de cette phase dans `docs/plans/`.
-2. Référence fonctionnelle : [docs/specs/2026-10-09-refonte-ances-tree.md](docs/specs/2026-10-09-refonte-ances-tree.md). Référence visuelle : [docs/design/DESIGN.md](docs/design/DESIGN.md) et les maquettes `docs/design/maquettes/`.
+2. Référence fonctionnelle : [docs/specs/2026-10-09-refonte-racines.md](docs/specs/2026-10-09-refonte-racines.md). Référence visuelle : [docs/design/DESIGN.md](docs/design/DESIGN.md) et les maquettes `docs/design/maquettes/`.
 3. Décisions structurantes : [docs/DECISIONS.md](docs/DECISIONS.md), en ajout uniquement.
 
 ## Conventions

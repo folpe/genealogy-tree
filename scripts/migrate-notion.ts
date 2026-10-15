@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -30,13 +30,19 @@ import { geocodePlaces, pickPlace } from '../src/server/places/places.service';
 //   bun scripts/migrate-notion.ts geocode --target main [--dry-run] [--confirm-production]
 //   bun scripts/migrate-notion.ts geocode-pick --target main --label <libellé> --ref <réf> --confirm-production
 //
-// Secrets lus dans le trousseau macOS (compte `ances-tree`) : jeton Notion, base,
-// clé de chiffrement de l'export, jeton du store Blob. L'export et le rapport
-// vivent hors du dépôt.
+// Secrets lus dans le trousseau macOS (compte `racines`, sinon `ances-tree`, son nom
+// d'avant le renommage) : jeton Notion, base, clé de chiffrement de l'export, jeton du
+// store Blob. L'export et le rapport vivent hors du dépôt. La base et le rôle Neon
+// (`ances_tree`, `ances_tree_app`) gardent leur nom : ce sont ceux de la production.
 
 type ExportedPhoto = PhotoOutcome & { sha256?: string; mime?: string; bytes?: number };
 
-const EXPORT_ROOT = join(homedir(), '.local/share/ances-tree/notion-exports');
+/** Les exports déjà faits restent sous l'ancien nom tant que le nouveau dossier n'existe pas. */
+const EXPORT_ROOT =
+  [
+    join(homedir(), '.local/share/racines/notion-exports'),
+    join(homedir(), '.local/share/ances-tree/notion-exports'),
+  ].find(existsSync) ?? join(homedir(), '.local/share/racines/notion-exports');
 const NEON_PROJECT_ID = 'frosty-feather-00901702';
 const MAX_PAGES = 5_000;
 const PHOTO_TIMEOUT_MS = 30_000;
@@ -49,17 +55,22 @@ const EXTENSIONS: Record<string, string> = {
   'image/gif': 'gif',
 };
 
-function secret(service: string): string {
-  return execFileSync('security', [
-    'find-generic-password',
-    '-a',
-    'ances-tree',
-    '-s',
-    service,
-    '-w',
-  ])
-    .toString()
-    .trim();
+/** Un secret du trousseau, par son nom court (`notion-token`...), au nom actuel ou ancien. */
+function secret(name: string): string {
+  for (const prefix of ['racines', 'ances-tree']) {
+    try {
+      return execFileSync(
+        'security',
+        ['find-generic-password', '-a', prefix, '-s', `${prefix}-${name}`, '-w'],
+        { stdio: ['ignore', 'pipe', 'ignore'] },
+      )
+        .toString()
+        .trim();
+    } catch {
+      // Absent sous ce nom : on essaie le suivant.
+    }
+  }
+  throw new Error(`Secret introuvable dans le trousseau : racines-${name}`);
 }
 
 function writePrivate(path: string, content: Buffer | string) {
@@ -77,9 +88,9 @@ async function downloadPhoto(url: string): Promise<{ bytes: Buffer; mime: string
 }
 
 async function extract() {
-  const notion = new Client({ auth: secret('ances-tree-notion-token') });
-  const databaseId = secret('ances-tree-notion-database');
-  const key = secret('ances-tree-export-key');
+  const notion = new Client({ auth: secret('notion-token') });
+  const databaseId = secret('notion-database');
+  const key = secret('export-key');
   const exportedAt = new Date().toISOString();
   const dir = join(EXPORT_ROOT, exportedAt.replace(/[:.]/g, '-'));
   mkdirSync(join(dir, 'photos'), { recursive: true, mode: 0o700 });
@@ -136,10 +147,7 @@ async function extract() {
 }
 
 function readExport(dir: string) {
-  const clear = decryptExport(
-    readFileSync(join(dir, 'export.json.enc')),
-    secret('ances-tree-export-key'),
-  );
+  const clear = decryptExport(readFileSync(join(dir, 'export.json.enc')), secret('export-key'));
   const bundle: { exportedAt: string; pages: unknown[]; photos: ExportedPhoto[] } = JSON.parse(
     clear.toString('utf8'),
   );
@@ -219,7 +227,7 @@ async function load(dir: string, target: string, options: { dryRun: boolean; con
 async function loadPhotos(dir: string, target: string, options: { confirmed: boolean }) {
   guardProduction(target, { dryRun: false, confirmed: options.confirmed });
   const { bundle } = readExport(dir);
-  const key = secret('ances-tree-export-key');
+  const key = secret('export-key');
   const photos: NotionPhoto[] = bundle.photos.flatMap((p) => {
     if (!p.ok || !p.sha256 || !p.mime) return [];
     const file = join(dir, 'photos', `${p.sha256}.${EXTENSIONS[p.mime]}.enc`);
@@ -227,7 +235,7 @@ async function loadPhotos(dir: string, target: string, options: { confirmed: boo
   });
   const { db, close } = connect(target);
   try {
-    const blob = vercelBlobStore({ token: secret('ances-tree-blob-token') });
+    const blob = vercelBlobStore({ token: secret('blob-token') });
     const result = await loadNotionPhotos({ db, blob }, photos);
     console.log(`Photos sur ${target} :`, {
       stored: result.stored,
@@ -243,7 +251,7 @@ async function loadPhotos(dir: string, target: string, options: { confirmed: boo
 function geocoders() {
   const nominatim = nominatimGeocoder({
     fetch,
-    userAgent: 'ances-tree (+https://famille.folpe.me)',
+    userAgent: 'racines (+https://famille.folpe.me)',
     now: () => Date.now(),
     sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   });

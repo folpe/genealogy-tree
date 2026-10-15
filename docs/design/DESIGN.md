@@ -3,7 +3,7 @@
 Source de vérité visuelle pour les phases 4 à 9. Toute valeur ci-dessous est extraite des maquettes validées par Folpe le 2026-10-09 (`docs/design/maquettes/`). En cas de conflit entre ce document et une maquette, la maquette fait foi pour le rendu, ce document pour les règles.
 
 - Canvas en ligne (version vivante, interactive) : https://claude.ai/artifact/72o5WKvd2GawZpMCfdKKD2
-- Spec produit : [../specs/2026-10-09-refonte-ances-tree.md](../specs/2026-10-09-refonte-ances-tree.md) (sections 6 droits, 8 vues, 9 animations, 12 direction visuelle)
+- Spec produit : [../specs/2026-10-09-refonte-racines.md](../specs/2026-10-09-refonte-racines.md) (sections 6 droits, 8 vues, 9 animations, 12 direction visuelle)
 - Décisions : [../DECISIONS.md](../DECISIONS.md) (ADR 05, 06, 07, 08, 11, 12)
 
 ## 1. Direction

@@ -21,12 +21,12 @@ describe('resolveAppUrl', () => {
   it('en preview, l’URL stable de la branche plutôt que celle du déploiement', () => {
     expect(
       resolveAppUrl({
-        VERCEL_BRANCH_URL: 'ances-tree-git-feat-voidcorp.vercel.app',
-        VERCEL_URL: 'ances-tree-abc123-voidcorp.vercel.app',
+        VERCEL_BRANCH_URL: 'racines-git-feat-voidcorp.vercel.app',
+        VERCEL_URL: 'racines-abc123-voidcorp.vercel.app',
       }),
-    ).toBe('https://ances-tree-git-feat-voidcorp.vercel.app');
-    expect(resolveAppUrl({ VERCEL_URL: 'ances-tree-abc123-voidcorp.vercel.app' })).toBe(
-      'https://ances-tree-abc123-voidcorp.vercel.app',
+    ).toBe('https://racines-git-feat-voidcorp.vercel.app');
+    expect(resolveAppUrl({ VERCEL_URL: 'racines-abc123-voidcorp.vercel.app' })).toBe(
+      'https://racines-abc123-voidcorp.vercel.app',
     );
   });
 

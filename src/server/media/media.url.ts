@@ -11,7 +11,11 @@ export type MediaWidth = (typeof MEDIA_WIDTHS)[number];
 
 const WINDOW_SECONDS = 3_600;
 
-/** Clé dédiée, dérivée du secret d'auth : pas de variable d'environnement de plus. */
+/**
+ * Clé dédiée, dérivée du secret d'auth : pas de variable d'environnement de plus. Le
+ * libellé de dérivation garde l'ancien nom de l'app : c'est une constante
+ * cryptographique, pas un nom affiché, et le changer invaliderait les URLs signées.
+ */
 export function mediaUrlKey(authSecret: string): Buffer {
   return Buffer.from(hkdfSync('sha256', authSecret, '', 'ances-tree/media-url', 32));
 }
