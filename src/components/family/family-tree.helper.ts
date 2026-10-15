@@ -32,6 +32,6 @@ function describePeople(tree: TreeForViewer): Record<string, PersonText> {
 }
 
 export async function drawTree(tree: TreeForViewer, elk: ElkLike): Promise<TreeDrawing> {
-  const layout = await computeTreeLayout(tree.drawn, elk);
+  const layout = await computeTreeLayout(tree.drawn, elk, { focusId: tree.centerId });
   return assembleDrawing(tree.drawn, layout, describePeople(tree));
 }

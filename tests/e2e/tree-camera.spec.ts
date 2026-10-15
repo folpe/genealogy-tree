@@ -230,18 +230,26 @@ test('un tap pendant un vol arrête la caméra et finit le mouvement', async ({ 
   await page.getByRole('button', { name: 'Me retrouver' }).click();
   // En plein vol, un tap sur le fond du canevas, loin de toute bulle et des boutons.
   await page.waitForTimeout(120);
-  const empty = await canvas.evaluate((el) => {
+  // Le point vide est choisi et touché dans le même instant, depuis la page : en plein
+  // vol, une bulle passerait sous le point entre la mesure et un clic envoyé ensuite.
+  await canvas.evaluate((el) => {
     const box = el.getBoundingClientRect();
     for (let y = 16; y < box.height / 2; y += 16) {
       for (let x = 16; x < box.width / 2; x += 16) {
-        const hit = document.elementFromPoint(box.left + x, box.top + y);
+        const clientX = box.left + x;
+        const clientY = box.top + y;
+        const hit = document.elementFromPoint(clientX, clientY);
         // L'en-tête et les vues flottent sur l'arbre plein écran du téléphone.
-        if (hit && el.contains(hit) && !hit.closest('a, button')) return { x, y };
+        if (!hit || !el.contains(hit) || hit.closest('a, button')) continue;
+        const touch = { bubbles: true, clientX, clientY, pointerId: 7, pointerType: 'touch' };
+        hit.dispatchEvent(new PointerEvent('pointerdown', { ...touch, isPrimary: true }));
+        hit.dispatchEvent(new PointerEvent('pointerup', { ...touch, isPrimary: true }));
+        hit.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX, clientY }));
+        return;
       }
     }
     throw new Error('aucun point vide dans le canevas');
   });
-  await canvas.click({ position: empty });
   await expect(page).toHaveURL(/\/tree\?view=all$/);
   await settled(page);
   await expect(layer).toHaveCSS('will-change', 'auto');

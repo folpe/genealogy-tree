@@ -132,20 +132,22 @@ describe('lisibilité du placement', () => {
   ] satisfies [[number, number], [number, number]][]) {
     it(`deux familles reliées par un couple : aucun croisement (${uncles} oncles, ${cousins} cousins)`, async () => {
       const drawn = selectDisplayedGraph(twoFamilies(uncles, cousins), { focusId: 'moi' });
-      expect(countCrossings(drawn, await computeTreeLayout(drawn, elk))).toBe(0);
+      const layout = await computeTreeLayout(drawn, elk, { focusId: 'moi' });
+      expect(countCrossings(drawn, layout)).toBe(0);
     });
   }
 
   for (const focus of ['alex', 'bea', 'cous1']) {
     it(`un couple dont un seul côté a sa famille : aucun croisement (vu par ${focus})`, async () => {
       const drawn = selectDisplayedGraph(couple, { focusId: focus });
-      const layout = await computeTreeLayout(drawn, elk);
+      const layout = await computeTreeLayout(drawn, elk, { focusId: focus });
       expect(countCrossings(drawn, layout)).toBe(0);
     });
   }
 
   it('la famille des maquettes reste sans croisement', async () => {
     const drawn = selectDisplayedGraph(marchandFamily, { focusId: 'hugo' });
-    expect(countCrossings(drawn, await computeTreeLayout(drawn, elk))).toBe(0);
+    const layout = await computeTreeLayout(drawn, elk, { focusId: 'hugo' });
+    expect(countCrossings(drawn, layout)).toBe(0);
   });
 });
