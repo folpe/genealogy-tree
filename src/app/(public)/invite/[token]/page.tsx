@@ -26,7 +26,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
           }}
         />
       ) : (
-        <div className="step-in flex flex-col gap-[22px]">
+        <div className="flex flex-col gap-[22px]">
           <div className="flex flex-col gap-2.5">
             <Kicker>Invitation</Kicker>
             <RevealTitle text="Ce lien n’est plus valable" />

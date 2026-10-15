@@ -102,7 +102,7 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 - [ ] Écrans Connexion, Arbre et Mobile validés par Folpe côte à côte avec les maquettes, clair et sombre.
 - [ ] Contraste AA sur tout le texte, focus visible partout, navigation clavier complète de la fiche et de ⌘K.
 - [ ] Aucune animation sous `prefers-reduced-motion` hormis des fondus courts.
-- [ ] GSAP absent du bundle initial de `/login`, LCP < 2,5 s en 4G simulée.
+- [x] GSAP absent du bundle initial de `/login`, LCP < 2,5 s en 4G simulée. Mesuré le 2026-10-15 (build de production, 4G lente 150 ms / 1,6 Mb/s, processeur ralenti 4 fois) : 2,4 s avant correction, le titre animé faisant le LCP ; 0,9 s après, l'étape du chargement n'entrant plus en fondu. Garde-fou e2e dans `auth.spec.ts`.
 - [ ] Aucun flash de thème au chargement.
 
 ## Risques

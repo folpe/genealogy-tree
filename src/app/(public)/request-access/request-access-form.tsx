@@ -47,7 +47,7 @@ export function RequestAccessForm({ action }: { action: Action }) {
   }
 
   return (
-    <div className="step-in flex flex-col gap-[18px]">
+    <div className="flex flex-col gap-[18px]">
       <div className="flex flex-col gap-2.5">
         <Kicker>Demande d’accès</Kicker>
         <RevealTitle text="Rejoins la famille" />

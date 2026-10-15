@@ -28,7 +28,7 @@ export function PasskeyOffer({ firstName }: { firstName: string }) {
   }
 
   return (
-    <div className="step-in flex flex-col items-center gap-[18px] text-center">
+    <div className="flex flex-col items-center gap-[18px] text-center">
       <StepBadge tone="neutral">
         <FaceIcon />
       </StepBadge>
