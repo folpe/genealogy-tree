@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { DisplayedGraph } from '../../server/family/family.display';
 import { countCrossings } from './tree.crossings';
 import { DEFAULT_METRICS, type LayoutMetrics, type Point } from './tree.metrics';
+import { familyOrder } from './tree.order';
 
 // Placement de l'arbre (plan phase 4, lot 2). ELK (algorithme `layered`) ne connaît
 // pas les couples : laissé seul, il éloigne des partenaires et ajoute une couche par
@@ -135,18 +136,28 @@ const emptyLayout = (): TreeLayout => ({
   height: 0,
 });
 
+export type LayoutOptions = {
+  /**
+   * Personne au centre de la vue : l'arbre se range autour d'elle, famille par famille
+   * (tree.order.ts). Sans elle, ELK range librement chaque rangée.
+   */
+  focusId?: string | undefined;
+  metrics?: LayoutMetrics;
+};
+
 export async function computeTreeLayout(
   drawn: DisplayedGraph,
   elk: ElkLike,
-  metrics: LayoutMetrics = DEFAULT_METRICS,
+  { focusId, metrics = DEFAULT_METRICS }: LayoutOptions = {},
 ): Promise<TreeLayout> {
   if (drawn.personIds.length === 0) return emptyLayout();
   // La minimisation des croisements d'ELK est une heuristique qui peut s'arrêter sur
   // un optimum local selon sa graine : on en essaie quelques-unes et on garde le
   // placement le plus lisible, en s'arrêtant au premier sans croisement.
   let best: { layout: TreeLayout; crossings: number } | undefined;
-  for (const seed of SEEDS) {
-    const layout = await placeOnce(drawn, elk, metrics, seed);
+  // Ordre imposé : ELK ne minimise plus rien, la graine n'y change rien, une passe suffit.
+  for (const seed of focusId ? SEEDS.slice(0, 1) : SEEDS) {
+    const layout = await placeOnce(drawn, elk, { metrics, focusId, seed });
     const crossings = countCrossings(drawn, layout);
     if (!best || crossings < best.crossings) best = { layout, crossings };
     if (crossings === 0) break;
@@ -157,19 +168,16 @@ export async function computeTreeLayout(
 /** Graines essayées, dans l'ordre ; la première suffit presque toujours. */
 const SEEDS = [1, 2, 3] as const;
 
-async function placeOnce(
-  drawn: DisplayedGraph,
-  elk: ElkLike,
-  metrics: LayoutMetrics,
-  seed: number,
-): Promise<TreeLayout> {
+type Pass = { metrics: LayoutMetrics; focusId: string | undefined; seed: number };
+
+async function placeOnce(drawn: DisplayedGraph, elk: ElkLike, pass: Pass): Promise<TreeLayout> {
   const { blocks, detached } = buildBlocks(drawn);
-  const first = await placeBlocks(drawn, blocks, detached, elk, metrics, seed);
+  const first = await placeBlocks(drawn, blocks, detached, elk, pass);
   // ELK range les blocs mais ne retourne pas un couple : chaque partenaire passe du
   // côté de sa famille d'origine, puis on replace (retour de Folpe, 2026-10-13).
   if (!orientCouples(drawn, blocks, first)) return first;
   // Le second passage peut ranger les blocs autrement : on garde le plus lisible.
-  const turned = await placeBlocks(drawn, blocks, detached, elk, metrics, seed);
+  const turned = await placeBlocks(drawn, blocks, detached, elk, pass);
   return countCrossings(drawn, turned) <= countCrossings(drawn, first) ? turned : first;
 }
 
@@ -219,13 +227,56 @@ function orientCouples(drawn: DisplayedGraph, blocks: Block[], layout: TreeLayou
   return changed;
 }
 
+/** Options d'ELK ; `ordered` : l'ordre généalogique des blocs est imposé (tree.order.ts). */
+function elkOptions(metrics: LayoutMetrics, seed: number, ordered: boolean) {
+  return {
+    'elk.algorithm': 'layered',
+    'elk.direction': 'DOWN',
+    'elk.layered.layering.strategy': 'NETWORK_SIMPLEX',
+    'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
+    // Croisements (retour de Folpe, 2026-10-13) : deux familles reliées par un couple
+    // laissaient des cousins s'intercaler. Plus de passes de minimisation et des
+    // échanges gloutons des deux côtés : 0 croisement sur la famille réelle, en moins
+    // de temps qu'avant (65 ms contre 91 pour 112 fiches).
+    'elk.layered.thoroughness': '50',
+    'elk.layered.crossingMinimization.greedySwitch.type': 'TWO_SIDED',
+    'elk.randomSeed': String(seed),
+    'elk.spacing.nodeNode': String(metrics.blockGap),
+    'elk.layered.spacing.nodeNodeBetweenLayers': String(metrics.layerGap),
+    'elk.separateConnectedComponents': 'true',
+    'elk.padding': '[top=0,left=0,bottom=0,right=0]',
+    // Familles d'un tenant (retour de Folpe, 2026-10-15) : l'ordre généalogique des
+    // blocs est imposé à chaque rangée, ELK ne fait que les espacer.
+    ...(ordered
+      ? {
+          'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
+          'elk.layered.crossingMinimization.strategy': 'NONE',
+          'elk.layered.crossingMinimization.greedySwitch.type': 'OFF',
+          'elk.layered.crossingMinimization.forceNodeModelOrder': 'true',
+        }
+      : {}),
+  };
+}
+
+/** Les blocs dans l'ordre généalogique autour de la personne au centre, s'il y en a une. */
+function inFamilyOrder(drawn: DisplayedGraph, blocks: Block[], focusId: string | undefined) {
+  if (!focusId) return blocks;
+  const persons = (block: Block) => block.slots.flatMap((s) => (s.kind === 'person' ? [s.id] : []));
+  const order = familyOrder(
+    drawn,
+    blocks.map((b) => ({ id: b.id, persons: persons(b) })),
+    focusId,
+  );
+  const rank = new Map(order.map((id, index) => [id, index]));
+  return [...blocks].sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
+}
+
 async function placeBlocks(
   drawn: DisplayedGraph,
   blocks: Block[],
   detached: Set<string>,
   elk: ElkLike,
-  metrics: LayoutMetrics,
-  seed: number,
+  { metrics, focusId, seed }: Pass,
 ): Promise<TreeLayout> {
   const slot = metrics.nodeWidth + metrics.gap;
   const slotX = (index: number) => index * slot + metrics.nodeWidth / 2;
@@ -297,24 +348,8 @@ async function placeBlocks(
   const result = elkResultSchema.parse(
     await elk.layout({
       id: 'arbre',
-      layoutOptions: {
-        'elk.algorithm': 'layered',
-        'elk.direction': 'DOWN',
-        'elk.layered.layering.strategy': 'NETWORK_SIMPLEX',
-        'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
-        // Croisements (retour de Folpe, 2026-10-13) : deux familles reliées par un couple
-        // laissaient des cousins s'intercaler. Plus de passes de minimisation et des
-        // échanges gloutons des deux côtés : 0 croisement sur la famille réelle, en moins
-        // de temps qu'avant (65 ms contre 91 pour 112 fiches).
-        'elk.layered.thoroughness': '50',
-        'elk.layered.crossingMinimization.greedySwitch.type': 'TWO_SIDED',
-        'elk.randomSeed': String(seed),
-        'elk.spacing.nodeNode': String(metrics.blockGap),
-        'elk.layered.spacing.nodeNodeBetweenLayers': String(metrics.layerGap),
-        'elk.separateConnectedComponents': 'true',
-        'elk.padding': '[top=0,left=0,bottom=0,right=0]',
-      },
-      children: blocks.map((block) => ({
+      layoutOptions: elkOptions(metrics, seed, focusId !== undefined),
+      children: inFamilyOrder(drawn, blocks, focusId).map((block) => ({
         id: block.id,
         width: block.slots.length * slot - metrics.gap,
         height: metrics.nodeHeight,

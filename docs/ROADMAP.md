@@ -18,7 +18,7 @@ Point d'entrée pour savoir où en est la refonte et ce qu'il reste à faire. Le
 | 2 | [Domaine en TDD](plans/2026-10-09-phase-2-domaine.md) | Faite | Graphe, parenté, policies couverts |
 | 3 | [Socle Next, Neon, auth, migration Notion](plans/2026-10-09-phase-3-socle-next-neon.md) | Faite, bascule reportée | App en ligne sur `famille.folpe.me` avec comptes et données migrées |
 | 4 | [Moteur de rendu](plans/2026-10-09-phase-4-moteur-rendu.md) | En cours | Arbre complet et fluide |
-| 5 | [Design et animations](plans/2026-10-09-phase-5-design-animations.md) | En cours | Maquettes implémentées |
+| 5 | [Design et animations](plans/2026-10-09-phase-5-design-animations.md) | Terminée, validée par Folpe le 2026-10-16 (reste : vérifications sur iPhone réel) | Maquettes implémentées |
 | 6 | [Édition et droits](plans/2026-10-09-phase-6-edition-droits.md) | À faire | La famille contribue |
 | 7 | [Vues éventail, frise, carte](plans/2026-10-09-phase-7-vues.md) | À faire | Effet waouh |
 | 8 | [Récits](plans/2026-10-09-phase-8-recits.md) | À faire | Mémoire collectée |
