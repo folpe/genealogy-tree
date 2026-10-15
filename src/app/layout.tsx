@@ -60,6 +60,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       lang="fr"
       data-theme={themeAttribute(await readTheme())}
       className={`${fraunces.variable} ${figtree.variable}`}
+      // Le script d'entrée de l'arbre peut y poser `data-tree-entry` avant l'hydratation.
+      suppressHydrationWarning
     >
       <body>
         {children}

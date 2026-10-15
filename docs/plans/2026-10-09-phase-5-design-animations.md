@@ -48,6 +48,7 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
   - [x] `src/motion/gsap.ts` : point d'entrée unique, DrawSVG et Inertia enregistrés, mouvement réduit lu au même endroit (caméra, relayout, éventail, chemin). Flip, SplitText et Draggable s'y ajouteront avec leur premier usage ; les durées restent près de chaque animation.
 - [ ] Chargement différé de GSAP et des plugins hors du chemin critique (import dynamique après le premier rendu).
 - [ ] Animations de la spec 9 : logo dessiné et titre révélé (Connexion), arbre qui pousse génération par génération au premier chargement, liens dessinés (DrawSVG), nœud créé qui apparaît à sa place (branché en phase 6).
+  - [x] Arbre qui pousse au premier affichage de l'onglet : génération par génération, bulles en échelle et fondu, traits tracés (DrawSVG), poignées en fondu (`src/motion/entry.ts`, vagues de `tree.entry.ts`). Marqué avant l'affichage par un script sous nonce : l'arbre rendu au serveur ne clignote pas ; repli CSS s'il ne vient pas. Fondu seul avec le mouvement réduit.
 
 ### Lot 4 : fiche personne
 
