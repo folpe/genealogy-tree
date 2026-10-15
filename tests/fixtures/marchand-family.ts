@@ -147,6 +147,7 @@ export const marchandFamily: FamilyGraph = {
       gender: 'homme',
       birth: { date: exact(1987, 3, 14), place: 'Nantes' },
       residence: 'Lille',
+      notes: 'Né d’une précédente union de Luc. Il a grandi entre Nantes et Toulouse.',
     }),
     person('lea', {
       firstName: 'Léa',

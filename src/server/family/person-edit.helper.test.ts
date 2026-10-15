@@ -24,6 +24,19 @@ describe('parsePersonEdit', () => {
     });
   });
 
+  it('lit une note sur plusieurs lignes ; vide, elle s’efface', () => {
+    expect(
+      parsePersonEdit({ personId: 'luc', field: 'notes', value: ' Ligne 1\nLigne 2 ' }),
+    ).toEqual({ personId: 'luc', field: 'notes', value: 'Ligne 1\nLigne 2' });
+    expect(parsePersonEdit({ personId: 'luc', field: 'notes', value: '  ' })).toEqual({
+      personId: 'luc',
+      field: 'notes',
+    });
+    expect(() =>
+      parsePersonEdit({ personId: 'luc', field: 'notes', value: 'x'.repeat(2001) }),
+    ).toThrow(ValidationError);
+  });
+
   it('refuse un prénom vide, un genre inconnu, une date impossible', () => {
     expect(() => parsePersonEdit({ personId: 'luc', field: 'lastName', value: ' ' })).toThrow(
       ValidationError,
@@ -93,5 +106,18 @@ describe('sourcedFieldsOf', () => {
     expect(sourcedFieldsOf({ personId: 'luc', field: 'firstName', value: 'A' })).toEqual([
       'firstName',
     ]);
+  });
+});
+
+describe('note de la fiche', () => {
+  it('s’écrit et s’efface sans toucher au reste', () => {
+    const noted = applyPersonEdit(luc, {
+      personId: 'luc',
+      field: 'notes',
+      value: 'Aimait la pêche.',
+    });
+    expect(noted.notes).toBe('Aimait la pêche.');
+    expect(noted.residence).toBe('Toulouse');
+    expect(applyPersonEdit(noted, { personId: 'luc', field: 'notes' }).notes).toBeUndefined();
   });
 });

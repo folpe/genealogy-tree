@@ -21,6 +21,8 @@ const schema = z.discriminatedUnion('field', [
     value: optionalText(120),
   }),
   z.object({ personId: id, field: z.literal('gender'), value: genderSchema }),
+  // Une note garde ses retours à la ligne ; seuls les blancs des bords partent.
+  z.object({ personId: id, field: z.literal('notes'), value: optionalText(2000) }),
   // La date se lit à part, champ par champ (`date-fields.helper`).
   z.object({ personId: id, field: z.literal('birth'), place: optionalText(120) }),
   z.object({
@@ -39,7 +41,11 @@ type LifeEvent = NonNullable<Person['birth']>;
 
 export type PersonEdit =
   | { personId: string; field: 'firstName' | 'lastName'; value: string }
-  | { personId: string; field: 'birthName' | 'nickname' | 'residence'; value?: string }
+  | {
+      personId: string;
+      field: 'birthName' | 'nickname' | 'residence' | 'notes';
+      value?: string;
+    }
   | { personId: string; field: 'gender'; value: Person['gender'] }
   /** `event` absent : rien de connu (naissance) ou pas décédée (décès). */
   | { personId: string; field: 'birth' | 'death'; event?: LifeEvent };
@@ -61,6 +67,7 @@ export function parsePersonEdit(raw: unknown): PersonEdit {
     case 'birthName':
     case 'nickname':
     case 'residence':
+    case 'notes':
       return edit.value === undefined
         ? { personId, field: edit.field }
         : { personId, field: edit.field, value: edit.value };
@@ -83,7 +90,7 @@ export function parsePersonEdit(raw: unknown): PersonEdit {
 /** Retire un champ facultatif de la fiche, sans toucher au reste. */
 function without(
   person: Person,
-  field: 'birthName' | 'nickname' | 'residence' | 'birth' | 'death',
+  field: 'birthName' | 'nickname' | 'residence' | 'notes' | 'birth' | 'death',
 ) {
   const copy = { ...person };
   delete copy[field];
@@ -100,6 +107,7 @@ export function applyPersonEdit(person: Person, edit: PersonEdit): Person {
     case 'birthName':
     case 'nickname':
     case 'residence':
+    case 'notes':
       return edit.value === undefined
         ? without(person, edit.field)
         : { ...person, [edit.field]: edit.value };

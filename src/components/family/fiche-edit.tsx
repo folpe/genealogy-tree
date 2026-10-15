@@ -61,8 +61,9 @@ function useEditing(personId: string, field: string, initial: Values) {
     });
   };
   const commit = async (values: Values) => {
+    // Le serveur ôte les blancs des bords : un espace ajouté seul ne change rien.
     const unchanged = Object.keys({ ...initial, ...values }).every(
-      (k) => (values[k] ?? '') === (initial[k] ?? ''),
+      (k) => (values[k] ?? '').trim() === (initial[k] ?? '').trim(),
     );
     if (unchanged) return setEditing(false);
     const failure = await save(personId, field, values);
@@ -91,7 +92,10 @@ function values(form: HTMLFormElement): Values {
     if (element instanceof HTMLInputElement && element.name) {
       out[element.name] =
         element.type === 'checkbox' ? (element.checked ? 'on' : '') : element.value;
-    } else if (element instanceof HTMLSelectElement && element.name) {
+    } else if (
+      (element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement) &&
+      element.name
+    ) {
       out[element.name] = element.value;
     }
   }
@@ -114,7 +118,7 @@ function InlineForm({
   const form = useRef<HTMLFormElement>(null); // allow-null: contrat des refs de React
   useEffect(() => {
     const first = form.current?.querySelector(
-      'input:not([type="checkbox"]):not([type="hidden"]), select',
+      'input:not([type="checkbox"]):not([type="hidden"]), select, textarea',
     );
     if (first instanceof HTMLElement) first.focus();
   }, []);
@@ -201,6 +205,8 @@ function Feedback({
 
 type FieldKind =
   | { kind: 'text'; value: string | undefined; placeholder?: string }
+  /** Texte libre sur plusieurs lignes : Entrée va à la ligne, toucher ailleurs enregistre. */
+  | { kind: 'note'; value: string | undefined }
   | { kind: 'gender'; value: string }
   | {
       kind: 'event';
@@ -240,6 +246,18 @@ function Fields({ spec, label, id }: { spec: FieldKind; label: string; id: strin
         maxLength={120}
         autoComplete="off"
         className={input}
+      />
+    );
+  }
+  if (spec.kind === 'note') {
+    return (
+      <textarea
+        name="value"
+        aria-label={label}
+        defaultValue={spec.value ?? ''}
+        rows={4}
+        maxLength={2000}
+        className="w-full min-w-0 resize-y rounded-[var(--radius-field)] border border-line bg-surface px-3.5 py-2.5 text-[15px] leading-relaxed text-ink outline-none focus-visible:ring-2 focus-visible:ring-ink disabled:opacity-60"
       />
     );
   }
@@ -340,12 +358,19 @@ export function EditableRow({
         <button
           type="button"
           onClick={() => e.setEditing(true)}
-          aria-label={`${label} : ${display ?? 'à compléter'}, modifier`}
-          className="group flex w-full items-baseline justify-between gap-4 py-3.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          // Une note peut être longue : son nom reste court, le texte la décrit.
+          aria-label={
+            spec.kind === 'note' && display
+              ? `${label}, modifier`
+              : `${label} : ${display ?? 'à compléter'}, modifier`
+          }
+          aria-describedby={spec.kind === 'note' && display ? `${id}-value` : undefined}
+          className={`group flex w-full gap-4 py-3.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${spec.kind === 'note' ? 'flex-col gap-1.5' : 'items-baseline justify-between'}`}
         >
           <span className="shrink-0 text-sm text-ink-2">{label}</span>
           <span
-            className={`min-w-0 text-right text-[15px] [overflow-wrap:anywhere] decoration-line underline-offset-4 group-hover:underline ${display ? 'text-ink' : 'text-ink-2'}`}
+            id={`${id}-value`}
+            className={`min-w-0 [overflow-wrap:anywhere] decoration-line underline-offset-4 group-hover:underline ${spec.kind === 'note' ? 'whitespace-pre-line text-sm leading-relaxed' : 'text-right text-[15px]'} ${display ? 'text-ink' : 'text-ink-2'}`}
           >
             {display ?? 'À compléter'}
           </span>

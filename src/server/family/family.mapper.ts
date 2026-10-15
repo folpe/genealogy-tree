@@ -20,7 +20,7 @@ type Row<T> = { [K in keyof T]: null extends T[K] ? T[K] | undefined : T[K] }; /
 type PersonRow = Row<
   Pick<
     typeof persons.$inferSelect,
-    'id' | 'firstName' | 'lastName' | 'birthName' | 'nickname' | 'gender' | 'visibility'
+    'id' | 'firstName' | 'lastName' | 'birthName' | 'nickname' | 'gender' | 'visibility' | 'notes'
   >
 >;
 type EventRow = Row<
@@ -140,6 +140,7 @@ export function graphToRows(graph: FamilyGraph, ids: RowIds = randomIds): Family
       nickname: p.nickname,
       gender: p.gender,
       visibility: p.visibility,
+      notes: p.notes,
     });
     const lifeEvents = [
       { kind: 'naissance', event: p.birth },
@@ -262,6 +263,7 @@ export function rowsToGraph(rows: FamilyRows): FamilyGraph {
       ...(death ? { death } : {}),
       ...(residenceLabel ? { residence: residenceLabel } : {}),
       visibility: row.visibility,
+      ...(row.notes ? { notes: row.notes } : {}),
       sourcedFields: (factsByPerson.get(row.id) ?? []).map((f) => f.field).sort(),
     };
   });

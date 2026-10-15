@@ -9,6 +9,7 @@ const luc = aPerson('luc', {
   gender: 'homme',
   birth: { date: exact(1963, 8, 21), place: 'Toulouse' },
   residence: 'Toulouse',
+  notes: 'Aimait la pêche.',
   sourcedFields: ['birth.date'],
 });
 
@@ -29,6 +30,7 @@ describe('redactPerson', () => {
       birth: { date: { precision: 'annee', year: 1963 }, place: 'Toulouse' },
     });
     expect('residence' in redacted).toBe(false);
+    expect('notes' in redacted).toBe(false);
   });
 
   it('family : garde une date déjà à l’année telle quelle', () => {

@@ -104,6 +104,24 @@ describe('PersonSheet', () => {
     expect(screen.getByRole('button', { name: 'Surnom : Lulu, modifier' })).toBeVisible();
   });
 
+  it('la note se lit en fin de fiche', () => {
+    render(<PersonSheet tree={{ ...hugo, editableIds: [] }} personId="maxime" />);
+    const note = screen.getByText(/Il a grandi entre Nantes et Toulouse/);
+    expect(note).toBeVisible();
+    expect(screen.queryByRole('button', { name: /^Note/ })).toBeNull();
+  });
+
+  it('dans sa lignée, la note se touche pour se modifier', () => {
+    render(<PersonSheet tree={hugo} personId="maxime" />);
+    const note = screen.getByRole('button', { name: 'Note, modifier' });
+    expect(note).toHaveAccessibleDescription(/^Né d’une précédente union de Luc/);
+  });
+
+  it('pas de note sur une fiche vue de loin', () => {
+    render(<PersonSheet tree={treeForViewer('m-anne')} personId="maxime" />);
+    expect(screen.queryByText(/Il a grandi entre Nantes/)).toBeNull();
+  });
+
   it('hors de sa lignée : la fiche se lit, rien ne se touche', () => {
     render(<PersonSheet tree={hugo} personId="anne" />);
     expect(screen.queryByRole('button', { name: /modifier/i })).toBeNull();
