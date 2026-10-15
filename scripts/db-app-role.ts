@@ -8,9 +8,7 @@ import postgres from 'postgres';
 // Sortie : l'URL poolée du rôle applicatif, sur stdout seulement, pour être
 // branchée sur `vercel env add` sans jamais s'afficher.
 
-// Rôle de la production (Neon), créé sous l'ancien nom de l'app : il ne se renomme pas
-// sans changer les chaînes de connexion de Vercel.
-const ROLE = 'ances_tree_app';
+const ROLE = 'racines_app';
 
 const ownerUrl = process.env['OWNER_DATABASE_URL'];
 const pooledUrl = process.env['OWNER_DATABASE_URL_POOLED'];

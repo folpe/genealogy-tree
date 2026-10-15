@@ -32,8 +32,7 @@ import { geocodePlaces, pickPlace } from '../src/server/places/places.service';
 //
 // Secrets lus dans le trousseau macOS (compte `racines`, sinon `ances-tree`, son nom
 // d'avant le renommage) : jeton Notion, base, clé de chiffrement de l'export, jeton du
-// store Blob. L'export et le rapport vivent hors du dépôt. La base et le rôle Neon
-// (`ances_tree`, `ances_tree_app`) gardent leur nom : ce sont ceux de la production.
+// store Blob. L'export et le rapport vivent hors du dépôt.
 
 type ExportedPhoto = PhotoOutcome & { sha256?: string; mime?: string; bytes?: number };
 
@@ -189,9 +188,9 @@ function connect(target: string) {
     '--project-id',
     NEON_PROJECT_ID,
     '--database-name',
-    'ances_tree',
+    'racines',
     '--role-name',
-    'ances_tree_app',
+    'racines_app',
   ])
     .toString()
     .trim();

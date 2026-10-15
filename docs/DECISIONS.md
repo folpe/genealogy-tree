@@ -148,3 +148,12 @@ Journal ADR-lite des choix non évidents. Lire avant de remettre une décision e
 - **Alternatives écartées :** « Lignée », « Veillée », « Folpe Famille » pour le nom. Pour le signe, la coupe de terre (bulle et racines) et un monogramme R, évalués sur une même planche à 32, 40 et 128 px. Risque connu de l'éventail : à très petite taille, il rappelle une icône wifi.
 - **À réexaminer si :** le signe se confond à l'usage avec une icône système, ou si l'app sort du cadre familial.
 
+### 16. Racines jusque dans l'infrastructure, sauf le rôle propriétaire
+
+- **Date :** 2026-10-15
+- **Décision :** à la demande de Folpe, le projet Vercel s'appelle `racines`, le projet Neon `racines` (identifiant `frosty-feather-00901702` inchangé), et sur toutes les branches Neon la base `ances_tree` devient `racines` et le rôle applicatif `ances_tree_app` devient `racines_app` (mot de passe conservé). `DATABASE_URL` (production, preview, développement) et le secret GitHub `DATABASE_URL_UNPOOLED` ont été reposés sans transiter en clair ; la production a été redéployée (coupure d'environ une minute). Le rôle propriétaire garde son nom `ances_tree_owner`.
+- **Pourquoi :** un seul nom partout, sans rien perdre : le renommage d'un rôle conserve son mot de passe et Neon le reconnaît, essayé d'abord sur une branche jetable copiée de `main`.
+- **Ce qui ne change pas :** le rôle `ances_tree_owner`, créé par Neon avec le projet, ne se renomme pas (« permission denied to rename role ») ; le remplacer demanderait de transférer la propriété de tout le schéma, pour un nom que personne ne voit. Le libellé de dérivation des URLs de photos garde aussi l'ancien nom (DECISIONS 15).
+- **Alternatives écartées :** nouveau rôle propriétaire avec `REASSIGN OWNED` (risque sur les migrations et la table de Drizzle, sans gain visible) ; garder les anciens noms de base et de rôle.
+- **À réexaminer si :** Neon permet un jour de renommer le rôle propriétaire.
+
