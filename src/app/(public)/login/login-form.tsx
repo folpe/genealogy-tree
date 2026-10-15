@@ -1,111 +1,223 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { type FormEvent, useState } from 'react';
+import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
+import {
+  fieldLabel,
+  KeyIcon,
+  Kicker,
+  MailIcon,
+  pillField,
+  pillPrimary,
+  pillSecondary,
+  StepBadge,
+} from '@/components/auth/auth-ui';
+import { RevealTitle } from '@/components/auth/reveal-title';
 import { authClient } from '@/lib/auth-client';
 
-// Étapes « email » et « envoyé » de la maquette Connexion. La mise en scène
-// finale (canevas, transitions) arrive en phase 5.
+// Étapes « email » et « envoyé » de la maquette Connexion. Le lien ramène sur
+// /login/passkey, qui propose la passkey une fois connecté (étape « passkey »).
 
 type Step = { name: 'email' } | { name: 'sent'; email: string };
 
-const button =
-  'h-[50px] w-full rounded-full text-[15px] font-semibold disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
+type Intro = { kicker: string; title: string; lead: ReactNode };
 
-export function LoginForm({ defaultEmail = '' }: { defaultEmail?: string }) {
-  const router = useRouter();
+const LOGIN_INTRO: Intro = {
+  kicker: 'Bon retour',
+  title: 'Entre dans l’arbre',
+  lead: 'Pas de mot de passe. On t’envoie un lien de connexion par email.',
+};
+
+/** Où le lien magique ramène : la proposition de passkey, qui renvoie à l'arbre. */
+const AFTER_LINK = '/login/passkey';
+
+export function LoginForm({
+  defaultEmail = '',
+  intro = LOGIN_INTRO,
+  footer,
+}: {
+  defaultEmail?: string;
+  intro?: Intro;
+  /** Sous l'étape email seulement (lien vers la demande d'accès). */
+  footer?: ReactNode;
+}) {
   const [step, setStep] = useState<Step>({ name: 'email' });
   const [email, setEmail] = useState(defaultEmail);
   const [pending, setPending] = useState(false);
+  const [resent, setResent] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const heading = useRef<HTMLHeadingElement>(null);
+  const focusHeading = useRef(false);
 
-  async function sendLink(event?: FormEvent) {
-    event?.preventDefault();
-    setPending(true);
+  // Au changement d'étape, le focus suit le nouveau titre ; pas au premier affichage.
+  useEffect(() => {
+    if (!focusHeading.current) return;
+    focusHeading.current = false;
+    heading.current?.focus();
+  });
+
+  function goTo(next: Step) {
+    focusHeading.current = true;
     setError(undefined);
-    const { error: failure } = await authClient.signIn.magicLink({ email, callbackURL: '/tree' });
-    setPending(false);
-    if (failure) {
-      setError('L’envoi n’a pas abouti. Réessaie dans une minute.');
-      return;
-    }
-    setStep({ name: 'sent', email });
+    setResent(false);
+    setStep(next);
   }
 
-  async function signInWithPasskey() {
+  async function sendLink() {
+    setPending(true);
     setError(undefined);
+    const { error: failure } = await authClient.signIn.magicLink({
+      email,
+      callbackURL: AFTER_LINK,
+    });
+    setPending(false);
+    if (failure) setError('L’envoi n’a pas abouti. Réessaie dans une minute.');
+    return !failure;
+  }
+
+  if (step.name === 'sent') {
+    return (
+      <SentStep
+        email={step.email}
+        heading={heading}
+        pending={pending}
+        resent={resent}
+        error={error}
+        onResend={async () => setResent(await sendLink())}
+        onChangeEmail={() => goTo({ name: 'email' })}
+      />
+    );
+  }
+
+  return (
+    <EmailStep
+      intro={intro}
+      heading={heading}
+      email={email}
+      onEmail={setEmail}
+      pending={pending}
+      error={error}
+      onError={setError}
+      onSubmit={async () => {
+        if (await sendLink()) goTo({ name: 'sent', email });
+      }}
+      footer={footer}
+    />
+  );
+}
+
+type HeadingRef = RefObject<HTMLHeadingElement | null>;
+
+function EmailStep(props: {
+  intro: Intro;
+  heading: HeadingRef;
+  email: string;
+  onEmail: (email: string) => void;
+  pending: boolean;
+  error: string | undefined;
+  onError: (error: string) => void;
+  onSubmit: () => Promise<void>;
+  footer: ReactNode;
+}) {
+  const router = useRouter();
+
+  async function signInWithPasskey() {
     const result = await authClient.signIn.passkey();
     if (result?.error) {
-      setError('Aucune passkey reconnue sur cet appareil. Reçois plutôt un lien par email.');
+      props.onError('Aucune passkey reconnue sur cet appareil. Reçois plutôt un lien par email.');
       return;
     }
     router.push('/tree');
   }
 
-  if (step.name === 'sent') {
-    return (
-      <div className="mt-8">
-        <h2 className="font-display text-2xl">Regarde tes emails</h2>
-        <p className="mt-3 text-[15px] text-ink-2">
-          On vient d’envoyer un lien à <strong className="text-ink">{step.email}</strong>. Il est
-          valable 15 minutes et ne sert qu’une fois.
-        </p>
-        <p className="mt-3 text-sm text-ink-2">
-          Rien reçu ? Pense à regarder dans les indésirables.
-        </p>
-        <div className="mt-6 flex flex-col gap-3">
-          <button
-            type="button"
-            onClick={() => sendLink()}
-            disabled={pending}
-            className={`${button} border border-line bg-card text-ink`}
-          >
-            Renvoyer le lien
-          </button>
-          <button
-            type="button"
-            onClick={() => setStep({ name: 'email' })}
-            className="text-sm font-medium text-ink-2 underline underline-offset-4"
-          >
-            Changer d’email
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="mt-8 flex flex-col gap-3">
-      <form onSubmit={sendLink} className="flex flex-col gap-3">
-        <label htmlFor="email" className="text-sm font-medium text-ink-2">
-          Ton email
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email webauthn"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="h-[50px] rounded-[var(--radius-field)] border border-line bg-surface px-4 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-ink"
-        />
-        <button type="submit" disabled={pending} className={`${button} bg-ink text-on-ink`}>
-          Recevoir mon lien
+    <div className="step-in flex flex-col gap-[22px]">
+      <div className="flex flex-col gap-2.5">
+        <Kicker>{props.intro.kicker}</Kicker>
+        <RevealTitle ref={props.heading} text={props.intro.title} />
+        <p className="text-base leading-normal text-ink-2">{props.intro.lead}</p>
+      </div>
+      <div className="flex flex-col gap-3">
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void props.onSubmit();
+          }}
+        >
+          <label htmlFor="email" className={fieldLabel}>
+            Ton email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email webauthn"
+            placeholder="prenom@exemple.fr"
+            required
+            value={props.email}
+            onChange={(event) => props.onEmail(event.target.value)}
+            className={pillField}
+          />
+          <button type="submit" disabled={props.pending} className={`${pillPrimary} mt-1`}>
+            Recevoir mon lien
+          </button>
+        </form>
+        <button type="button" onClick={signInWithPasskey} className={pillSecondary}>
+          <KeyIcon />
+          Me connecter avec une passkey
         </button>
-      </form>
-      <button
-        type="button"
-        onClick={signInWithPasskey}
-        className={`${button} border border-line bg-card text-ink`}
-      >
-        Me connecter avec une passkey
-      </button>
-      {error ? (
-        <p role="alert" className="text-sm text-accent">
-          {error}
-        </p>
-      ) : undefined}
+      </div>
+      {props.error ? <ErrorNote>{props.error}</ErrorNote> : undefined}
+      {props.footer}
     </div>
+  );
+}
+
+function SentStep(props: {
+  email: string;
+  heading: HeadingRef;
+  pending: boolean;
+  resent: boolean;
+  error: string | undefined;
+  onResend: () => Promise<void>;
+  onChangeEmail: () => void;
+}) {
+  return (
+    <div className="step-in flex flex-col items-center gap-[18px] text-center">
+      <StepBadge tone="accent">
+        <MailIcon />
+      </StepBadge>
+      <Kicker>Lien envoyé</Kicker>
+      <RevealTitle ref={props.heading} text="Regarde tes emails" />
+      <p className="text-base leading-normal text-ink-2">
+        On vient d’envoyer un lien à{' '}
+        <strong className="font-semibold text-ink">{props.email}</strong>. Il est valable 15 minutes
+        et ne sert qu’une fois.
+      </p>
+      <div className="mt-2 flex w-full flex-col gap-2.5 sm:flex-row">
+        <button
+          type="button"
+          onClick={() => void props.onResend()}
+          disabled={props.pending}
+          className={pillSecondary}
+        >
+          {props.resent ? 'Lien renvoyé' : 'Renvoyer le lien'}
+        </button>
+        <button type="button" onClick={props.onChangeEmail} className={pillSecondary}>
+          Changer d’email
+        </button>
+      </div>
+      {props.error ? <ErrorNote>{props.error}</ErrorNote> : undefined}
+      <p className="text-[13px] text-ink-3">Rien reçu ? Pense à regarder dans les indésirables.</p>
+    </div>
+  );
+}
+
+function ErrorNote({ children }: { children: ReactNode }) {
+  return (
+    <p role="alert" className="text-sm text-accent">
+      {children}
+    </p>
   );
 }

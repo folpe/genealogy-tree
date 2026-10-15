@@ -27,8 +27,12 @@ describe('LoginForm', () => {
     await userEvent.type(screen.getByRole('textbox', { name: 'Ton email' }), 'luc@exemple.fr');
     await userEvent.click(screen.getByRole('button', { name: 'Recevoir mon lien' }));
 
-    expect(magicLink).toHaveBeenCalledWith({ email: 'luc@exemple.fr', callbackURL: '/tree' });
-    expect(screen.getByRole('heading', { name: 'Regarde tes emails' })).toBeVisible();
+    expect(magicLink).toHaveBeenCalledWith({
+      email: 'luc@exemple.fr',
+      callbackURL: '/login/passkey',
+    });
+    const heading = screen.getByRole('heading', { level: 1, name: 'Regarde tes emails' });
+    expect(heading).toHaveFocus();
     expect(screen.getByText('luc@exemple.fr')).toBeVisible();
     expect(screen.getByText(/valable 15 minutes et ne sert qu’une fois/)).toBeVisible();
   });
@@ -39,6 +43,15 @@ describe('LoginForm', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Recevoir mon lien' }));
     await userEvent.click(screen.getByRole('button', { name: 'Changer d’email' }));
     expect(screen.getByRole('textbox', { name: 'Ton email' })).toHaveValue('luc@exemple.fr');
+  });
+
+  it('renvoie le lien et le dit', async () => {
+    render(<LoginForm />);
+    await userEvent.type(screen.getByRole('textbox', { name: 'Ton email' }), 'luc@exemple.fr');
+    await userEvent.click(screen.getByRole('button', { name: 'Recevoir mon lien' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Renvoyer le lien' }));
+    expect(magicLink).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('button', { name: 'Lien renvoyé' })).toBeVisible();
   });
 
   it('dit qu’il faut réessayer si l’envoi échoue, sans rien révéler de plus', async () => {
@@ -60,5 +73,24 @@ describe('LoginForm', () => {
   it('préremplit l’adresse d’une invitation', () => {
     render(<LoginForm defaultEmail="lea@exemple.fr" />);
     expect(screen.getByRole('textbox', { name: 'Ton email' })).toHaveValue('lea@exemple.fr');
+  });
+
+  it('accueille par défaut comme un retour, ou avec l’entrée donnée', () => {
+    const { unmount } = render(<LoginForm />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Entre dans l’arbre' })).toBeVisible();
+    expect(screen.getByRole('heading')).not.toHaveFocus();
+    unmount();
+    render(
+      <LoginForm intro={{ kicker: 'Invitation', title: 'Bonjour Léa', lead: 'Bienvenue.' }} />,
+    );
+    expect(screen.getByRole('heading', { level: 1, name: 'Bonjour Léa' })).toBeVisible();
+  });
+
+  it('ne montre le pied de l’étape email qu’à cette étape', async () => {
+    render(<LoginForm footer={<a href="/request-access">Demander l’accès</a>} />);
+    expect(screen.getByRole('link', { name: 'Demander l’accès' })).toBeVisible();
+    await userEvent.type(screen.getByRole('textbox', { name: 'Ton email' }), 'luc@exemple.fr');
+    await userEvent.click(screen.getByRole('button', { name: 'Recevoir mon lien' }));
+    expect(screen.queryByRole('link', { name: 'Demander l’accès' })).toBeNull();
   });
 });

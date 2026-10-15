@@ -49,6 +49,7 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 - [ ] Chargement différé de GSAP et des plugins hors du chemin critique (import dynamique après le premier rendu).
   - [x] Mesuré (2026-10-15) : ~32 Ko gzip, chargés seulement par `/tree` et `/ancestors` (découpage par route) ; sur ces pages GSAP est le chemin critique (caméra, entrée). Proposé : pas d'import dynamique (journal du 2026-10-15, GSAP sans import différé), à valider par Folpe.
 - [ ] Animations de la spec 9 : logo dessiné et titre révélé (Connexion), arbre qui pousse génération par génération au premier chargement, liens dessinés (DrawSVG), nœud créé qui apparaît à sa place (branché en phase 6).
+  - [x] Logo dessiné et titre révélé (Connexion), en CSS seul : traits en `pathLength="1"` tracés par `stroke-dashoffset`, titre découpé mot à mot au rendu serveur (`RevealTitle`), petit arbre du canevas qui pousse rangée par rangée. La page de connexion ne charge pas GSAP (journal du 2026-10-15) ; fondu seul avec le mouvement réduit.
   - [x] Arbre qui pousse au premier affichage de l'onglet : génération par génération, bulles en échelle et fondu, traits tracés (DrawSVG), poignées en fondu (`src/motion/entry.ts`, vagues de `tree.entry.ts`). Marqué avant l'affichage par un script sous nonce : l'arbre rendu au serveur ne clignote pas ; repli CSS s'il ne vient pas. Fondu seul avec le mouvement réduit.
 
 ### Lot 4 : fiche personne
@@ -83,7 +84,8 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 
 ### Lot 8 : écran Connexion
 
-- [ ] Conforme à la maquette Connexion : étapes email -> "Regarde tes emails" -> proposition de passkey -> connecté ; formulaire de demande d'accès.
+- [x] Conforme à la maquette Connexion : étapes email -> "Regarde tes emails" -> proposition de passkey -> connecté ; formulaire de demande d'accès.
+  - [x] Cadre commun (`src/components/auth/auth-shell.tsx`) : canevas à trame avec un petit arbre anonyme (rien de la famille avant connexion), carte des étapes ; carte seule sur téléphone. Connexion, invitation et demande d'accès le partagent. Le lien magique ramène sur `/login/passkey` (la route porte l'étape, sans nuqs) : proposition de passkey, puis l'arbre ; déjà une passkey, droit à l'arbre. Focus posé sur le titre à chaque étape.
 
 ## Tests
 

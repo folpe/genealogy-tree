@@ -1,6 +1,9 @@
 // tdd-cover: e2e src/server/members/members.service.integration.test.ts
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { AuthShell } from '@/components/auth/auth-shell';
+import { Kicker, pillPrimary } from '@/components/auth/auth-ui';
+import { RevealTitle } from '@/components/auth/reveal-title';
 import { getDb } from '@/server/db/client';
 import { getInvitationPreview } from '@/server/members/members.service';
 import { LoginForm } from '../../login/login-form';
@@ -12,41 +15,31 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   const invitation = await getInvitationPreview(getDb(), token, new Date());
 
   return (
-    <main className="canvas-grid flex min-h-dvh items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-[var(--radius-card)] bg-card p-8 shadow-card">
-        <p className="font-display text-2xl font-medium">Ances-Tree</p>
-        {invitation ? (
-          <>
-            <p className="mt-8 text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-              Invitation
-            </p>
-            <h1 className="mt-2 font-display text-[32px] leading-tight">
-              Bonjour {invitation.firstName}
-            </h1>
-            <p className="mt-3 text-[15px] text-ink-2">
-              {invitation.inviterName} t’invite dans l’arbre de la famille. Pas de mot de passe :
-              reçois ton lien de connexion par email.
-            </p>
-            <LoginForm defaultEmail={invitation.email} />
-          </>
-        ) : (
-          <>
-            <h1 className="mt-8 font-display text-[32px] leading-tight">
-              Ce lien n’est plus valable
-            </h1>
-            <p className="mt-3 text-[15px] text-ink-2">
+    <AuthShell>
+      {invitation ? (
+        <LoginForm
+          defaultEmail={invitation.email}
+          intro={{
+            kicker: 'Invitation',
+            title: `Bonjour ${invitation.firstName}`,
+            lead: `${invitation.inviterName} t’invite dans l’arbre de la famille. Pas de mot de passe : reçois ton lien de connexion par email.`,
+          }}
+        />
+      ) : (
+        <div className="step-in flex flex-col gap-[22px]">
+          <div className="flex flex-col gap-2.5">
+            <Kicker>Invitation</Kicker>
+            <RevealTitle text="Ce lien n’est plus valable" />
+            <p className="text-base leading-normal text-ink-2">
               Il a peut-être déjà servi, ou expiré. Demande à la personne qui t’a invité de
               recommencer, ou fais une demande d’accès.
             </p>
-            <Link
-              href="/request-access"
-              className="mt-6 inline-block text-[15px] font-semibold underline underline-offset-4"
-            >
-              Demander l’accès
-            </Link>
-          </>
-        )}
-      </div>
-    </main>
+          </div>
+          <Link href="/request-access" className={pillPrimary}>
+            Demander l’accès
+          </Link>
+        </div>
+      )}
+    </AuthShell>
   );
 }
