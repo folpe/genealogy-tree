@@ -55,3 +55,29 @@ test('un lien vers une fiche ouvre l’arbre avec la fiche', async ({ page }, in
     sheetOf(page, info, /Paul Marchand/).getByRole('link', { name: 'Fiche complète' }),
   ).toHaveAttribute('href', '/people/paul');
 });
+
+test('à l’ouverture, l’avatar part de la bulle touchée, puis se pose', async ({ page }, info) => {
+  test.skip(info.project.name === 'mobile', 'Sur téléphone, la feuille monte : la cascade seule.');
+  await signIn(page, 'hugo@famille.test');
+  await settled(page);
+  await page.getByRole('treeitem', { name: /^Luc Marchand/ }).click();
+  const avatar = page.locator('aside [data-fiche-avatar]');
+  // Au premier instant, l'avatar est encore posé sur la bulle : décalé et réduit.
+  const start = await avatar.evaluate((element) => element.style.transform);
+  expect(start).toMatch(/translate|matrix/);
+  // Puis il revient à sa place, sans transformation résiduelle.
+  await expect.poll(() => avatar.evaluate((element) => element.style.transform)).toBe('');
+  await expect(page.locator('aside')).toContainText('Ton père');
+});
+
+test('avec le mouvement réduit, la fiche arrive en simple fondu', async ({ page }, info) => {
+  test.skip(info.project.name === 'mobile', 'Même règle sur téléphone, vérifiée ici une fois.');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await signIn(page, 'hugo@famille.test');
+  await settled(page);
+  await page.getByRole('treeitem', { name: /^Luc Marchand/ }).click();
+  await expect(page).toHaveURL(/[?&]fiche=luc/);
+  const avatar = page.locator('aside [data-fiche-avatar]');
+  expect(await avatar.evaluate((element) => element.style.transform)).toBe('');
+  await expect(page.locator('aside')).toContainText('Ton père');
+});

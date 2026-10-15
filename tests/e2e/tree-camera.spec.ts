@@ -107,6 +107,17 @@ test('au clavier, la caméra suit la bulle qui prend le focus', async ({ page })
   await expect(page.locator(':focus')).toBeInViewport();
 });
 
+test('au doigt, la caméra ne bouge pas sous la bulle touchée, même avec le mouvement réduit', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await signIn(page, 'hugo@famille.test');
+  await settled(page);
+  // Luc est près du bord : au clavier, la caméra irait le chercher ; touché, il reste.
+  await page.getByRole('treeitem', { name: /^Luc Marchand/ }).click();
+  await expect(page).toHaveURL(/[?&]fiche=luc/);
+});
+
 test('sur grand écran, un clic sur la mini-carte y déplace la caméra', async ({ page }, info) => {
   test.skip(info.project.name === 'mobile', 'mini-carte réservée aux grands écrans');
   await openTree(page);

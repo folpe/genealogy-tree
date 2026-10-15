@@ -197,6 +197,7 @@ const TreeItem = memo(function TreeItem({
     >
       <PendingRing />
       <span
+        data-bubble
         className={`rounded-full outline-offset-2 group-hover:motion-safe:scale-[1.03] group-focus-visible:outline-2 group-focus-visible:outline-ink motion-safe:transition-transform ${selected ? 'shadow-bubble-selected' : ''}`}
       >
         <span className={FAR_HIDDEN}>
@@ -548,11 +549,13 @@ export function FamilyTree({
   }, []);
 
   // Une bulle prise au clavier, hors de l'écran ou trop près du bord : la caméra y va.
+  // Au doigt ou à la souris, jamais : la bulle bougerait entre l'appui et le relâché, et
+  // le clic tomberait à côté (d'un coup avec le mouvement réduit, où la caméra saute).
   const onFocus = useCallback(
     (id: string) => {
       setActiveId(id);
       const node = byId.get(id);
-      if (!camera || !node) return;
+      if (!camera || !node || !elements.current.get(id)?.matches(':focus-visible')) return;
       const state = camera.get();
       const { width: w, height: h } = camera.viewport();
       const screenX = node.x * state.k + state.x;
