@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { BrandGlyph } from '@/components/app/brand-glyph';
+import { APP_NAME } from '@/lib/brand';
 
 // Mise en scène de la maquette Connexion : à gauche un canevas à trame avec un petit arbre,
 // à droite la carte des étapes. Sur téléphone, la carte seule, la marque en tête.
@@ -41,9 +42,9 @@ function BrandLockup({ className = '' }: { className?: string }) {
   return (
     <p className={`flex items-center gap-3 ${className}`}>
       <span className="grid size-10 place-items-center rounded-full bg-ink text-on-ink">
-        <BrandGlyph size={22} className="brand-draw" />
+        <BrandGlyph size={28} className="brand-draw" />
       </span>
-      <span className="font-display text-2xl font-medium tracking-[-0.01em]">Ances-Tree</span>
+      <span className="font-display text-2xl font-medium tracking-[-0.01em]">{APP_NAME}</span>
     </p>
   );
 }

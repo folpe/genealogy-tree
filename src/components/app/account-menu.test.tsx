@@ -124,7 +124,7 @@ describe('AccountMenu', () => {
     render(<AccountMenu account={hugo} hasPasskey theme="system" />);
     const menu = await openMenu();
     await userEvent.click(within(menu).getByRole('menuitem', { name: 'Installer l’app' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Installer Ances-Tree' });
+    const dialog = await screen.findByRole('dialog', { name: 'Installer Racines' });
     expect(dialog).toHaveTextContent('Partager');
     expect(dialog).toHaveTextContent('Sur l’écran d’accueil');
   });

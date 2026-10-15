@@ -1,4 +1,6 @@
 // tdd-cover: e2e src/server/notifications/email.test.ts
+
+import { APP_NAME } from '../../../lib/brand';
 import {
   EmailLayout,
   FallbackLink,
@@ -12,8 +14,7 @@ import {
 // Les quatre emails de la phase 3 : connexion, invitation, demande acceptée et
 // demande d'accès reçue (admins). Textes en français, tutoiement.
 
-const FAMILY_FOOTER =
-  'Tu reçois cet email parce que tu fais partie d’Ances-Tree, l’arbre privé de la famille.';
+const FAMILY_FOOTER = `Tu reçois cet email parce que tu fais partie de ${APP_NAME}, l’arbre privé de la famille.`;
 
 const initialsOf = (name: string) =>
   name
@@ -30,7 +31,7 @@ export function MagicLinkEmail({ origin, url }: { origin: string; url: string })
       preview="Valable 15 minutes, pour une seule connexion."
       kicker="Connexion"
       title="Ton lien pour entrer dans l’arbre"
-      footer="Tu reçois cet email parce qu’une connexion à Ances-Tree a été demandée avec cette adresse."
+      footer={`Tu reçois cet email parce qu’une connexion à ${APP_NAME} a été demandée avec cette adresse.`}
     >
       <Paragraph>
         Bonjour, voici ton lien pour entrer dans l’arbre de la famille. Pas de mot de passe à
@@ -117,7 +118,7 @@ export function AccessRequestEmail({
       preview={`${name} attend ta réponse pour entrer dans l’arbre.`}
       kicker="Demande d’accès"
       title={`${name} demande à rejoindre l’arbre`}
-      footer="Tu reçois cet email parce que tu es admin de l’arbre de la famille sur Ances-Tree."
+      footer={`Tu reçois cet email parce que tu es admin de l’arbre de la famille sur ${APP_NAME}.`}
     >
       <PersonCard initials={initialsOf(name)} name={name} detail={email} />
       <Quote label="Qui est-ce dans la famille">{relation}</Quote>

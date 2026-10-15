@@ -184,21 +184,13 @@
   stroke-dashoffset: 1;
   animation: draw 0.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
-/* Le tronc, puis les deux branches, puis les trois têtes. */
-.brand-draw :nth-child(2) {
-  animation-delay: 0.35s;
-}
+/* Toi, puis tes deux parents, puis tes quatre grands-parents (BRAND_MARK). */
+.brand-draw :nth-child(2),
 .brand-draw :nth-child(3) {
-  animation-delay: 0.45s;
+  animation-delay: 0.3s;
 }
-.brand-draw :nth-child(4) {
-  animation-delay: 0.7s;
-}
-.brand-draw :nth-child(5) {
-  animation-delay: 0.8s;
-}
-.brand-draw :nth-child(6) {
-  animation-delay: 0.9s;
+.brand-draw :nth-child(n + 4) {
+  animation-delay: 0.6s;
 }
 
 .sketch-bubble {

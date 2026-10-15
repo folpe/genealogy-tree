@@ -1,5 +1,6 @@
 import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
+import { APP_NAME } from './lib/brand';
 
 // Variables d'environnement validées au premier usage (pas au chargement du module,
 // pour que `next build` passe sans secrets). Un oubli fait échouer la première
@@ -35,7 +36,7 @@ function load() {
       AUTH_BOOTSTRAP_ADMIN_EMAIL: z.email().optional(),
       PASSKEY_RP_ID: z.string().min(1).optional(),
       RESEND_API_KEY: z.string().startsWith('re_').optional(),
-      EMAIL_FROM: z.string().min(3).default('Ances-Tree <famille@mail.folpe.me>'),
+      EMAIL_FROM: z.string().min(3).default(`${APP_NAME} <famille@mail.folpe.me>`),
       VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
       VERCEL_BRANCH_URL: z.string().optional(),
       VERCEL_URL: z.string().optional(),

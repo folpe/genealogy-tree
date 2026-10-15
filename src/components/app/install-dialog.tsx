@@ -2,6 +2,7 @@
 'use client';
 
 import { Dialog } from 'radix-ui';
+import { APP_NAME } from '@/lib/brand';
 import type { InstallMode } from './install.helper';
 
 // Mode d'emploi de l'installation là où le navigateur n'a pas d'invite : Safari.
@@ -12,7 +13,7 @@ const steps: Record<'ios' | 'mac-safari', string[]> = {
   ios: [
     'Touche le bouton Partager (le carré avec une flèche). Sur iOS 26, il est dans le menu « ··· ».',
     'Choisis « Sur l’écran d’accueil », puis « Ajouter ».',
-    'Ouvre Ances-Tree depuis ton écran d’accueil et connecte-toi avec Face ID.',
+    `Ouvre ${APP_NAME} depuis ton écran d’accueil et connecte-toi avec Face ID.`,
   ],
   'mac-safari': [
     'Dans la barre des menus, ouvre « Fichier ».',
@@ -35,7 +36,7 @@ export function InstallDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/30" />
         <Dialog.Content className="fixed inset-x-4 bottom-[var(--tab-bar-bottom)] z-50 mx-auto max-w-md rounded-[var(--radius-card)] bg-card p-6 shadow-float focus-visible:outline-none md:top-1/2 md:bottom-auto md:-translate-y-1/2">
-          <Dialog.Title className="font-display text-2xl">Installer Ances-Tree</Dialog.Title>
+          <Dialog.Title className="font-display text-2xl">Installer {APP_NAME}</Dialog.Title>
           <Dialog.Description className="mt-2 text-[15px] text-ink-2">
             L’arbre s’ouvre alors comme une app, en plein écran.
           </Dialog.Description>

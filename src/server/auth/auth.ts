@@ -5,6 +5,7 @@ import { betterAuth } from 'better-auth';
 import { nextCookies } from 'better-auth/next-js';
 import { magicLink } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
+import { APP_NAME } from '../../lib/brand';
 import { accounts, passkeys, rateLimits, sessions, users, verifications } from '../db/schema';
 import type { Db } from '../db/types';
 import { decideAdmission, normalizeEmail } from '../members/admission';
@@ -103,7 +104,7 @@ export function createAuth(deps: AuthDeps) {
       }),
       passkey({
         rpID: deps.passkeyRpID,
-        rpName: 'Ances-Tree',
+        rpName: APP_NAME,
         origin: deps.baseURL,
       }),
       nextCookies(),

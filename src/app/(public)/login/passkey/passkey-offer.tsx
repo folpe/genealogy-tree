@@ -41,7 +41,15 @@ export function PasskeyOffer({ firstName }: { firstName: string }) {
       <button type="button" onClick={activate} disabled={pending} className={`${pillPrimary} mt-2`}>
         Activer Face ID ou Touch ID
       </button>
-      <a href="/tree" className={pillSecondary}>
+      <a
+        href="/tree"
+        // Remplace l'entrée : le bouton Retour depuis l'arbre ne repropose pas la passkey.
+        onClick={(event) => {
+          event.preventDefault();
+          globalThis.location.replace('/tree');
+        }}
+        className={pillSecondary}
+      >
         Plus tard
       </a>
       {error ? (

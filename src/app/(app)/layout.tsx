@@ -7,6 +7,7 @@ import { BrandGlyph } from '@/components/app/brand-glyph';
 import { CommandPalette } from '@/components/app/command-palette';
 import { NavPills } from '@/components/app/nav-pills';
 import { PageZone } from '@/components/app/page-zone';
+import { APP_NAME } from '@/lib/brand';
 import { parseTheme, THEME_COOKIE } from '@/lib/theme/theme';
 import { getAuth } from '@/server/auth/auth.instance';
 import { requireSession } from '@/server/auth/session';
@@ -36,7 +37,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         >
           {/* Sur téléphone, la marque se réduit à son signe : la recherche prend la place. */}
           <BrandMark />
-          <span className="max-md:sr-only">Ances-Tree</span>
+          <span className="max-md:sr-only">{APP_NAME}</span>
         </Link>
         <div className="hidden md:block">
           <NavPills placement="header" />
@@ -63,7 +64,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 function BrandMark() {
   return (
     <span className="grid size-11 place-items-center rounded-full bg-ink text-on-ink md:hidden">
-      <BrandGlyph size={22} />
+      <BrandGlyph size={30} />
     </span>
   );
 }

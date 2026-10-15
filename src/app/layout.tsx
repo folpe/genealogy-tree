@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { KeyboardInset } from '@/components/app/keyboard-inset';
 import { parseTheme, THEME_COOKIE, themeAttribute, themeColor } from '@/lib/theme/theme';
 import './globals.css';
+import { APP_NAME } from '@/lib/brand';
 
 const fraunces = Fraunces({
   subsets: ['latin', 'latin-ext'],
@@ -21,9 +22,9 @@ const figtree = Figtree({
 });
 
 export const metadata: Metadata = {
-  title: { default: 'Ances-Tree', template: '%s - Ances-Tree' },
+  title: { default: APP_NAME, template: `%s - ${APP_NAME}` },
   description: 'L’arbre privé de la famille.',
-  applicationName: 'Ances-Tree',
+  applicationName: APP_NAME,
   robots: { index: false, follow: false },
   icons: {
     icon: [
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png',
   },
   // Safari sur iPhone : l'app ajoutée à l'écran d'accueil s'ouvre en plein écran.
-  appleWebApp: { capable: true, title: 'Ances-Tree', statusBarStyle: 'default' },
+  appleWebApp: { capable: true, title: APP_NAME, statusBarStyle: 'default' },
 };
 
 const readTheme = async () => parseTheme((await cookies()).get(THEME_COOKIE)?.value);

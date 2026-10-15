@@ -1,4 +1,4 @@
-# Ances-Tree - Design de référence
+# Racines - Design de référence
 
 Source de vérité visuelle pour les phases 4 à 9. Toute valeur ci-dessous est extraite des maquettes validées par Folpe le 2026-10-09 (`docs/design/maquettes/`). En cas de conflit entre ce document et une maquette, la maquette fait foi pour le rendu, ce document pour les règles.
 
@@ -182,7 +182,7 @@ Règle : la trame **suit la caméra**. La transform de la caméra (pan `x`, `y`,
 | Titre d'écran (h1) | 30-34 | Fraunces | 400 |
 | Nom dans la fiche | 32 | Fraunces | 400, letter-spacing -0.01em |
 | Phrase du lien de parenté | 26 | Fraunces | 400 |
-| Marque "Ances-Tree" | 24 | Fraunces | 500 |
+| Marque "Racines" | 24 | Fraunces | 500 |
 | Initiales bulle 76px / avatar 120px | 24 / 42 | Fraunces | 400 |
 | Nom sous une bulle | 17 | Fraunces | 400 |
 | Corps, boutons, champs | 15 | Figtree | 400 / 600 |

@@ -139,3 +139,12 @@ Journal ADR-lite des choix non évidents. Lire avant de remettre une décision e
 - **Alternatives écartées :** définition par le cercle proche (trop permissive).
 - **À réexaminer si :** trop de fiches restent bloquées en suggestion faute de gardien actif.
 
+### 15. L'app s'appelle Racines, son signe est l'éventail des ancêtres
+
+- **Date :** 2026-10-15
+- **Décision :** l'app est renommée « Racines » (choix de Folpe). Son signe est l'éventail de la vue Ancêtres réduit à deux générations : toi au centre, tes deux parents, tes quatre grands-parents, au trait. Le nom et le signe ont un seul propriétaire, `src/lib/brand.ts` : l'interface les lit, et `bun run brand:icons` en génère les icônes (favicon, installables dont une masquable, iOS, logo des emails).
+- **Pourquoi :** « Ances-Tree » se lisait mal à voix haute et pour les aînés. L'éventail est propre au produit et évite les clichés du secteur (arbre à feuilles, feuille, vert, silhouettes). Il se trace trait par trait, ce qui nourrit l'animation de la connexion.
+- **Ce qui ne change pas :** le domaine `famille.folpe.me` et le RP ID des passkeys (`folpe.me`), donc les passkeys existantes restent valides. Les identifiants techniques gardent l'ancien nom (clés de stockage local, cookie de thème, dérivation des URL de médias, trousseau du script de migration, nom du paquet et du projet Vercel) : les changer réinitialiserait les préférences ou invaliderait les URL de photos déjà émises, sans rien montrer à personne.
+- **Alternatives écartées :** « Lignée », « Veillée », « Folpe Famille » pour le nom. Pour le signe, la coupe de terre (bulle et racines) et un monogramme R, évalués sur une même planche à 32, 40 et 128 px. Risque connu de l'éventail : à très petite taille, il rappelle une icône wifi.
+- **À réexaminer si :** le signe se confond à l'usage avec une icône système, ou si l'app sort du cadre familial.
+
