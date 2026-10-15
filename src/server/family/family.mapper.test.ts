@@ -73,6 +73,15 @@ describe('graphToRows / rowsToGraph', () => {
     expect(sorted(rowsToGraph(graphToRows(marchandFamily)))).toEqual(sorted(marchandFamily));
   });
 
+  it('la note d’une fiche fait l’aller-retour', () => {
+    const rows = graphToRows(marchandFamily);
+    expect(rows.persons.find((p) => p.id === 'maxime')?.notes).toMatch(/^Né d’une précédente/);
+    const back = rowsToGraph(rows).persons.find((p) => p.id === 'maxime');
+    expect(back?.notes).toBe(
+      'Né d’une précédente union de Luc. Il a grandi entre Nantes et Toulouse.',
+    );
+  });
+
   it('un lieu cité plusieurs fois n’est créé qu’une fois', () => {
     const rows = graphToRows(
       emptyGraph([

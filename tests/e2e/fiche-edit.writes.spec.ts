@@ -17,6 +17,25 @@ test('Anne corrige sa résidence sur place, puis annule', async ({ page }) => {
   await expect(page.getByRole('button', { name: /^Réside à : Bordeaux/ })).toBeVisible();
 });
 
+test('une note s’écrit sur plusieurs lignes et s’enregistre en touchant ailleurs', async ({
+  page,
+}, info) => {
+  await signIn(page, 'anne@famille.test');
+  await page.goto('/people/tom');
+  await page.getByRole('button', { name: /^Note/ }).click();
+  const note = page.getByRole('textbox', { name: 'Note' });
+  await expect(note).toBeFocused();
+  // La base est partagée entre projets : chaque projet écrit sa propre note.
+  await note.fill(`Adopté par Anne.\nNote de ${info.project.name}.`);
+  // Entrée va à la ligne sans enregistrer ; toucher le titre enregistre.
+  await note.press('Enter');
+  await expect(note).toBeVisible();
+  await page.getByRole('heading', { level: 1 }).click({ position: { x: 1, y: 1 } });
+  await expect(page.getByRole('button', { name: /^Note : Adopté par Anne\./ })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText(`Note de ${info.project.name}.`)).toBeVisible();
+});
+
 test('le nom se corrige en touchant le titre ; Échap abandonne', async ({ page }, info) => {
   await signIn(page, 'anne@famille.test');
   await page.goto('/people/tom');

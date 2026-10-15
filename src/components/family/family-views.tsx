@@ -387,6 +387,23 @@ export function PersonSheet({
         <PeopleRow label="Enfants" people={r.children} tree={tree} onPick={onPick} />
         <PeopleRow label="A aussi été élevé par" people={r.raisedBy} tree={tree} onPick={onPick} />
         <PeopleRow label="A élevé" people={r.raised} tree={tree} onPick={onPick} />
+        {person.level !== 'full' ? undefined : editable ? (
+          <EditableRow
+            personId={person.id}
+            field="notes"
+            label="Note"
+            display={person.notes}
+            spec={{ kind: 'note', value: person.notes }}
+          />
+        ) : person.notes ? (
+          // Maquette Arbre : la note ferme la fiche, sous un filet, en texte secondaire.
+          <div className="border-t border-rule py-3.5">
+            <dt className="sr-only">Note</dt>
+            <dd className="text-sm leading-relaxed whitespace-pre-line text-ink-2">
+              {person.notes}
+            </dd>
+          </div>
+        ) : undefined}
       </dl>
       {tree.trashableIds.includes(person.id) ? (
         <TrashButton personId={person.id} name={personLabel(person)} />

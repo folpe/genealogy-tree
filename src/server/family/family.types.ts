@@ -59,6 +59,8 @@ export const personSchema = z.object({
   death: lifeEventSchema.optional(),
   residence: z.string().min(1).optional(),
   visibility: visibilitySchema.default('famille'),
+  /** Note libre de la famille sur la personne, en fin de fiche (visible en lecture complète). */
+  notes: z.string().min(1).max(2000).optional(),
   /** Champs rattachés à une source (acte, livret, photo) : badge « Sourcé ». */
   sourcedFields: z.array(z.string().min(1)).default([]),
 });
