@@ -19,6 +19,8 @@ test('un tap ouvre la fiche à côté de l’arbre ; on passe de fiche en fiche'
   await expect(page).toHaveURL(/[?&]fiche=luc/);
   const luc = sheetOf(page, info, /Luc Marchand/);
   await expect(luc).toContainText('Ton père');
+  // Encart de droits calculé par la policy côté serveur.
+  await expect(luc).toContainText('Dans ta lignée : tu modifies directement.');
   // L'arbre reste en place derrière (sur mobile, la feuille modale le masque aux
   // lecteurs d'écran : on le cherche dans la page, pas dans l'arbre d'accessibilité).
   await expect(page.locator('[role="treeitem"][aria-label$="c’est toi"]')).toHaveCount(1);
@@ -26,6 +28,10 @@ test('un tap ouvre la fiche à côté de l’arbre ; on passe de fiche en fiche'
   await luc.getByRole('link', { name: 'Paul Marchand' }).click();
   await expect(page).toHaveURL(/[?&]fiche=paul/);
   await expect(sheetOf(page, info, /Paul Marchand/)).toContainText('Ton grand-père');
+  // Paul est aussi le père d'Anne, membre d'une autre branche.
+  await expect(sheetOf(page, info, /Paul Marchand/)).toContainText(
+    'Ancêtre commun à plusieurs branches',
+  );
 
   await page.goBack();
   await expect(page).toHaveURL(/[?&]fiche=luc/);

@@ -15,6 +15,8 @@ export {
 } from './access.policy';
 export type { RedactedPerson } from './access.redact';
 export { redactPerson } from './access.redact';
+export type { Rights, RightsNotice } from './access.rights';
+export { rightsNotices } from './access.rights';
 export type {
   EditDecision,
   EditReason,

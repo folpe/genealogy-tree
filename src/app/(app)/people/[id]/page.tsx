@@ -13,6 +13,7 @@ import {
 import { BackToTree } from '@/components/family/back-to-tree';
 import { PersonSheet } from '@/components/family/family-views';
 import { personLabel } from '@/components/family/person.helper';
+import { RightsNoticeBox } from '@/components/family/rights-notice';
 import { FAN_GENERATIONS } from '@/components/fan/fan.helper';
 import { ClaimPersonForm } from '@/components/members/members-forms';
 import { fanHref } from '@/lib/fan/fan.params';
@@ -46,6 +47,7 @@ export default async function PersonPage({
         <BackToTree />
       </nav>
       <PersonSheet tree={tree} personId={id} relation={tree.relations[id]} />
+      <RightsNoticeBox notice={tree.rights[id]} />
       <AddRelative
         key={id}
         anchor={relativeAnchor(person)}
