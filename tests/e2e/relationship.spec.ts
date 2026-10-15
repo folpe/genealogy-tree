@@ -19,7 +19,9 @@ test('Hugo voit son lien avec Isabelle, éclairé dans l’arbre', async ({ page
   await settled(page);
 
   const tree = page.locator('[role="tree"]');
-  await expect(tree.locator('[data-on-path="true"]')).toHaveCount(5);
+  // Le chemin, plus Henri et Louise, ancêtres communs au sommet.
+  await expect(tree.locator('[data-on-path="true"]')).toHaveCount(7);
+  await expect(tree.locator('[aria-label^="Henri "]')).toHaveAttribute('data-on-path', 'true');
   await expect(tree.locator('[aria-label^="Sophie Marchand"]')).toHaveAttribute(
     'data-on-path',
     'false',
@@ -68,11 +70,8 @@ for (const width of [360, undefined]) {
       await boxOf(page.getByRole('button', { name: 'Dézoomer', exact: true })),
     ];
     const tree = page.locator('[role="tree"]');
-    const framed = [
-      ...(await tree.locator('[data-on-path="true"]').all()),
-      tree.locator('[aria-label^="Henri "]'),
-      tree.locator('[aria-label^="Louise "]'),
-    ];
+    // Le chemin allumé, ancêtres communs compris.
+    const framed = await tree.locator('[data-on-path="true"]').all();
     expect(framed).toHaveLength(7);
     for (const bubble of framed) {
       const box = await boxOf(bubble);
