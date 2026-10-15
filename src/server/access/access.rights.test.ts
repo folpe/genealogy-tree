@@ -46,6 +46,15 @@ describe('droits sur une fiche, vus par Hugo', () => {
   });
 });
 
+describe('ancêtre commun et fratrie', () => {
+  it('une sœur inscrite ne fait pas des parents un ancêtre commun', () => {
+    const lea: Member = { id: 'm-lea', personId: 'lea', isAdmin: false, joinedAt: 9 };
+    const withLea = buildAccessContext(buildFamilyIndex(marchandFamily), [...marchandMembers, lea]);
+    expect(rightsOf(withLea, hugo, 'luc')).toEqual({ kind: 'lineage' });
+    expect(rightsOf(withLea, hugo, 'paul')).toEqual({ kind: 'common' });
+  });
+});
+
 describe('droits d’un administrateur', () => {
   it('modifie directement partout', () => {
     expect(rightsOf(ctx(), member('m-folpe'), 'marie')).toEqual({ kind: 'admin' });
@@ -65,7 +74,7 @@ describe('texte de l’encart', () => {
       text: 'Dans ta lignée : tu modifies directement.',
     });
     expect(rightsNotice({ kind: 'common' }, names).text).toBe(
-      'Ancêtre commun à plusieurs branches : tu modifies directement, toute sa lignée est prévenue et peut annuler.',
+      'Ancêtre commun à plusieurs branches : tu modifies directement ; bientôt, toute sa lignée sera prévenue et pourra annuler.',
     );
     expect(rightsNotice({ kind: 'open' }, names).text).toBe(
       'Fiche ouverte : aucun proche de Claude n’est inscrit, tu peux la compléter.',
@@ -76,20 +85,27 @@ describe('texte de l’encart', () => {
   it('hors lignée, nomme les gardiens, puce en accent', () => {
     expect(rightsNotice({ kind: 'outside', guardians: ['a'] }, names)).toEqual({
       tone: 'suggest',
-      text: 'Hors de ta lignée : ta suggestion ira à Isabelle.',
+      text: 'Hors de ta lignée : bientôt, tes suggestions iront à Isabelle.',
     });
     expect(
       rightsNotice(
         { kind: 'outside', guardians: ['a', 'b', 'c'] },
         { personName: 'Marie', guardianNames: ['Isabelle', 'Luc', 'Anne'] },
       ).text,
-    ).toBe('Hors de ta lignée : ta suggestion ira à Isabelle, Luc et Anne.');
+    ).toBe('Hors de ta lignée : bientôt, tes suggestions iront à Isabelle, Luc et Anne.');
   });
 
   it('sans gardien inscrit, la suggestion va aux administrateurs', () => {
     expect(
       rightsNotice({ kind: 'outside', guardians: [] }, { personName: 'X', guardianNames: [] }).text,
-    ).toBe('Hors de ta lignée : ta suggestion ira aux administrateurs.');
+    ).toBe('Hors de ta lignée : bientôt, tes suggestions iront aux administrateurs.');
+  });
+
+  it('des gardiens que le lecteur ne voit pas restent anonymes, pas des administrateurs', () => {
+    expect(
+      rightsNotice({ kind: 'outside', guardians: ['a'] }, { personName: 'X', guardianNames: [] })
+        .text,
+    ).toBe('Hors de ta lignée : bientôt, tes suggestions iront à ses proches inscrits.');
   });
 });
 
@@ -100,14 +116,16 @@ describe('encarts de toutes les fiches visibles', () => {
       { id: 'isabelle', firstName: 'Isabelle' },
       { id: 'hugo', firstName: 'Hugo' },
     ]);
-    expect(notices['marie']?.text).toBe('Hors de ta lignée : ta suggestion ira à Isabelle.');
+    expect(notices['marie']?.text).toBe(
+      'Hors de ta lignée : bientôt, tes suggestions iront à Isabelle.',
+    );
     expect(notices['hugo']?.tone).toBe('direct');
   });
 
   it('ne nomme pas un gardien que le lecteur ne voit pas', () => {
     const notices = rightsNotices(ctx(), hugo, [{ id: 'marie', firstName: 'Marie' }]);
     expect(notices['marie']?.text).toBe(
-      'Hors de ta lignée : ta suggestion ira aux administrateurs.',
+      'Hors de ta lignée : bientôt, tes suggestions iront à ses proches inscrits.',
     );
   });
 });

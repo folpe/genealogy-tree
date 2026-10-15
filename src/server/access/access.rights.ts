@@ -2,7 +2,7 @@
 // d'une fiche, dit en une phrase. La règle vient de la policy (canEdit) ; l'écran ne
 // fait qu'afficher le texte calculé ici.
 
-import { ancestorsOf, descendantsOf } from '../family/family.helper';
+import { ancestorsOf, descendantsOf, siblingsOf } from '../family/family.helper';
 import { type AccessContext, canEdit } from './access.policy';
 import type { Member } from './access.types';
 
@@ -35,8 +35,9 @@ export function rightsOf(ctx: AccessContext, viewer: Member, personId: string): 
 }
 
 /**
- * Ancêtre du lecteur et d'un autre membre qui n'est ni son ancêtre ni son descendant :
- * la fiche appartient à plusieurs branches (Henri pour Hugo et Isabelle).
+ * Ancêtre du lecteur et d'un autre membre qui n'est ni son ancêtre, ni son descendant,
+ * ni son frère ou sa sœur : la fiche appartient à plusieurs branches (Henri pour Hugo
+ * et Isabelle, Paul pour Hugo et sa tante Anne). Une fratrie reste une seule branche.
  */
 function isCommonAncestor(ctx: AccessContext, viewer: Member, personId: string): boolean {
   const own = viewer.personId;
@@ -45,6 +46,7 @@ function isCommonAncestor(ctx: AccessContext, viewer: Member, personId: string):
     own,
     ...ancestorsOf(ctx.index, own).keys(),
     ...descendantsOf(ctx.index, own).keys(),
+    ...siblingsOf(ctx.index, own).map((s) => s.id),
   ]);
   return ctx.members.some(
     (m) =>
@@ -54,13 +56,26 @@ function isCommonAncestor(ctx: AccessContext, viewer: Member, personId: string):
   );
 }
 
+/**
+ * À qui va la suggestion : les gardiens nommés ; des gardiens que le lecteur ne voit
+ * pas restent anonymes ; sans gardien inscrit, l'escalade mène aux administrateurs.
+ */
+function recipients(guardians: string[], names: string[]): string {
+  if (names.length > 0) return `à ${enumerate(names)}`;
+  return guardians.length > 0 ? 'à ses proches inscrits' : 'aux administrateurs';
+}
+
 /** « Isabelle », « Isabelle et Luc », « Isabelle, Luc et Anne ». */
 function enumerate(names: string[]): string {
   if (names.length <= 1) return names.join('');
   return `${names.slice(0, -1).join(', ')} et ${names.at(-1)}`;
 }
 
-/** Texte de l'encart, repris de la maquette Arbre (puce encre en direct, accent sinon). */
+/**
+ * Texte de l'encart, repris de la maquette Arbre (puce encre en direct, accent sinon).
+ * Suggestions et veille de lignée arrivent en phase 6 : d'ici là, l'encart les annonce
+ * au futur, comme les refus des services. À remettre au présent avec elles.
+ */
 export function rightsNotice(
   rights: Rights,
   { personName, guardianNames }: { personName: string; guardianNames: string[] },
@@ -76,7 +91,7 @@ export function rightsNotice(
     case 'common':
       return {
         tone: 'direct',
-        text: 'Ancêtre commun à plusieurs branches : tu modifies directement, toute sa lignée est prévenue et peut annuler.',
+        text: 'Ancêtre commun à plusieurs branches : tu modifies directement ; bientôt, toute sa lignée sera prévenue et pourra annuler.',
       };
     case 'open':
       return {
@@ -88,10 +103,7 @@ export function rightsNotice(
     case 'outside':
       return {
         tone: 'suggest',
-        text:
-          guardianNames.length > 0
-            ? `Hors de ta lignée : ta suggestion ira à ${enumerate(guardianNames)}.`
-            : 'Hors de ta lignée : ta suggestion ira aux administrateurs.',
+        text: `Hors de ta lignée : bientôt, tes suggestions iront ${recipients(rights.guardians, guardianNames)}.`,
       };
   }
 }

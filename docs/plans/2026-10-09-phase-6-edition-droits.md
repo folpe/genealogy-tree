@@ -70,6 +70,7 @@ Sortie : un membre crée, modifie et supprime des fiches dans son périmètre ; 
 - [ ] Payload de suggestion = diff validé par Zod, rejoué dans une transaction à l'acceptation (revalidation de la policy et des invariants au moment de l'acceptation).
 - [ ] Plusieurs gardiens : la première réponse tranche, les autres voient la décision.
 - [ ] Escalade : cron Vercel quotidien (`vercel.ts` `crons`) qui passe aux admins les suggestions sans réponse depuis 14 jours, idempotent.
+- [ ] Encart de droits (`rightsNotice`, `src/server/access/access.rights.ts`) remis au présent une fois les suggestions et la veille de lignée livrées (« ta suggestion ira à X », « toute sa lignée est prévenue et peut annuler »), avec les refus « arrivent bientôt » des services d'ajout et de modification.
 
 ### Lot 7 : écran Activité
 
