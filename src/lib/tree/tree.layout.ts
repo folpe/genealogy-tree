@@ -155,7 +155,8 @@ export async function computeTreeLayout(
   // un optimum local selon sa graine : on en essaie quelques-unes et on garde le
   // placement le plus lisible, en s'arrêtant au premier sans croisement.
   let best: { layout: TreeLayout; crossings: number } | undefined;
-  for (const seed of SEEDS) {
+  // Ordre imposé : ELK ne minimise plus rien, la graine n'y change rien, une passe suffit.
+  for (const seed of focusId ? SEEDS.slice(0, 1) : SEEDS) {
     const layout = await placeOnce(drawn, elk, { metrics, focusId, seed });
     const crossings = countCrossings(drawn, layout);
     if (!best || crossings < best.crossings) best = { layout, crossings };

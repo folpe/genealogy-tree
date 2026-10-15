@@ -61,7 +61,8 @@ export function familyOrder(
   function centered(focus: string): string[] {
     const focusBlock = g.blockOf(focus);
     const origin = g.parentBlock.get(focus);
-    if (!origin) return descendants(focusBlock);
+    // Sans parents, ou parents soudés au même bloc (chaîne de remariages) : sa descendance.
+    if (!origin || origin === focusBlock) return descendants(focusBlock);
     const persons = g.blocks.get(focusBlock) ?? [];
     const onLeft = persons.indexOf(focus) < (persons.length - 1) / 2 || persons.length === 1;
     visited.add(focusBlock);
@@ -74,8 +75,12 @@ export function familyOrder(
     });
   }
   // Les familles d'origine des conjoints, chacune avec ses ascendants, puis le reste.
+  // Marqué avant de remonter : deux blocs peuvent être chacun l'origine de l'autre
+  // (remariages croisés), la remontée doit s'arrêter.
+  const climbing = new Set<string>();
   const family = (blockId: string): string[] => {
-    if (visited.has(blockId)) return [];
+    if (visited.has(blockId) || climbing.has(blockId)) return [];
+    climbing.add(blockId);
     const up = (g.blocks.get(blockId) ?? []).flatMap((person) => {
       const origin = g.parentBlock.get(person);
       return origin && !visited.has(origin) ? family(origin) : [];

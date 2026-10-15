@@ -75,3 +75,37 @@ describe('familyOrder', () => {
     expect(increasing(ranked(['cousin-p3', 'moi+conjoint', 'enfant1', 'cousin-m1']))).toBe(true);
   });
 });
+
+describe('familyOrder sur des remariages croisés', () => {
+  it('deux blocs chacun l’origine de l’autre : l’ordre se termine, chaque bloc une fois', () => {
+    // « Grand-père de soi-même » : N épouse la veuve W, F (père de N) épouse D (fille de W).
+    const crossed = {
+      personIds: ['n', 'w', 'f', 'd'],
+      unions: [
+        {
+          id: 'u-nw',
+          partnerIds: ['n', 'w'] as [string, string],
+          past: false,
+          unknownPartner: false,
+        },
+        {
+          id: 'u-fd',
+          partnerIds: ['f', 'd'] as [string, string],
+          past: false,
+          unknownPartner: false,
+        },
+      ],
+      edges: [
+        { kind: 'parent' as const, from: 'f', to: 'n' },
+        { kind: 'parent' as const, from: 'w', to: 'd' },
+      ],
+    };
+    const crossedBlocks = [
+      { id: 'n+w', persons: ['n', 'w'] },
+      { id: 'f+d', persons: ['f', 'd'] },
+    ];
+    // Atteints sans personne au centre : par la boucle finale.
+    expect([...familyOrder(crossed, crossedBlocks, undefined)].sort()).toEqual(['f+d', 'n+w']);
+    expect([...familyOrder(crossed, crossedBlocks, 'w')].sort()).toEqual(['f+d', 'n+w']);
+  });
+});

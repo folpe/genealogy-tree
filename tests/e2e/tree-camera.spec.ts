@@ -232,8 +232,9 @@ test('un tap pendant un vol arrête la caméra et finit le mouvement', async ({ 
   await page.waitForTimeout(120);
   // Le point vide est choisi et touché dans le même instant, depuis la page : en plein
   // vol, une bulle passerait sous le point entre la mesure et un clic envoyé ensuite.
-  await canvas.evaluate((el) => {
+  const stopped = await canvas.evaluate((el) => {
     const box = el.getBoundingClientRect();
+    const cameraLayer = el.querySelector<HTMLElement>('[data-camera-layer]');
     for (let y = 16; y < box.height / 2; y += 16) {
       for (let x = 16; x < box.width / 2; x += 16) {
         const clientX = box.left + x;
@@ -245,7 +246,10 @@ test('un tap pendant un vol arrête la caméra et finit le mouvement', async ({ 
         hit.dispatchEvent(new PointerEvent('pointerdown', { ...touch, isPrimary: true }));
         hit.dispatchEvent(new PointerEvent('pointerup', { ...touch, isPrimary: true }));
         hit.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX, clientY }));
-        return;
+        // La caméra telle que le tap l'a arrêtée, à la frame suivante.
+        return new Promise<string>((done) =>
+          requestAnimationFrame(() => done(cameraLayer?.style.transform ?? '')),
+        );
       }
     }
     throw new Error('aucun point vide dans le canevas');
@@ -253,4 +257,6 @@ test('un tap pendant un vol arrête la caméra et finit le mouvement', async ({ 
   await expect(page).toHaveURL(/\/tree\?view=all$/);
   await settled(page);
   await expect(layer).toHaveCSS('will-change', 'auto');
+  // Arrêtée net : elle n'a pas fini son vol jusqu'à « moi », elle est restée où le tap l'a prise.
+  expect(await layer.evaluate((el) => el.style.transform)).toBe(stopped);
 });
