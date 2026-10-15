@@ -67,7 +67,7 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 ### Lot 5 : recherche ⌘K
 
 - [x] `components/CommandPalette/` (cmdk) : raccourci ⌘K / Ctrl+K, recherche floue insensible aux accents et aux noms de naissance (helper de la phase 2), résultats avec bulle, nom, "née X", années et lien de parenté en accent, "Récemment consultés" sans requête.
-- [ ] Sélection : vol caméra jusqu'à la personne puis ouverture de la fiche. Pour l'instant la sélection ouvre la fiche ; le vol caméra viendra avec la fiche en panneau (lot 4).
+- [x] Sélection : vol caméra jusqu'à la personne puis ouverture de la fiche. `camera.flyTo` prend un rappel d'arrivée (aussi appelé si un geste coupe le vol, aussitôt avec le mouvement réduit) ; `FamilyTree` reçoit la personne à révéler (`reveal`) et l'arbre n'ouvre la fiche qu'à l'arrivée, d'une bulle à l'écran dont l'avatar peut partir. Une bulle déjà bien visible ouvre sa fiche tout de suite.
 
 ### Lot 6 : lien de parenté animé
 

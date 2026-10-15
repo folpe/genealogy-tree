@@ -39,7 +39,11 @@ export type CameraController = {
   zoomTo: (k: number, around?: Point) => void;
   /** Part du canevas couverte (carte, boutons) : les bornes suivent la zone libre. */
   setCover: (cover: Cover) => void;
-  flyTo: (camera: Camera) => void;
+  /**
+   * Vol jusqu'à `camera`. `onArrive` est appelé une fois, à l'arrivée ou quand un geste
+   * coupe le vol (on est alors là où le doigt l'a arrêté) ; aussitôt avec le mouvement réduit.
+   */
+  flyTo: (camera: Camera, onArrive?: () => void) => void;
   /** Pose la caméra sans animation et conclut le mouvement (nouveau placement). */
   jump: (camera: Camera) => void;
   resize: (viewport: Size) => void;
@@ -75,6 +79,13 @@ export function createCamera({
   const listeners = new Set<(camera: Camera) => void>();
   let tween: gsap.core.Tween | undefined;
   let moving = false;
+  /** Ce qui attend la fin du vol en cours (ouvrir une fiche cherchée). */
+  let arrive: (() => void) | undefined;
+  const arrived = () => {
+    const done = arrive;
+    arrive = undefined;
+    done?.();
+  };
 
   const paint = () => {
     layer.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.k})`;
@@ -105,11 +116,13 @@ export function createCamera({
     moving = false;
     layer.style.willChange = 'auto';
     onSettle({ ...state });
+    arrived();
   };
   const stop = () => {
     const interrupted = tween !== undefined || moving;
     tween?.kill();
     tween = undefined;
+    arrived();
     return interrupted;
   };
   /** Sans animation quand l'utilisateur la refuse (DESIGN.md, section 10). */
@@ -163,11 +176,16 @@ export function createCamera({
         onComplete: settle,
       });
     },
-    flyTo(camera) {
+    flyTo(camera, onArrive) {
       const target = clampCamera(camera, content, cover);
-      if (reducedMotion()) return instant(target);
+      if (reducedMotion()) {
+        instant(target);
+        onArrive?.();
+        return;
+      }
       const path = flightPath({ ...state }, target, size);
       stop();
+      arrive = onArrive;
       const progress = { t: 0 };
       tween = gsap.to(progress, {
         t: 1,

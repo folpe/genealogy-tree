@@ -94,9 +94,18 @@ export function TreeWithSheet({
   const wide = useWide();
   const open = useCallback((id: string) => showFiche(id), []);
   const close = useCallback(() => showFiche(undefined), []);
+  // Une personne cherchée (⌘K) : la caméra va d'abord à sa bulle, la fiche s'ouvre à
+  // l'arrivée (lot 5) ; l'avatar de la fiche part ainsi d'une bulle à l'écran.
+  const [reveal, setReveal] = useState<{ id: string; onArrive: () => void }>();
   useOpenFicheRequests((id) => {
     if (!tree.drawn.personIds.includes(id)) return false;
-    showFiche(id);
+    setReveal({
+      id,
+      onArrive: () => {
+        setReveal(undefined);
+        showFiche(id);
+      },
+    });
     return true;
   });
   const [link, setLink] = useState<{ view: RelationshipView; highlight: PathHighlight }>();
@@ -173,6 +182,7 @@ export function TreeWithSheet({
           highlight={link?.highlight}
           coveredTop={link ? cardHeight : 0}
           quickActions={quickActions}
+          reveal={reveal}
         />
         {addingTo && adding ? (
           <AddRelativeDialog

@@ -59,3 +59,45 @@ test('⌘K hors de l’arbre, puis retour de la fiche complète : centré sur la
   await expect(isabelle).toBeInViewport();
   await expect(isabelle).toHaveAttribute('aria-selected', 'true');
 });
+
+test('⌘K vers une bulle hors de l’écran : la caméra y va d’abord, puis la fiche s’ouvre', async ({
+  page,
+}) => {
+  await signIn(page, 'hugo@famille.test');
+  await settled(page);
+  // De tout près : la bulle de Jeanne, deux générations plus haut, sort de l'écran.
+  const zoomIn = page.getByRole('button', { name: 'Zoomer', exact: true });
+  for (let i = 0; i < 6; i += 1) await zoomIn.click();
+  await settled(page);
+  const jeanne = page.locator('[data-person="jeanne"]');
+  await expect(jeanne).not.toBeInViewport();
+
+  // Au moment où l'URL ouvre la fiche, la bulle est-elle déjà à l'écran ?
+  await page.evaluate(() => {
+    const record = window as unknown as { openedInView?: boolean };
+    const push = history.pushState.bind(history);
+    history.pushState = (...args: Parameters<typeof history.pushState>) => {
+      if (String(args[2]).includes('fiche=jeanne') && record.openedInView === undefined) {
+        const rect = document.querySelector('[data-person="jeanne"]')?.getBoundingClientRect();
+        record.openedInView =
+          rect !== undefined &&
+          rect.top >= 0 &&
+          rect.left >= 0 &&
+          rect.bottom <= window.innerHeight &&
+          rect.right <= window.innerWidth;
+      }
+      push(...args);
+    };
+  });
+  await page.keyboard.press('ControlOrMeta+k');
+  const input = page.getByRole('dialog', { name: 'Trouver quelqu’un' }).getByRole('combobox');
+  await input.fill('jeanne');
+  await expect(page.getByRole('option', { name: /Jeanne Marchand/ })).toBeVisible();
+  await input.press('Enter');
+  // La fiche ne s'ouvre qu'une fois la bulle à l'écran : l'avatar peut en partir.
+  await expect(page).toHaveURL(/[?&]fiche=jeanne/);
+  const openedInView = await page.evaluate(
+    () => (window as unknown as { openedInView?: boolean }).openedInView,
+  );
+  expect(openedInView).toBe(true);
+});
