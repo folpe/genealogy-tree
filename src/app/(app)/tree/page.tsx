@@ -27,7 +27,7 @@ export default async function TreePage({
   const center = tree.persons.find((p) => p.id === tree.centerId);
 
   return (
-    <main className="flex h-full flex-col gap-3 px-4 pt-2 pb-4 md:gap-4 md:p-8 md:pt-4">
+    <main className="group/tree flex h-full flex-col gap-3 px-4 pt-2 pb-4 md:gap-4 md:p-8 md:pt-4">
       {/* Sur mobile, l'onglet « Arbre » dit déjà où l'on est : la place va au canevas. */}
       <h1 className="sr-only font-display text-[32px] leading-tight md:not-sr-only">
         L’arbre de la famille

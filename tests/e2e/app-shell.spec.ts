@@ -100,9 +100,10 @@ test('sur téléphone, les onglets flottent en bas, sous le pouce, sans rien cac
   expect(bar?.width ?? 0).toBeGreaterThan(width - 40);
   const tab = await nav.getByRole('link', { name: 'Ancêtres' }).boundingBox();
   expect(tab?.height ?? 0).toBeGreaterThanOrEqual(44);
-  // Le canevas s'arrête au-dessus de la barre : ses commandes restent à portée.
-  const canvas = await page.locator('[data-camera-layer]').locator('..').boundingBox();
-  expect((canvas?.y ?? 0) + (canvas?.height ?? 0)).toBeLessThanOrEqual(bar?.y ?? 0);
+  // L'arbre est plein écran sous la barre (maquette Mobile) ; ses commandes restent
+  // au-dessus d'elle, à portée.
+  const zoom = await page.getByRole('button', { name: 'Dézoomer', exact: true }).boundingBox();
+  expect((zoom?.y ?? 0) + (zoom?.height ?? 0)).toBeLessThanOrEqual(bar?.y ?? 0);
   await nav.getByRole('link', { name: 'Ancêtres' }).click();
   await expect(page).toHaveURL(/\/ancestors$/);
   await expect(nav.getByRole('link', { name: 'Ancêtres' })).toHaveAttribute('aria-current', 'page');

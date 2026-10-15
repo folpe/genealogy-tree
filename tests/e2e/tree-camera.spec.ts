@@ -221,7 +221,8 @@ test('un tap pendant un vol arrête la caméra et finit le mouvement', async ({ 
     for (let y = 16; y < box.height / 2; y += 16) {
       for (let x = 16; x < box.width / 2; x += 16) {
         const hit = document.elementFromPoint(box.left + x, box.top + y);
-        if (hit && !hit.closest('a, button')) return { x, y };
+        // L'en-tête et les vues flottent sur l'arbre plein écran du téléphone.
+        if (hit && el.contains(hit) && !hit.closest('a, button')) return { x, y };
       }
     }
     throw new Error('aucun point vide dans le canevas');

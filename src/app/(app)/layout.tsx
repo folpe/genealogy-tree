@@ -28,17 +28,19 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // en entier ; une page longue (fiche, membres) défile dans sa zone, l'arbre jamais.
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden">
-      <header className="flex shrink-0 items-center justify-between gap-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-1 md:grid md:grid-cols-[1fr_auto_1fr] md:pr-[max(2rem,env(safe-area-inset-right))] md:pl-[max(2rem,env(safe-area-inset-left))] md:pt-[18px]">
+      <header className="relative z-20 flex shrink-0 items-center gap-2.5 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-1 md:grid md:grid-cols-[1fr_auto_1fr] md:pr-[max(2rem,env(safe-area-inset-right))] md:pl-[max(2rem,env(safe-area-inset-left))] md:pt-[18px]">
         <Link
           href="/tree"
-          className="font-display text-xl leading-none whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+          className="shrink-0 rounded-full font-display text-xl leading-none whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
         >
-          Ances-Tree
+          {/* Sur téléphone, la marque se réduit à son signe : la recherche prend la place. */}
+          <BrandMark />
+          <span className="max-md:sr-only">Ances-Tree</span>
         </Link>
         <div className="hidden md:block">
           <NavPills placement="header" />
         </div>
-        <div className="flex items-center justify-end gap-2.5">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2.5 md:flex-none">
           <CommandPalette />
           <AccountMenu
             account={account}
@@ -53,5 +55,30 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <NavPills placement="bar" />
       </div>
     </div>
+  );
+}
+
+/** Le signe de la marque (maquette Mobile) : un arbre de trois branches, en pastille. */
+function BrandMark() {
+  return (
+    <span className="grid size-10 place-items-center rounded-full bg-ink text-on-ink md:hidden">
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 32 32"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        aria-hidden="true"
+      >
+        <path d="M16 28V16" />
+        <path d="M16 20C16 16 11 15 9 12" />
+        <path d="M16 18C16 14 21 13 23 10" />
+        <circle cx="9" cy="9" r="3" />
+        <circle cx="23" cy="7.5" r="3" />
+        <circle cx="16" cy="12" r="3" />
+      </svg>
+    </span>
   );
 }

@@ -24,6 +24,10 @@ function withoutCenter({ p: _, ...rest }: TreeParams): TreeParams {
   return rest;
 }
 
+/** Sur l'arbre plein écran du téléphone, le texte se pose sur une pastille lisible. */
+const floating =
+  'max-md:min-h-11 max-md:rounded-full max-md:bg-card max-md:px-4 max-md:shadow-float';
+
 export function TreeViewControls({
   params,
   shownView,
@@ -50,7 +54,9 @@ export function TreeViewControls({
     'flex h-11 shrink-0 items-center rounded-full px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+    // Au-dessus de l'arbre plein écran du téléphone ; une carte « Notre lien » ouverte prend
+    // leur place, ses vues reviennent à sa fermeture.
+    <div className="relative z-10 flex flex-wrap items-center gap-x-4 gap-y-2 max-md:group-has-[[data-link-card]]/tree:hidden">
       <nav aria-label="Vue de l’arbre" className="-mx-1 flex gap-1 overflow-x-auto px-1">
         {VIEWS.filter(({ view }) => view !== 'couple' || centerInCouple).map(({ view, label }) => {
           const current = shownView === view;
@@ -67,7 +73,7 @@ export function TreeViewControls({
         })}
       </nav>
       {shownView !== 'all' && centerName ? (
-        <p className="flex items-center gap-2 text-sm text-ink-2">
+        <p className={`flex items-center gap-2 text-sm text-ink-2 ${floating}`}>
           Centré sur <strong className="font-medium text-ink">{centerName}</strong>
           {canReturn ? (
             <Link
@@ -79,7 +85,7 @@ export function TreeViewControls({
           ) : undefined}
         </p>
       ) : undefined}
-      <div className="flex min-h-11 items-center gap-2 text-sm text-ink-2">
+      <div className={`flex min-h-11 items-center gap-2 text-sm text-ink-2 ${floating}`}>
         <Switch.Root
           id={pastId}
           checked={params.past}

@@ -141,7 +141,9 @@ export function TreeWithSheet({
   ) : undefined;
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5 lg:flex-row">
-      <div className="relative min-h-0 min-w-0 flex-1">
+      {/* Sur téléphone, l'arbre est plein écran (maquette Mobile) : l'en-tête, les vues et
+          les onglets flottent dessus. */}
+      <div className="relative min-h-0 min-w-0 flex-1 max-md:fixed max-md:inset-0">
         {link ? (
           <RelationshipCard
             // Un autre lien : une autre carte, mesurée à nouveau.
@@ -412,7 +414,8 @@ function RelationshipCard({
     <section
       ref={ref}
       aria-label="Notre lien"
-      className="absolute inset-x-3 top-3 z-10 mx-auto flex max-w-lg flex-col gap-2 rounded-[var(--radius-panel)] bg-card p-4 shadow-float md:gap-3 md:p-5"
+      data-link-card
+      className="absolute inset-x-3 top-3 z-10 mx-auto flex max-w-lg max-md:top-[var(--app-header-space)] flex-col gap-2 rounded-[var(--radius-panel)] bg-card p-4 shadow-float md:gap-3 md:p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <span className="pt-2 text-xs font-semibold tracking-[0.14em] text-accent uppercase">

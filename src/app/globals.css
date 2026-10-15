@@ -59,6 +59,9 @@
 :root {
   --tab-bar-bottom: max(14px, env(safe-area-inset-bottom));
   --tab-bar-space: calc(var(--tab-bar-bottom) + 60px + 10px);
+  /* En-tête du téléphone : il flotte sur l'arbre, plein écran ; ce qui se pose en haut
+     du canevas (carte « Notre lien ») commence dessous. */
+  --app-header-space: calc(max(0.75rem, env(safe-area-inset-top)) + 46px + 0.75rem);
 }
 
 /*
