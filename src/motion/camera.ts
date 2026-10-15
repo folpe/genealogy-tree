@@ -189,6 +189,10 @@ export function createCamera({
     },
     setCover(next) {
       cover = next;
+      // Les bornes ont bougé (un lien fermé) : une vue restée hors d'elles y glisse
+      // maintenant, plutôt que de sauter au premier geste.
+      const inside = clampCamera(state, content, cover);
+      if (inside.x !== state.x || inside.y !== state.y) controller.flyTo(inside);
     },
     setContent(next) {
       content = next;

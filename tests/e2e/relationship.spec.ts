@@ -87,5 +87,12 @@ for (const width of [360, undefined]) {
       );
       for (const button of buttons) expect(overlaps(box, button), `${name} libre`).toBe(false);
     }
+
+    // Le lien fermé, la vue rejoint en douceur les bornes sans carte (le haut du placement
+    // au plus au centre du canevas) : le geste suivant ne la fait pas sauter.
+    await card.getByRole('button', { name: 'Fermer le lien' }).click();
+    const after = await settled(page);
+    expect(after.y).toBeLessThanOrEqual(0.5);
+    expect(after.x).toBeLessThanOrEqual(0.5);
   });
 }
