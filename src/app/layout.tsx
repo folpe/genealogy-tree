@@ -3,6 +3,7 @@ import { Figtree, Fraunces } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { connection } from 'next/server';
 import type { ReactNode } from 'react';
+import { KeyboardInset } from '@/components/app/keyboard-inset';
 import { parseTheme, THEME_COOKIE, themeAttribute, themeColor } from '@/lib/theme/theme';
 import './globals.css';
 
@@ -60,7 +61,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       data-theme={themeAttribute(await readTheme())}
       className={`${fraunces.variable} ${figtree.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <KeyboardInset />
+      </body>
     </html>
   );
 }

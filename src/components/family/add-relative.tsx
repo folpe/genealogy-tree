@@ -96,7 +96,7 @@ export function AddRelativeDialog({
     <Dialog.Root open={intent !== undefined} onOpenChange={(next) => !next && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/30" />
-        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] max-w-lg overflow-y-auto rounded-t-[var(--radius-card)] bg-card p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-float focus-visible:outline-none md:inset-x-4 md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:rounded-[var(--radius-card)]">
+        <Dialog.Content className="fixed inset-x-0 bottom-[var(--keyboard-inset,0px)] z-50 mx-auto max-h-[calc(92dvh-var(--keyboard-inset,0px))] max-w-lg overflow-y-auto rounded-t-[var(--radius-card)] bg-card p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-float focus-visible:outline-none md:inset-x-4 md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:rounded-[var(--radius-card)]">
           {intent ? (
             <RelativeForm
               // Un nouveau formulaire à chaque ouverture : rien ne reste d'un ajout précédent.

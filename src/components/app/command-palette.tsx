@@ -123,7 +123,7 @@ export function CommandPalette() {
                 className="h-16 flex-1 bg-transparent text-lg outline-none placeholder:text-ink-2"
               />
             </div>
-            <Command.List className="max-h-[min(60dvh,440px)] overflow-y-auto p-2">
+            <Command.List className="max-h-[min(60dvh,440px,calc(100dvh-var(--keyboard-inset,0px)-7rem))] overflow-y-auto p-2">
               <Results
                 load={load}
                 query={query}
