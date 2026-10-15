@@ -250,7 +250,7 @@
  * en utilitaire (15 px), qu'un sélecteur d'élément ne surpasse pas.
  */
 @media (pointer: coarse) {
-  :is(input, select, textarea) {
+  :is(input:not([type="checkbox"], [type="radio"], [type="range"]), select, textarea) {
     /* biome-ignore lint/complexity/noImportantStyles: la taille des champs vient d'utilitaires, plus spécifiques qu'un sélecteur d'élément. */
     font-size: max(16px, 1em) !important;
   }
