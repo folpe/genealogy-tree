@@ -11,6 +11,7 @@ import { type PersonPhoto, signedPhoto } from '../media/media.url';
 import { loadAccessMembers } from '../members/members.repository';
 import { type DisplayedGraph, selectDisplayedGraph } from './family.display';
 import { buildFamilyIndex, type FamilyIndex, generationLevels, partnersOf } from './family.helper';
+import { familiesRevealing, inLawFamilies, withoutInLawFamilies } from './family.inlaws';
 import { loadFamilyGraph } from './family.repository';
 import { selectSubgraph } from './family.subgraph';
 import { todayIn } from './fuzzy-date.helper';
@@ -51,6 +52,11 @@ export type TreeForViewer = Omit<TreeView, 'audited'> & {
   relations: Record<string, string>;
   /** Fiches que le lecteur peut mettre à la corbeille (même règle que le service). */
   trashableIds: string[];
+  /**
+   * Toute la famille : conjoints venus avec leur famille d'origine, repliée derrière
+   * eux (« + sa famille ») ou dépliée ; `size`, le nombre de personnes qu'elle compte.
+   */
+  inLawFamilies: Record<string, { size: number; open: boolean }>;
   /** Encart de droits de chaque fiche, calculé par la policy (RightsNotice). */
   rights: Record<string, RightsNotice>;
 };
@@ -70,6 +76,10 @@ export type TreeDisplay = {
   past: boolean;
   /** Générations au plus de chaque côté ; sans limite par défaut. */
   depth?: number;
+  /** Toute la famille : conjoints dont la famille d'origine est dépliée (« + sa famille »). */
+  families?: string[];
+  /** Fiche demandée (recherche, lien) : la famille repliée qui la contient s'ouvre. */
+  reveal?: string;
 };
 
 const DEFAULT_DISPLAY: TreeDisplay = { past: false };
@@ -136,9 +146,12 @@ export async function getTreeForViewer(
   // Sans union en cours, « notre famille » est le sablier : on le nomme comme tel.
   const asked: TreeViewKind = display.view ?? (viewer.personId ? 'couple' : 'all');
   const shownView = asked === 'couple' && !centerInCouple ? 'hourglass' : asked;
+  // Toute la famille : les familles d'origine des conjoints se replient derrière eux.
+  const families = shownView === 'all' ? inLawFamilies(graph, centerId) : new Map();
+  const opened = [...(display.families ?? []), ...familiesRevealing(families, display.reveal)];
   const shown =
     shownView === 'all'
-      ? graph
+      ? withoutInLawFamilies(graph, families, opened)
       : selectSubgraph(graph, {
           view: shownView,
           rootId: centerId,
@@ -154,6 +167,12 @@ export async function getTreeForViewer(
     shownView,
     centerInCouple,
     editableIds: editableIds(ctx, viewer),
+    inLawFamilies: Object.fromEntries(
+      [...families].map(([spouse, family]) => [
+        spouse,
+        { size: family.size, open: opened.includes(spouse) },
+      ]),
+    ),
     trashableIds: view.persons.flatMap((p) => (trashRefusal(ctx, viewer, p.id) ? [] : [p.id])),
     rights: rightsNotices(ctx, viewer, view.persons),
     relations: relationsFrom(

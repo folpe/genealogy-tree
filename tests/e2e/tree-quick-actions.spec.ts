@@ -61,8 +61,11 @@ test('dans sa lignée : le geste propose les ajouts, puis ouvre le dialogue rég
 
 test('hors de sa lignée : pas d’ajout, les chemins de la fiche restent', async ({ page }) => {
   await signIn(page, 'anne@famille.test');
-  await openTree(page, '/tree?view=all');
-  // Bernard n'est pas forcément à l'écran : l'événement suffit à demander le menu.
+  // Bernard, père de Sophie : sa famille est repliée derrière elle, on la déplie.
+  await openTree(page, '/tree?view=all&famille=sophie');
+  // Bernard est au bord de l'arbre : la caméra va le chercher, son menu s'ouvre à l'écran.
+  await bubble(page, 'bernard').focus();
+  await settled(page);
   await bubble(page, 'bernard').dispatchEvent('contextmenu', { bubbles: true });
   const menu = page.getByRole('menu', { name: /^Actions rapides, Bernard/ });
   await expect(menu.getByRole('menuitem')).toHaveText([

@@ -8,7 +8,8 @@ import { aChildOf, anUnion, aPerson, exact, yearOnly } from './builders';
  *
  * Ajouts par rapport aux maquettes, pour couvrir des règles : `claire` (mère de
  * Maxime, union passée de Luc), `jade` (mineure, fille de Léa) et `tom` (adopté
- * par Anne).
+ * par Anne), `gaston` et `yvonne` (parents de Jacques : une famille de conjoint,
+ * repliée derrière lui dans Toute la famille).
  */
 const person = aPerson;
 
@@ -74,6 +75,20 @@ export const marchandFamily: FamilyGraph = {
       gender: 'homme',
       birth: { date: yearOnly(1933), place: 'Lyon' },
       death: { date: yearOnly(2015), place: 'Lyon' },
+    }),
+    person('gaston', {
+      firstName: 'Gaston',
+      lastName: 'Lefèvre',
+      gender: 'homme',
+      birth: { date: yearOnly(1904), place: 'Lyon' },
+      death: { date: yearOnly(1970), place: 'Lyon' },
+    }),
+    person('yvonne', {
+      firstName: 'Yvonne',
+      lastName: 'Lefèvre',
+      gender: 'femme',
+      birth: { date: yearOnly(1908), place: 'Lyon' },
+      death: { date: yearOnly(1985), place: 'Lyon' },
     }),
     person('claude', {
       firstName: 'Claude',
@@ -177,6 +192,7 @@ export const marchandFamily: FamilyGraph = {
       start: yearOnly(1930),
       end: { date: yearOnly(1980), reason: 'deces' },
     }),
+    anUnion('u-gaston-yvonne', 'gaston', 'yvonne', { start: yearOnly(1930) }),
     anUnion('u-paul-jeanne', 'paul', 'jeanne', { start: yearOnly(1957) }),
     anUnion('u-marie-jacques', 'marie', 'jacques', {
       start: yearOnly(1959),
@@ -206,6 +222,8 @@ export const marchandFamily: FamilyGraph = {
     aChildOf('jeanne', 'anne', { unionId: 'u-paul-jeanne' }),
     aChildOf('paul', 'luc', { unionId: 'u-paul-jeanne' }),
     aChildOf('jeanne', 'luc', { unionId: 'u-paul-jeanne' }),
+    aChildOf('gaston', 'jacques', { unionId: 'u-gaston-yvonne' }),
+    aChildOf('yvonne', 'jacques', { unionId: 'u-gaston-yvonne' }),
     aChildOf('marie', 'isabelle', { unionId: 'u-marie-jacques' }),
     aChildOf('jacques', 'isabelle', { unionId: 'u-marie-jacques' }),
     aChildOf('bernard', 'sophie', { unionId: 'u-bernard-odette' }),

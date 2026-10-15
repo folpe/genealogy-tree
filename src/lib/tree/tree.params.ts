@@ -10,6 +10,8 @@ export type TreeParams = TreeDisplay;
 
 /** Profondeur bornée : au-delà, une famille réelle n'a plus de générations à montrer. */
 const DEPTH_MAX = 20;
+/** Familles de conjoints dépliées à la fois, au plus. */
+const FAMILIES_MAX = 40;
 
 const first = (value: unknown) => (Array.isArray(value) ? value[0] : value);
 const fallback = <T extends z.ZodType>(schema: T) =>
@@ -20,27 +22,52 @@ const schema = z.object({
   view: fallback(z.enum(['all', 'couple', 'descendants', 'hourglass'])),
   past: fallback(z.enum(['0', '1'])),
   depth: fallback(z.coerce.number().int().min(1).max(DEPTH_MAX)),
+  famille: fallback(
+    z
+      .string()
+      .max(FAMILIES_MAX * 65)
+      .transform((value) => value.split(',').filter((id) => id.length > 0 && id.length <= 64)),
+  ),
+  fiche: fallback(z.string().min(1).max(64)),
 });
 
 export function parseTreeParams(
   searchParams: Record<string, string | string[] | undefined>,
 ): TreeParams {
-  const { p, view, past, depth } = schema.parse(searchParams);
+  const { p, view, past, depth, famille, fiche } = schema.parse(searchParams);
+  const families = famille?.slice(0, FAMILIES_MAX);
   return {
     ...(view ? { view } : {}),
     ...(p ? { p } : {}),
     past: past === '1',
     ...(depth ? { depth } : {}),
+    ...(families && families.length > 0 ? { families } : {}),
+    ...(fiche ? { reveal: fiche } : {}),
   };
 }
 
-export function treeHref({ view, p, past, depth }: TreeParams): string {
+export function treeHref({ view, p, past, depth, families }: TreeParams): string {
   const query = new URLSearchParams();
   if (p) query.set('p', p);
   if (view) query.set('view', view);
   if (past) query.set('past', '1');
   // La profondeur ne vaut que pour les vues centrées sur une personne.
   if (depth && view && view !== 'all') query.set('depth', String(depth));
+  // Les familles dépliées ne valent que pour Toute la famille.
+  if (families && families.length > 0 && view === 'all') query.set('famille', families.join(','));
   const search = query.toString();
   return search ? `/tree?${search}` : '/tree';
+}
+
+/**
+ * Déplie ou replie la famille d'origine d'un conjoint (Toute la famille). L'arbre se
+ * replace : la caméra revient sur le conjoint (`focus`), d'où la famille part.
+ */
+export function familyToggleHref(params: TreeParams, spouseId: string): string {
+  const current = params.families ?? [];
+  const families = current.includes(spouseId)
+    ? current.filter((id) => id !== spouseId)
+    : [...current, spouseId];
+  const base = treeHref({ ...params, view: 'all', families });
+  return `${base}${base.includes('?') ? '&' : '?'}focus=${encodeURIComponent(spouseId)}`;
 }
