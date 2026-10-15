@@ -17,6 +17,7 @@ import {
   type Camera,
   cameraFraming,
   cameraOn,
+  NO_COVER,
   nodesInView,
   type Rect,
   type Size,
@@ -312,6 +313,9 @@ const BranchToggle = memo(function BranchToggle({
 const REVEAL_MARGIN = 80;
 const ZOOM_STEP = 1.4;
 
+/** Colonne des boutons de caméra, marge comprise (46 px + `right-4`) : un cadrage l'évite. */
+const CONTROLS_WIDTH = 46 + 16;
+
 function CanvasControls({
   camera,
   home,
@@ -473,11 +477,15 @@ export function FamilyTree({
     const inside = Math.abs(x) < w / 2 - margin && Math.abs(y) < h / 2 - margin;
     if (!inside) camera.flyTo(cameraOn(node, Math.max(state.k, 0.75)));
   }, [camera, selectedId]);
-  // Un nouveau lien éclairé : la caméra cadre tout son chemin, et recadre quand la carte
-  // a pris sa hauteur. Un pli ensuite ne la déplace pas : les bulles sont relues ici.
+  // Un nouveau lien éclairé : la caméra cadre tout son chemin, ancêtres communs compris,
+  // hors de la carte et de la colonne des boutons, et recadre quand la carte a pris sa
+  // hauteur. Un pli ensuite ne la déplace pas : les bulles sont relues ici.
   useEffect(() => {
-    if (!camera || !highlight) return;
-    const onPath = [...highlight.persons].flatMap((id) => nodesById.current.get(id) ?? []);
+    if (!camera) return;
+    const free = { top: coveredTop, right: CONTROLS_WIDTH };
+    camera.setCover(highlight ? free : NO_COVER);
+    if (!highlight) return;
+    const onPath = [...highlight.framed].flatMap((id) => nodesById.current.get(id) ?? []);
     if (onPath.length === 0) return;
     const rect = {
       x0: Math.min(...onPath.map((n) => n.x)) - NODE_HALF_WIDTH,
@@ -485,7 +493,7 @@ export function FamilyTree({
       x1: Math.max(...onPath.map((n) => n.x)) + NODE_HALF_WIDTH,
       y1: Math.max(...onPath.map((n) => n.y)) + BUBBLE_RADIUS + LABEL_HEIGHT,
     };
-    camera.flyTo(cameraFraming(rect, camera.viewport(), camera.limits(), { top: coveredTop }));
+    camera.flyTo(cameraFraming(rect, camera.viewport(), camera.limits(), free));
   }, [camera, highlight, coveredTop]);
   const leaving = useRelayout({
     drawing: fold.drawing,
@@ -690,7 +698,9 @@ export function FamilyTree({
       {camera ? (
         <TreeMinimap points={nodes} width={width} height={height} camera={camera} />
       ) : undefined}
-      <CanvasControls camera={camera} home={me ? home : undefined} />
+      {/* Pendant un lien, « Toi » est déjà dans le cadre : « Me retrouver » céderait la
+          place au chemin pour rien. */}
+      <CanvasControls camera={camera} home={me && !highlight ? home : undefined} />
     </div>
   );
 }

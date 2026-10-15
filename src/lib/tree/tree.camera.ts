@@ -47,25 +47,31 @@ export const cameraOn = (point: Point, k: number): Camera => ({
 
 /** Lecture confortable : un cadrage ne grossit pas au-delà. */
 const FRAMING_K_MAX = 1.2;
+/**
+ * Un lien long sous sa carte peut demander une vue plus lointaine que la limite des
+ * gestes : le cadrage y descend (vue de loin), jusqu'à ce plancher.
+ */
+const FRAMING_K_MIN = 0.15;
 
 /**
  * Caméra qui montre toute une zone du monde, avec une marge (« Notre lien »). `top` :
- * hauteur couverte en haut de l'écran (une carte posée sur le canevas) ; la zone se
- * centre dans ce qui reste.
+ * hauteur couverte en haut de l'écran (une carte posée sur le canevas) ; `right` :
+ * largeur couverte à droite (les boutons de caméra). La zone se centre dans ce qui reste.
  */
 export function cameraFraming(
   rect: Rect,
   viewport: Size,
   limits: ScaleLimits,
-  { top = 0 }: { top?: number } = {},
+  { top, right }: Cover = NO_COVER,
 ): Camera {
   const width = rect.x1 - rect.x0 + 2 * FIT_PADDING;
   const height = rect.y1 - rect.y0 + 2 * FIT_PADDING;
-  const free = Math.max(1, viewport.height - top);
-  const fit = Math.min(viewport.width / width, free / height);
-  const k = Math.max(limits.kMin, Math.min(fit, FRAMING_K_MAX, limits.kMax));
+  const freeWidth = Math.max(1, viewport.width - right);
+  const freeHeight = Math.max(1, viewport.height - top);
+  const fit = Math.min(freeWidth / width, freeHeight / height);
+  const k = Math.max(FRAMING_K_MIN, Math.min(fit, FRAMING_K_MAX, limits.kMax));
   const centered = cameraOn({ x: (rect.x0 + rect.x1) / 2, y: (rect.y0 + rect.y1) / 2 }, k);
-  return { ...centered, y: centered.y + top / 2 };
+  return { x: centered.x - right / 2, y: centered.y + top / 2, k };
 }
 
 /** Point du monde sous un point de l'écran (compté depuis le centre du canevas). */
@@ -75,21 +81,33 @@ export const worldAt = (camera: Camera, screen: Point): Point => ({
 });
 
 export function zoomAt(camera: Camera, screen: Point, k: number, limits: ScaleLimits): Camera {
-  const next = Math.min(limits.kMax, Math.max(limits.kMin, k));
+  // Partie d'une vue plus lointaine que la limite (un lien cadré), la vue ne saute pas.
+  const next = Math.min(limits.kMax, Math.max(Math.min(limits.kMin, camera.k), k));
   const world = worldAt(camera, screen);
   return { x: screen.x - world.x * next, y: screen.y - world.y * next, k: next };
 }
 
-/** Le centre du canevas reste au-dessus du placement : on ne perd jamais l'arbre. */
-export const cameraBounds = (content: Size, k: number) => ({
-  xMin: -content.width * k,
-  xMax: 0,
-  yMin: -content.height * k,
-  yMax: 0,
+/**
+ * Part du canevas couverte, en px : en haut (la carte « Notre lien »), à droite (les
+ * boutons de caméra). Le cadrage et les bornes raisonnent sur ce qui reste libre.
+ */
+export type Cover = { top: number; right: number };
+
+export const NO_COVER: Cover = { top: 0, right: 0 };
+
+/**
+ * Le centre de la zone libre reste au-dessus du placement : on ne perd jamais l'arbre.
+ * Sans rien de couvert, c'est le centre du canevas.
+ */
+export const cameraBounds = (content: Size, k: number, cover: Cover = NO_COVER) => ({
+  xMin: -content.width * k - cover.right / 2,
+  xMax: 0 - cover.right / 2,
+  yMin: -content.height * k + cover.top / 2,
+  yMax: cover.top / 2,
 });
 
-export function clampCamera(camera: Camera, content: Size): Camera {
-  const { xMin, xMax, yMin, yMax } = cameraBounds(content, camera.k);
+export function clampCamera(camera: Camera, content: Size, cover: Cover = NO_COVER): Camera {
+  const { xMin, xMax, yMin, yMax } = cameraBounds(content, camera.k, cover);
   return {
     x: Math.min(xMax, Math.max(xMin, camera.x)),
     y: Math.min(yMax, Math.max(yMin, camera.y)),

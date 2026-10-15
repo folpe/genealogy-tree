@@ -32,6 +32,15 @@ describe('pathHighlight', () => {
     );
   });
 
+  it('cadre aussi les parents d’où partent les branches allumées', () => {
+    const { framed } = pathHighlight(
+      ['hugo', 'u-luc-sophie', 'luc', 'u-paul-jeanne', 'anne'],
+      unions,
+    );
+    // Sophie, Paul et Jeanne ne sont pas sur le chemin, mais leurs branches le sont.
+    expect(framed).toEqual(new Set(['hugo', 'luc', 'anne', 'sophie', 'paul', 'jeanne']));
+  });
+
   it('un lien direct sans union : la branche du parent seul, dans un sens ou l’autre', () => {
     const { links } = pathHighlight(['jade', 'lea'], []);
     expect(links).toEqual(new Set(['parent:jade>lea', 'parent:lea>jade']));

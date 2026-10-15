@@ -4,16 +4,26 @@
 
 type UnionShape = { id: string; partnerIds: [string, string | null] };
 
-export type PathHighlight = { persons: Set<string>; links: Set<string> };
+export type PathHighlight = {
+  persons: Set<string>;
+  links: Set<string>;
+  /** À cadrer : le chemin, plus les parents d'où partent ses branches (ancêtres communs). */
+  framed: Set<string>;
+};
 
 export function pathHighlight(path: string[], unions: UnionShape[]): PathHighlight {
   const byId = new Map(unions.map((u) => [u.id, u]));
   const persons = new Set(path.filter((id) => !byId.has(id)));
   const links = new Set<string>();
+  const framed = new Set(persons);
   /** Un enfant rattaché à une union : son trait, ou les branches de chaque parent. */
   const fromUnion = (union: UnionShape, child: string) => {
     links.add(`child:${union.id}>${child}`);
-    for (const parent of union.partnerIds) if (parent) links.add(`parent:${parent}>${child}`);
+    for (const parent of union.partnerIds) {
+      if (!parent) continue;
+      links.add(`parent:${parent}>${child}`);
+      framed.add(parent);
+    }
   };
   for (let i = 0; i + 1 < path.length; i += 1) {
     const a = path[i] ?? '';
@@ -30,5 +40,5 @@ export function pathHighlight(path: string[], unions: UnionShape[]): PathHighlig
       links.add(`parent:${b}>${a}`);
     }
   }
-  return { persons, links };
+  return { persons, links, framed };
 }

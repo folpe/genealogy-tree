@@ -437,12 +437,14 @@ function RelationshipCard({
       <p aria-live="polite" className="font-display text-[19px] leading-snug md:text-[26px]">
         {view.sentence}
       </p>
+      {/* Sur téléphone, les étapes tiennent sur une ligne qui défile : la carte laisse
+          au chemin la hauteur du canevas. */}
       {view.steps.length > 1 ? (
-        <ol className="flex flex-wrap items-center gap-1.5">
+        <ol className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0">
           {view.steps.map((step, i) => (
             <li
               key={step.id}
-              className={`flex h-8 items-center rounded-full px-3 text-[13px] ${i === 0 || i === view.steps.length - 1 ? 'bg-accent-soft text-accent-strong' : 'bg-paper'}`}
+              className={`flex h-8 shrink-0 items-center rounded-full px-3 text-[13px] ${i === 0 || i === view.steps.length - 1 ? 'bg-accent-soft text-accent-strong' : 'bg-paper'}`}
             >
               {i === 0 ? 'Toi' : step.name}
             </li>

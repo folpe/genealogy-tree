@@ -3,9 +3,11 @@ import gsap from 'gsap';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import {
   type Camera,
+  type Cover,
   cameraBounds,
   clampCamera,
   flightPath,
+  NO_COVER,
   rubberBand,
   type ScaleLimits,
   type Size,
@@ -38,6 +40,8 @@ export type CameraController = {
   release: (velocity: Point) => void;
   /** Zoom animé autour d'un point de l'écran (compté depuis le centre du canevas). */
   zoomTo: (k: number, around?: Point) => void;
+  /** Part du canevas couverte (carte, boutons) : les bornes suivent la zone libre. */
+  setCover: (cover: Cover) => void;
   flyTo: (camera: Camera) => void;
   /** Pose la caméra sans animation et conclut le mouvement (nouveau placement). */
   jump: (camera: Camera) => void;
@@ -66,6 +70,7 @@ export function createCamera({
   let size: Size = { width: viewportElement.clientWidth, height: viewportElement.clientHeight };
   let content = initialContent;
   let limits = scaleLimits(content, size);
+  let cover: Cover = NO_COVER;
   // Une caméra retrouvée a pu être prise sur un autre écran : bornée comme les autres.
   const state: Camera = clampCamera(
     { ...initial, k: Math.min(limits.kMax, Math.max(limits.kMin, initial.k)) },
@@ -126,10 +131,10 @@ export function createCamera({
     set(camera, { elastic = false } = {}) {
       stop();
       if (!elastic) {
-        assign(clampCamera(camera, content));
+        assign(clampCamera(camera, content, cover));
         return;
       }
-      const { xMin, xMax, yMin, yMax } = cameraBounds(content, camera.k);
+      const { xMin, xMax, yMin, yMax } = cameraBounds(content, camera.k, cover);
       assign({
         x: rubberBand(camera.x, xMin, xMax),
         y: rubberBand(camera.y, yMin, yMax),
@@ -137,9 +142,9 @@ export function createCamera({
       });
     },
     release(velocity) {
-      if (reducedMotion()) return instant(clampCamera(state, content));
+      if (reducedMotion()) return instant(clampCamera(state, content, cover));
       stop();
-      const { xMin, xMax, yMin, yMax } = cameraBounds(content, state.k);
+      const { xMin, xMax, yMin, yMax } = cameraBounds(content, state.k, cover);
       tween = gsap.to(state, {
         inertia: {
           x: { velocity: velocity.x, min: xMin, max: xMax },
@@ -151,7 +156,7 @@ export function createCamera({
       });
     },
     zoomTo(k, around = { x: 0, y: 0 }) {
-      const target = clampCamera(zoomAt(state, around, k, limits), content);
+      const target = clampCamera(zoomAt(state, around, k, limits), content, cover);
       if (reducedMotion()) return instant(target);
       stop();
       tween = gsap.to(state, {
@@ -163,7 +168,7 @@ export function createCamera({
       });
     },
     flyTo(camera) {
-      const target = clampCamera(camera, content);
+      const target = clampCamera(camera, content, cover);
       if (reducedMotion()) return instant(target);
       const path = flightPath({ ...state }, target, size);
       stop();
@@ -177,9 +182,17 @@ export function createCamera({
       });
     },
     jump(camera) {
-      // Le contenu a pu changer de taille : l'échelle reste dans les nouvelles bornes.
-      const k = Math.min(limits.kMax, Math.max(limits.kMin, camera.k));
-      instant(clampCamera({ ...camera, k }, content));
+      // Le contenu a pu changer de taille : l'échelle reste dans les nouvelles bornes, sauf
+      // une vue déjà plus lointaine (un lien cadré), qu'on ne rapproche pas d'un bond.
+      const k = Math.min(limits.kMax, Math.max(Math.min(limits.kMin, state.k), camera.k));
+      instant(clampCamera({ ...camera, k }, content, cover));
+    },
+    setCover(next) {
+      cover = next;
+      // Les bornes ont bougé (un lien fermé) : une vue restée hors d'elles y glisse
+      // maintenant, plutôt que de sauter au premier geste.
+      const inside = clampCamera(state, content, cover);
+      if (inside.x !== state.x || inside.y !== state.y) controller.flyTo(inside);
     },
     setContent(next) {
       content = next;
