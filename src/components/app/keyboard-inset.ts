@@ -7,15 +7,29 @@ import { useEffect } from 'react';
 // passe dessous, champ compris. On mesure la part couverte avec `visualViewport` et on
 // l'expose en `--keyboard-inset`, que les panneaux du bas ajoutent à leur marge. La
 // feuille vaul se replace seule (`repositionInputs`) ; il lui manque le champ ramené en vue.
+// Elle ne doit pas lire `--keyboard-inset` : la compensation serait comptée deux fois.
 // `interactive-widget=resizes-content` réglerait Chrome seul : Safari l'ignore, on garde
 // un seul mécanisme pour les deux.
 
-export type ViewportBox = { layoutHeight: number; visualHeight: number; visualTop: number };
+export type ViewportBox = {
+  layoutHeight: number;
+  visualHeight: number;
+  visualTop: number;
+  scale: number;
+};
 
-/** Hauteur cachée sous le clavier, en px entiers ; zéro quand rien ne couvre le bas. */
-export function keyboardInset({ layoutHeight, visualHeight, visualTop }: ViewportBox): number {
+/**
+ * Hauteur cachée sous le clavier, en px entiers ; zéro quand rien ne couvre le bas.
+ * Zoomée à deux doigts (iOS l'autorise malgré `user-scalable=no`), la vue rétrécit
+ * aussi : ce n'est pas le clavier, on ne compense rien.
+ */
+export function keyboardInset({ layoutHeight, visualHeight, visualTop, scale }: ViewportBox) {
+  if (Math.abs(scale - 1) > 0.01) return 0;
   return Math.max(0, Math.round(layoutHeight - visualHeight - visualTop));
 }
+
+/** Les champs qui appellent le clavier : eux seuls sont ramenés en vue. */
+const TYPING = 'input, textarea, select, [contenteditable]';
 
 const VARIABLE = '--keyboard-inset';
 
@@ -35,14 +49,16 @@ function useKeyboardInset(): void {
         layoutHeight: window.innerHeight,
         visualHeight: viewport.height,
         visualTop: viewport.offsetTop,
+        scale: viewport.scale,
       });
       root.style.setProperty(VARIABLE, `${inset}px`);
       // Le panneau vient de remonter : le champ en cours peut être sorti de sa zone.
       if (inset > last) {
         cancelAnimationFrame(frame);
-        frame = requestAnimationFrame(() =>
-          document.activeElement?.scrollIntoView({ block: 'nearest' }),
-        );
+        frame = requestAnimationFrame(() => {
+          const active = document.activeElement;
+          if (active?.matches(TYPING)) active.scrollIntoView({ block: 'nearest' });
+        });
       }
       last = inset;
     };

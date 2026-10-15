@@ -63,6 +63,7 @@ test('le dialogue d’ajout remonte au-dessus du clavier, puis redescend', async
   await place.focus();
   await showKeyboard(page);
   await expect.poll(() => bottomOf(place)).toBeLessThanOrEqual(top + 1);
+  await expect(place).toBeInViewport();
 
   await hideKeyboard(page);
   await expect.poll(() => bottomOf(dialog)).toBeCloseTo(screenBottom, 0);
