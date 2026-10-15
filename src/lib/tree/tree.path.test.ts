@@ -51,6 +51,13 @@ describe('pathHighlight', () => {
     expect(persons.has('sophie')).toBe(false);
   });
 
+  it('ne prend pas pour un sommet une union voisine d’une autre union', () => {
+    // Le chemin filtré sur l'arbre affiché a perdu Luc, entre ses deux couples.
+    const { persons } = pathHighlight(['hugo', 'u-luc-sophie', 'u-paul-jeanne', 'anne'], unions);
+    expect(persons.has('sophie')).toBe(false);
+    expect(persons.has('paul')).toBe(false);
+  });
+
   it('un lien direct sans union : la branche du parent seul, dans un sens ou l’autre', () => {
     const { links } = pathHighlight(['jade', 'lea'], []);
     expect(links).toEqual(new Set(['parent:jade>lea', 'parent:lea>jade']));

@@ -19,7 +19,8 @@ export function pathHighlight(path: string[], unions: UnionShape[]): PathHighlig
   path.forEach((id, i) => {
     const union = byId.get(id);
     const [before, after] = [path[i - 1], path[i + 1]];
-    if (!union || !before || !after) return;
+    // Deux personnes de part et d'autre : un chemin filtré peut avoir perdu un maillon.
+    if (!union || !before || !after || byId.has(before) || byId.has(after)) return;
     if (union.partnerIds.includes(before) || union.partnerIds.includes(after)) return;
     for (const parent of union.partnerIds) if (parent) persons.add(parent);
   });
