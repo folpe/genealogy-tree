@@ -52,10 +52,11 @@ export function pathHighlight(path: string[], unions: UnionShape[]): PathHighlig
     const union = ua ?? ub;
     const other = ua ? b : a;
     if (union) {
+      const joined = `union:${union.id}`;
       // Vers l'union depuis un enfant, le chemin remonte ; depuis l'union, il descend.
-      if (union.partnerIds.includes(other))
-        steps.push([{ id: `union:${union.id}`, reverse: false }]);
-      else steps.push(fromUnion(union, other, ub !== undefined));
+      // De conjoint à conjoint, l'union est atteinte puis quittée : un seul trait.
+      if (!union.partnerIds.includes(other)) steps.push(fromUnion(union, other, ub !== undefined));
+      else if (steps.at(-1)?.[0]?.id !== joined) steps.push([{ id: joined, reverse: false }]);
     } else {
       steps.push([
         { id: `parent:${a}>${b}`, reverse: false },

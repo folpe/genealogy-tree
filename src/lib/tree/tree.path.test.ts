@@ -90,6 +90,11 @@ describe('pathHighlight', () => {
     ]);
   });
 
+  it('de conjoint à conjoint, le trait d’union se trace une fois', () => {
+    const { steps } = pathHighlight(['luc', 'u-luc-sophie', 'sophie'], unions);
+    expect(steps).toEqual([[{ id: 'union:u-luc-sophie', reverse: false }]]);
+  });
+
   it('un chemin vide n’allume rien', () => {
     const { persons, links } = pathHighlight([], unions);
     expect(persons.size + links.size).toBe(0);
