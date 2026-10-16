@@ -63,7 +63,7 @@ scripts/
 
 ### Lot 1 : bascule de Farm vers Next 16 (sans données)
 
-- [ ] **Avant de merger ce lot sur `main`**, Folpe verrouille le déploiement de production Netlify (« Lock published deploy ») : l'ancienne app reste servie telle quelle pendant que `main` évolue.
+- [x] **Avant de merger ce lot sur `main`**, Folpe verrouille le déploiement de production Netlify (« Lock published deploy ») : l'ancienne app reste servie telle quelle pendant que `main` évolue. Verrouillé le 2026-10-16 sur le déploiement publié de #66 (ancienne app).
 - [x] Ajouter Next 16, React 19, `@types/react@19` ; retirer Farm, React Router, `@farmfe/*`, `react-refresh`, `postcss.config.js` remplacé par `postcss.config.mjs` (Tailwind 4).
 - [x] `next.config.ts` : `typedRoutes`, en-têtes de sécurité, `images.remotePatterns` limité au domaine Blob. CSP stricte à nonce posée par `src/proxy.ts`. **Écart :** pas de `cacheComponents`, incompatible avec une CSP à nonce ([décision](../decisions-log/2026-10-11-csp-nonce-sans-cache-components--92c82dd2-1732-4620-a4c0-fa1d589051f3.md)).
 - [x] `src/app/layout.tsx` (lang `fr`, `noindex`), `robots.ts` qui interdit tout, polices Fraunces et Figtree via `next/font`, viewport avec `user-scalable=no` (ADR 07).

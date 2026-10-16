@@ -34,7 +34,7 @@ Point d'entrée pour savoir où en est la refonte et ce qu'il reste à faire. Le
 
 ## Actions qui reviennent à Folpe
 
-- [ ] Protection de branche `main` sur GitHub (check `quality`).
+- [x] Protection de branche `main` sur GitHub (check `quality`) : posée le 2026-10-16 (PR obligatoire, `quality` exigé, admins compris, ni force-push ni suppression).
 - [ ] Phase 3 : comptes et accès Neon, Vercel, Resend ; enregistrements DNS de `folpe.me` (CNAME `famille`, SPF, DKIM, DMARC) ; secrets Notion pour l'extraction.
 - [x] Phase 3 : relecture du rapport d'anomalies de la migration avant la production (chargement validé le 2026-10-12).
 - [ ] Bascule, après parité : feu vert pour couper Notion et Netlify.

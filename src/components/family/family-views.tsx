@@ -284,8 +284,9 @@ function EditableFacts({ person }: { person: Extract<RedactedPerson, { level: 'f
         personId={person.id}
         field="death"
         label="Décès"
-        // Vivante : « En vie », pas « à compléter », qui laisserait croire à un décès.
-        display={person.death ? (lifeEvent(person.death) ?? 'Date inconnue') : 'En vie'}
+        // Vivante : pas de ligne « Décès » (ni « En vie », ni « à compléter »), une action.
+        display={person.death ? (lifeEvent(person.death) ?? 'Date inconnue') : undefined}
+        invite="Indiquer un décès"
         spec={{
           kind: 'event',
           death: true,

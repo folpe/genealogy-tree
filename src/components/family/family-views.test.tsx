@@ -107,6 +107,18 @@ describe('PersonSheet', () => {
     expect(screen.getByRole('button', { name: 'Surnom : Lulu, modifier' })).toBeVisible();
   });
 
+  it('vivant : pas de ligne « Décès », une action pour l’indiquer', () => {
+    render(<PersonSheet tree={hugo} personId="luc" />);
+    expect(screen.queryByRole('button', { name: /^Décès/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Indiquer un décès' })).toBeVisible();
+  });
+
+  it('décédé : la ligne « Décès » et sa date, qui se touchent', () => {
+    render(<PersonSheet tree={hugo} personId="paul" />);
+    expect(screen.getByRole('button', { name: /^Décès : 2008/ })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Indiquer un décès' })).toBeNull();
+  });
+
   it('la note se lit en fin de fiche', () => {
     render(<PersonSheet tree={{ ...hugo, editableIds: [] }} personId="maxime" />);
     const note = screen.getByText(/Il a grandi entre Nantes et Toulouse/);
