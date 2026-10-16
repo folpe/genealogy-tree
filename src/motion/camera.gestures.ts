@@ -140,7 +140,10 @@ export function bindCameraGestures(viewport: HTMLElement, camera: CameraControll
     interrupted = false;
     // Après un pincement, pas d'élan : seulement le retour dans les bornes.
     camera.release(start && start.distance > 0 ? { x: 0, y: 0 } : velocity());
-    swallowClick = true;
+    // Seule la souris (ou le stylet) émet un click après un glissé. Au doigt, il n'en vient
+    // pas : le drapeau resterait levé et avalerait le click suivant, celui d'Entrée au
+    // clavier compris.
+    swallowClick = event.pointerType !== 'touch';
     dragging = false;
     start = undefined;
   };
