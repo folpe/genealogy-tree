@@ -17,12 +17,18 @@ const LINK_S = 0.36;
 const LINK_DELAY_S = 0.08;
 const EASE = 'power2.out';
 
-/** `bubbles` : les bulles rendues, par identifiant ; `layer` : le calque qui porte traits et poignées. */
+/**
+ * `bubbles` : les bulles rendues, par identifiant ; `layer` : le calque qui porte traits
+ * et poignées ; `fromRow` : la première génération à l'écran, d'où part la pousse (celles
+ * du dessus, hors de la vue, sont posées d'emblée).
+ */
 export function animateTreeEntry(
   waves: EntryWaves,
   bubbles: ReadonlyMap<string, HTMLElement>,
   layer: HTMLElement | undefined,
+  fromRow = 0,
 ): () => void {
+  const at = (row: number) => Math.max(0, row - fromRow) * ROW_S;
   const present = (ids: string[]) => ids.flatMap((id) => bubbles.get(id) ?? []);
   if (reducedMotion()) {
     const tween = gsap.from([...bubbles.values()], {
@@ -62,7 +68,7 @@ export function animateTreeEntry(
         ease: EASE,
         clearProps: 'opacity,transform,transition',
       },
-      row * ROW_S,
+      at(row),
     );
   });
   waves.links.forEach((ids, row) => {
@@ -74,7 +80,7 @@ export function animateTreeEntry(
         path,
         { drawSVG: '0% 0%' },
         { drawSVG: '0% 100%', duration: LINK_S, ease: EASE },
-        row * ROW_S + LINK_DELAY_S,
+        at(row) + LINK_DELAY_S,
       );
     }
   });
@@ -87,7 +93,7 @@ export function animateTreeEntry(
       elements,
       // En fondu seul : leur taille suit déjà le zoom par les propriétés `scale` et `translate`.
       { opacity: 0, duration: BUBBLE_S, ease: EASE, clearProps: 'opacity' },
-      row * ROW_S + LINK_DELAY_S,
+      at(row) + LINK_DELAY_S,
     );
   });
   return () => {

@@ -1,0 +1,198 @@
+// tdd-cover: e2e tests/e2e/tree-views.spec.ts
+'use client';
+
+import Link from 'next/link';
+import { Popover, Switch } from 'radix-ui';
+import { useId, useOptimistic, useState, useSyncExternalStore } from 'react';
+import { Drawer } from 'vaul';
+import { type TreeParams, treeHref } from '@/lib/tree/tree.params';
+import { useTreeLink, useTreeNavigate } from './tree-navigation';
+
+// Réglages de l'arbre (DESIGN.md, section 7, règle 3) : la personne au centre et les
+// unions passées, derrière un seul bouton au bout de la rangée des vues. Feuille vaul
+// sur le téléphone, comme la fiche ; popover sur ordinateur, où la place ne manque pas
+// mais où un même geste vaut mieux que deux dispositions. Une pastille d'accent sur le
+// bouton dit qu'un réglage s'écarte du départ.
+
+/** Même seuil que le passage au téléphone des commandes de l'arbre (`md`). */
+const WIDE = '(min-width: 768px)';
+
+function subscribe(onChange: () => void) {
+  const query = window.matchMedia(WIDE);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+}
+
+/** Rien n'est ouvert au rendu serveur : la valeur par défaut n'y sert jamais. */
+function useWide(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(WIDE).matches,
+    () => false,
+  );
+}
+
+const TITLE = 'Réglages de l’arbre';
+const focusRing =
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
+
+export function TreeSettings({
+  params,
+  centerName,
+  canReturn,
+}: {
+  params: TreeParams;
+  /** Personne au centre, si la vue en a une (pas « Toute la famille »). */
+  centerName: string | undefined;
+  canReturn: boolean;
+}) {
+  const wide = useWide();
+  const [open, setOpen] = useState(false);
+  // L'interrupteur bascule dès le tap ; l'arbre suit quand le serveur l'a redessiné.
+  const [past, showPast] = useOptimistic(params.past);
+  const changed = past || (centerName !== undefined && canReturn);
+  const titleId = useId();
+  const body = (
+    <SettingsBody
+      params={params}
+      centerName={centerName}
+      canReturn={canReturn}
+      past={past}
+      showPast={showPast}
+      onLeave={() => setOpen(false)}
+    />
+  );
+
+  return (
+    <Popover.Root open={open && wide} onOpenChange={setOpen}>
+      <Popover.Trigger
+        aria-label={changed ? `${TITLE}, modifiés` : TITLE}
+        // La feuille du téléphone n'est pas le popover : l'état ouvert est le nôtre.
+        aria-expanded={open}
+        className={`relative grid size-11 place-items-center rounded-full border border-line bg-card text-ink-2 hover:text-ink aria-expanded:border-ink aria-expanded:text-ink max-md:size-9 max-md:before:absolute max-md:before:-inset-1 max-md:before:content-[''] motion-safe:transition-colors ${focusRing}`}
+      >
+        <SlidersIcon />
+        {changed ? (
+          <span
+            aria-hidden="true"
+            data-settings-changed
+            className="absolute top-0 right-0 size-2.5 rounded-full bg-accent ring-2 ring-card"
+          />
+        ) : undefined}
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          aria-labelledby={titleId}
+          align="end"
+          sideOffset={8}
+          collisionPadding={16}
+          className="z-50 w-[340px] rounded-[24px] bg-card px-5 pt-5 pb-3 shadow-float outline-none motion-safe:animate-[quick-in_0.18s_cubic-bezier(0.22,1,0.36,1)]"
+        >
+          <h2 id={titleId} className="font-display text-ink text-xl">
+            {TITLE}
+          </h2>
+          {body}
+        </Popover.Content>
+      </Popover.Portal>
+      <Drawer.Root open={open && !wide} onOpenChange={setOpen}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-40 bg-ink/20" />
+          <Drawer.Content
+            aria-describedby={undefined}
+            className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-[var(--radius-card)] bg-card shadow-float outline-none"
+          >
+            <Drawer.Handle className="mt-3 !w-12 !bg-line" />
+            <div className="px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+              <Drawer.Title className="font-display text-ink text-xl">{TITLE}</Drawer.Title>
+              {body}
+            </div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+    </Popover.Root>
+  );
+}
+
+function SettingsBody({
+  params,
+  centerName,
+  canReturn,
+  past,
+  showPast,
+  onLeave,
+}: {
+  params: TreeParams;
+  centerName: string | undefined;
+  canReturn: boolean;
+  past: boolean;
+  showPast: (past: boolean) => void;
+  /** « Revenir à moi » quitte les réglages : on veut voir l'arbre qui se redessine. */
+  onLeave: () => void;
+}) {
+  const follow = useTreeLink();
+  const navigate = useTreeNavigate();
+  const pastId = useId();
+  // Même vue, centrée sur le lecteur : sans `p`, le serveur y revient de lui-même.
+  const { p: _, ...rest } = params;
+  const home = treeHref(rest);
+
+  return (
+    <div className="mt-2 flex flex-col">
+      {centerName ? (
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-rule border-b py-3">
+          <p className="text-[15px] text-ink-2">
+            Centré sur <strong className="font-medium text-ink">{centerName}</strong>
+          </p>
+          {canReturn ? (
+            <Link
+              href={home}
+              onClick={(event) => {
+                onLeave();
+                follow(event, home);
+              }}
+              className={`inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-ink text-sm hover:bg-surface ${focusRing}`}
+            >
+              Revenir à moi
+            </Link>
+          ) : undefined}
+        </div>
+      ) : undefined}
+      <div className="flex min-h-14 items-center justify-between gap-4 py-2">
+        <label htmlFor={pastId} className="cursor-pointer py-3 text-[15px] text-ink">
+          Unions passées
+        </label>
+        <Switch.Root
+          id={pastId}
+          checked={past}
+          onCheckedChange={(next) =>
+            navigate(treeHref({ ...params, past: next }), () => showPast(next))
+          }
+          // Cible tactile de 44 px autour d'un interrupteur de 24 px (pseudo-élément).
+          className={`relative h-6 w-10 shrink-0 rounded-full bg-line before:absolute before:-inset-2.5 before:content-[''] data-[state=checked]:bg-ink ${focusRing}`}
+        >
+          <Switch.Thumb className="block size-5 translate-x-0.5 rounded-full bg-card shadow-float data-[state=checked]:translate-x-[18px] motion-safe:transition-transform" />
+        </Switch.Root>
+      </div>
+    </div>
+  );
+}
+
+/** Deux curseurs : des réglages, au trait des autres icônes (2 px, bouts ronds). */
+function SlidersIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M4 8h8M18 8h2M4 16h2M12 16h8" />
+      <circle cx="15" cy="8" r="2.5" />
+      <circle cx="9" cy="16" r="2.5" />
+    </svg>
+  );
+}

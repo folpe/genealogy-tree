@@ -1,6 +1,8 @@
 // tdd-cover: e2e tests/e2e/tree.spec.ts
+import { TreeLoader } from '@/components/family/tree-loader';
+
 // Arbre en chargement : le canevas apparaît dès le tap (retour depuis une fiche,
-// marque de l'en-tête), avant que le serveur ait placé l'arbre.
+// marque de l'en-tête), avant que le serveur ait placé l'arbre ; le signe y pousse.
 
 export default function TreeLoading() {
   return (
@@ -10,15 +12,9 @@ export default function TreeLoading() {
       </h1>
       <div
         aria-busy="true"
-        className="canvas-grid relative grid min-h-0 flex-1 place-items-center overflow-hidden rounded-[var(--radius-panel)] border border-line"
+        className="canvas-grid relative grid min-h-0 flex-1 place-items-center overflow-hidden rounded-[var(--radius-panel)] border border-line max-md:fixed max-md:inset-0 max-md:rounded-none max-md:border-0"
       >
-        <p role="status" className="flex flex-col items-center gap-3 text-[15px] text-ink-2">
-          <span
-            aria-hidden="true"
-            className="size-[76px] rounded-full border-2 border-card bg-bubble shadow-bubble motion-safe:animate-pulse"
-          />
-          L’arbre se dessine…
-        </p>
+        <TreeLoader />
       </div>
     </main>
   );

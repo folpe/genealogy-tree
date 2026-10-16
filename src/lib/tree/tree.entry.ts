@@ -50,3 +50,13 @@ export function entryWaves(
   for (const handle of handles) handleWaves[rowAbove(handle.y)]?.push(handle.id);
   return { persons, links: linkWaves, handles: handleWaves };
 }
+
+/**
+ * La plus haute génération qui touche l'écran (`top`, haut de la vue dans le repère du
+ * placement ; `margin`, ce qui dépasse sous le centre d'une bulle) : l'entrée part d'elle,
+ * pour que l'arbre pousse là où l'on regarde. La première si rien n'est en dessous.
+ */
+export function firstVisibleRow(nodes: EntryNode[], top: number, margin: number): number {
+  const visible = nodes.filter((node) => node.y + margin >= top).map((node) => node.row);
+  return visible.length > 0 ? Math.min(...visible) : 0;
+}

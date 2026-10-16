@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { camera, settled } from './camera';
+import { camera, settled, zoom } from './camera';
 import { E2E_ISABELLE_EMAIL } from './e2e.constants';
 import { expect, test } from './fixtures';
 import { signIn } from './outbox';
@@ -43,7 +43,8 @@ test('glisser déplace l’arbre, et un glissé sur une bulle n’ouvre pas sa f
   await expect(page).toHaveURL(/\/tree\?view=all$/);
 });
 
-test('zoomer et dézoomer avec les boutons, dans les limites', async ({ page }) => {
+test('zoomer et dézoomer avec les boutons, dans les limites', async ({ page }, info) => {
+  test.skip(info.project.name === 'mobile', 'au doigt, le pincement remplace les boutons');
   await openTree(page);
   const before = await settled(page);
   await page.getByRole('button', { name: 'Zoomer', exact: true }).click();
@@ -55,6 +56,24 @@ test('zoomer et dézoomer avec les boutons, dans les limites', async ({ page }) 
     await settled(page);
   }
   const far = await settled(page);
+  expect(far.k).toBeLessThan(before.k);
+  expect(far.k).toBeGreaterThan(0.05);
+});
+
+test('au doigt, les boutons de zoom laissent la place ; « Me retrouver » devient rond', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'mobile', 'pointeur grossier du téléphone');
+  await openTree(page);
+  await expect(page.getByRole('button', { name: 'Zoomer', exact: true })).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Dézoomer', exact: true })).toBeHidden();
+  const home = await page.getByRole('button', { name: 'Me retrouver' }).boundingBox();
+  expect(home?.width).toBe(44);
+  expect(home?.height).toBe(44);
+  // Dans les limites, au pincement comme aux boutons.
+  const before = await settled(page);
+  expect((await zoom(page, 1)).k).toBeGreaterThan(before.k);
+  const far = await zoom(page, -12);
   expect(far.k).toBeLessThan(before.k);
   expect(far.k).toBeGreaterThan(0.05);
 });
@@ -177,11 +196,7 @@ test('zoom sémantique : de près, le nom complet ; le texte reste net', async (
   const me = page.getByRole('treeitem', { name: /c’est toi$/ });
   await expect(canvas).toHaveAttribute('data-detail', 'mid');
   await expect(me.getByText('Toi', { exact: true })).toBeVisible();
-  const zoomIn = page.getByRole('button', { name: 'Zoomer', exact: true });
-  for (let i = 0; i < 3; i += 1) {
-    await zoomIn.click();
-    await settled(page);
-  }
+  await zoom(page, 3);
   await expect(canvas).toHaveAttribute('data-detail', 'near');
   // Le nom complet affiché ; le nom de la bulle, pour la lecture, est à part.
   await expect(
@@ -195,11 +210,7 @@ test('zoom sémantique : de près, le nom complet ; le texte reste net', async (
 test('zoom sémantique : de loin, des pastilles sans texte', async ({ page }, info) => {
   test.skip(info.project.name !== 'mobile', 'l’arbre de test tient en entier sur grand écran');
   const canvas = await openTree(page);
-  const zoomOut = page.getByRole('button', { name: 'Dézoomer', exact: true });
-  for (let i = 0; i < 4; i += 1) {
-    await zoomOut.click();
-    await settled(page);
-  }
+  await zoom(page, -4);
   await expect(canvas).toHaveAttribute('data-detail', 'far');
   const henri = page.getByRole('treeitem', { name: /^Henri Marchand/ });
   await expect(henri).toBeVisible();

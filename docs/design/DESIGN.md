@@ -227,7 +227,7 @@ Petites capitales accent (relation, catégorie) : 12px, 600, `letter-spacing: 0.
 | `CommandPalette` | champ 18px, section "Récemment consultés", résultats (bulle 42, nom, nom de naissance + années, relation en accent) | vide, résultats, aucun résultat ("Essaie un nom de naissance") | `cmdk` dans un dialogue Radix, recherche insensible aux accents |
 | `RelationshipPanel` | petites capitales "Votre lien", phrase en Fraunces 26, étapes en pilules, ancêtres communs | ouvert, fermé | carte flottante en haut du canevas |
 | `PerimeterToggle` | libellé "Ce que je peux modifier" + switch | off, on | Radix Switch |
-| `CanvasControls` | zoom +, zoom -, "Me retrouver" | | boutons ronds 46px |
+| `CanvasControls` | zoom +, zoom -, "Me retrouver" | au doigt (`pointer: coarse`), pas de zoom : le pincement suffit ; "Me retrouver" rond de 44px à icône sur téléphone | boutons ronds 46px |
 | `BottomSheet` | poignée, contenu de la fiche | replié, ouvert, plein écran | `vaul` |
 | `SuggestionDiff` | champ, valeur actuelle barrée, nouvelle valeur, source jointe | ajout, modification, suppression | |
 | `ActivityItem` | auteur, action, fiche, diff, actions | à décider (Accepter / Refuser), accepté, refusé, veille (Annuler), annulé (mention anti guerre d'édition), en attente avec barre d'escalade 14 jours | |
@@ -300,6 +300,7 @@ Principes : d3 calcule, GSAP anime, React rend (ADR 05). Animations interruptibl
 |---|---|---|---|
 | Entrée de l'arbre | liens tracés en DrawSVG du haut vers le bas par génération, puis bulles en `scale 0.85 -> 1` + fondu, stagger par génération | 0.6s liens, 0.35s bulles, stagger 0.04s | `power2.out` |
 | Caméra (pan, zoom, "Me retrouver", focus) | tween unique sur `{x, y, k}`, trame synchronisée | 0.7s | `power3.inOut` |
+| Chargement d'une vue | le signe de la marque pousse sur le canevas (toi, parents, grands-parents, puis une génération de plus) et s'efface en boucle ; l'ancien arbre s'estompe ; à l'arrivée, l'entrée de l'arbre part de la première génération à l'écran | 2.6s par boucle, apparition après 0.15s | CSS |
 | Inertie au lâcher | InertiaPlugin sur le pan | selon vitesse | - |
 | Ouverture de la fiche | Flip depuis la bulle vers l'avatar de la fiche, contenu en fondu décalé | 0.45s | `expo.out` |
 | Lien de parenté | estompage du reste, puis chemin qui s'allume de "Toi" vers la cible (DrawSVG séquentiel), pilules d'étapes en stagger | 0.25s + 0.12s par segment | `power2.out` |
