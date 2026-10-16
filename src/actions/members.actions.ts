@@ -5,10 +5,12 @@ import { isAppError, ValidationError } from '@/server/_shared/errors';
 import { requireSession } from '@/server/auth/session';
 import { getMembersDeps } from '@/server/members/members.instance';
 import {
+  cancelInvitation,
   claimOwnPerson,
   decideAccessRequest,
   inviteMember,
   requestAccess,
+  resendInvitation,
   setAdmin,
 } from '@/server/members/members.service';
 
@@ -41,6 +43,24 @@ export async function inviteAction(_: ActionResult | undefined, data: FormData) 
   }
   revalidatePath('/members');
   return { ok: true, message: `Invitation envoyée à ${email}.` } satisfies ActionResult;
+}
+
+/** Page Membres (admin) : « Renvoyer » ou « Annuler » une invitation en attente. */
+export async function invitationAction(
+  _: ActionResult | undefined,
+  data: FormData,
+): Promise<ActionResult> {
+  const { user } = await requireSession();
+  const resend = field(data, 'intent') === 'resend';
+  const invitationId = field(data, 'invitationId');
+  try {
+    if (resend) await resendInvitation(getMembersDeps(), user.id, invitationId);
+    else await cancelInvitation(getMembersDeps(), user.id, invitationId);
+  } catch (error) {
+    return toResult(error);
+  }
+  revalidatePath('/members');
+  return { ok: true, message: resend ? 'Nouveau lien envoyé.' : 'Invitation annulée.' };
 }
 
 export async function requestAccessAction(

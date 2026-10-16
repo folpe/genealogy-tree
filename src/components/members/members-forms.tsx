@@ -15,6 +15,15 @@ const primary =
 const secondary =
   'h-11 rounded-full border border-line bg-card px-5 text-sm font-semibold text-ink disabled:opacity-60';
 const labelClass = 'text-sm font-medium text-ink-2';
+const focusRing =
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
+
+const longDate = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'Europe/Paris',
+});
 
 function Feedback({ state }: { state: ActionResult | undefined }) {
   if (!state) return undefined;
@@ -172,6 +181,60 @@ export function ClaimPersonForm({
       <button type="submit" disabled={pending || state?.ok === true} className={secondary}>
         C’est moi
       </button>
+      <Feedback state={state} />
+    </form>
+  );
+}
+
+/** Invitation en attente (page Membres, admin) : la renvoyer avec un nouveau lien, ou l'annuler. */
+export function PendingInvitation({
+  action,
+  invitation,
+}: {
+  action: Action;
+  invitation: {
+    id: string;
+    label: string;
+    email: string;
+    sentAt: Date;
+    expiresAt: Date;
+    expired: boolean;
+  };
+}) {
+  const [state, submit, pending] = useActionState(action, undefined);
+  const deadline = `${invitation.expired ? 'expirée' : 'expire'} le ${longDate.format(invitation.expiresAt)}`;
+  return (
+    <form action={submit} className="flex flex-col gap-3 p-4">
+      <input type="hidden" name="invitationId" value={invitation.id} />
+      <div className="flex min-w-0 flex-col gap-1">
+        <p className="font-display text-xl">{invitation.label}</p>
+        <p className="break-all text-[15px]">{invitation.email}</p>
+        <p className={`text-sm ${invitation.expired ? 'text-accent' : 'text-ink-2'}`}>
+          Envoyée le {longDate.format(invitation.sentAt)}, {deadline}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="submit"
+          name="intent"
+          value="resend"
+          disabled={pending}
+          aria-label={`Renvoyer l’invitation de ${invitation.label}`}
+          className={`${secondary} ${focusRing}`}
+        >
+          Renvoyer
+        </button>
+        <button
+          type="submit"
+          name="intent"
+          value="cancel"
+          disabled={pending}
+          aria-label={`Annuler l’invitation de ${invitation.label}`}
+          className={`${secondary} ${focusRing}`}
+        >
+          Annuler
+        </button>
+      </div>
       <Feedback state={state} />
     </form>
   );
