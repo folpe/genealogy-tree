@@ -82,7 +82,12 @@ export function createAuth(deps: AuthDeps) {
       // Liaison implicite, le défaut de better-auth rendu explicite : un membre inscrit
       // par lien magique (email vérifié) qui arrive par Google à la même adresse, que
       // Google dit vérifiée, retrouve son compte. Google n'est pas « de confiance » :
-      // sans `email_verified`, pas de liaison.
+      // sans `email_verified`, pas de liaison. Conditions portées par
+      // `handleOAuthUserInfo`, better-auth 1.6.33, dist/oauth2/link-account.mjs :
+      // ligne 21 (fournisseur de confiance), ligne 22 (`requireLocalEmailVerified`,
+      // vrai par défaut), ligne 23 (refus si l'IdP ne dit pas l'adresse vérifiée, si le
+      // compte local ne l'est pas, ou si la liaison est coupée), lignes 25-28
+      // (`account not linked`). Prouvé par auth.integration.test.ts.
       accountLinking: { enabled: true },
     },
     session: {

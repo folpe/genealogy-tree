@@ -35,11 +35,12 @@ describe.skipIf(!db)('auth (intégration)', () => {
   });
 
   /** Jeton de synthèse : better-auth le lit sans le vérifier dans ce parcours. */
-  const anIdToken = (claims: { sub: string; email: string; picture?: string }) =>
+  type GoogleClaims = { sub: string; email: string; picture?: string; email_verified?: boolean };
+  const anIdToken = (claims: GoogleClaims) =>
     [
       'e30',
       Buffer.from(
-        JSON.stringify({ ...claims, email_verified: true, name: 'Membre de test' }),
+        JSON.stringify({ email_verified: true, ...claims, name: 'Membre de test' }),
       ).toString('base64url'),
       'sig',
     ].join('.');
@@ -48,7 +49,7 @@ describe.skipIf(!db)('auth (intégration)', () => {
    * Parcours Google complet : départ, puis retour sur le callback avec un code. Seul
    * l'échange du code contre les jetons, chez Google, est simulé.
    */
-  async function signInWithGoogle(claims: { sub: string; email: string; picture?: string }) {
+  async function signInWithGoogle(claims: GoogleClaims) {
     const start = await auth.api.signInSocial({
       body: { provider: 'google', callbackURL: '/tree', errorCallbackURL: '/login?via=google' },
       headers: new Headers({ origin: BASE_URL }),
@@ -235,6 +236,31 @@ describe.skipIf(!db)('auth (intégration)', () => {
         .where(eq(accounts.userId, before?.id ?? ''));
       expect(linked.map((a) => a.providerId)).toContain('google');
       expect(onGoogleAccount).toHaveBeenCalledWith(expect.objectContaining({ userId: before?.id }));
+    });
+
+    it('une adresse que Google ne dit pas vérifiée ne prend pas le compte existant', async () => {
+      await inviteLuc();
+      await signInWithLink('luc@exemple.fr');
+      const [luc] = await client.select().from(users).where(eq(users.email, 'luc@exemple.fr'));
+      expect(luc?.emailVerified).toBe(true);
+
+      const response = await signInWithGoogle({
+        sub: 'g-usurpateur',
+        email: 'luc@exemple.fr',
+        email_verified: false,
+      });
+
+      const location = new URL(response.headers.get('location') ?? '', BASE_URL);
+      expect(location.pathname).toBe('/login');
+      expect(location.searchParams.get('error')).toBe('account_not_linked');
+      expect(response.headers.get('set-cookie') ?? '').not.toContain('session_token=');
+      const googleAccounts = await client
+        .select()
+        .from(accounts)
+        .where(eq(accounts.providerId, 'google'));
+      expect(googleAccounts).toHaveLength(0);
+      expect(await client.select().from(users)).toHaveLength(2);
+      expect(onGoogleAccount).not.toHaveBeenCalled();
     });
 
     it('un import de photo raté n’empêche pas d’entrer', async () => {
