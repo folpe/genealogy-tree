@@ -10,7 +10,15 @@ import { accessRequestEmail, type EmailMessage, invitationEmail } from '../notif
 import type { InvitationReason } from '../notifications/emails/email-templates';
 import { normalizeEmail } from './admission';
 import { canInvite, canSetAdmin, type MemberRecord } from './members.policy';
-import { createInvitation, findInvitationByToken } from './members.repository';
+import {
+  createInvitation,
+  findInvitationByToken,
+  findPendingInvitationById,
+  listPendingInvitationRows,
+  mailboxCandidates,
+  revokeInvitation,
+  sameMailbox,
+} from './members.repository';
 
 // Comptes de la famille (spec section 6.5). Les règles sont dans members.policy ;
 // ici, le chargement, les écritures et les emails. Chaque fonction revérifie les
@@ -121,6 +129,64 @@ export async function inviteMember(
   await sendInvitation(deps, { viewer, viewerUserId, ...parsed.data });
 }
 
+async function requireAdmin(db: Db, viewerUserId: string) {
+  const viewer = (await loadMembers(db)).find((m) => m.userId === viewerUserId);
+  if (!viewer?.isAdmin) throw forbidden();
+  return viewer;
+}
+
+const invitationIdSchema = z.string().min(1).max(64);
+
+const invitationNotFound = () =>
+  new AppError({
+    message: 'Invitation introuvable, déjà acceptée ou annulée',
+    code: 'MEMBERS_NOT_FOUND',
+    status: 404,
+  });
+
+/** Page Membres (admin) : les invitations qui attendent encore quelqu'un, échues comprises. */
+export async function listPendingInvitations(deps: MembersDeps, viewerUserId: string) {
+  await requireAdmin(deps.db, viewerUserId);
+  const rows = await listPendingInvitationRows(deps.db);
+  const now = deps.now().getTime();
+  return rows.map(({ firstName, lastName, ...row }) => ({
+    ...row,
+    label: fullName({ firstName, lastName }),
+    expired: row.expiresAt.getTime() <= now,
+  }));
+}
+
+/** « Annuler » : le lien de l'invitation cesse de marcher ; la fiche peut être réinvitée. */
+export async function cancelInvitation(
+  deps: MembersDeps,
+  viewerUserId: string,
+  invitationId: string,
+): Promise<void> {
+  await requireAdmin(deps.db, viewerUserId);
+  const parsed = invitationIdSchema.safeParse(invitationId);
+  if (!parsed.success) throw new ValidationError('Invitation invalide', parsed.error);
+  if (!(await revokeInvitation(deps.db, parsed.data, deps.now()))) throw invitationNotFound();
+}
+
+/** « Renvoyer » : nouvel email, nouveau jeton ; l'ancien lien est révoqué au passage. */
+export async function resendInvitation(
+  deps: MembersDeps,
+  viewerUserId: string,
+  invitationId: string,
+): Promise<void> {
+  const viewer = await requireAdmin(deps.db, viewerUserId);
+  const parsed = invitationIdSchema.safeParse(invitationId);
+  if (!parsed.success) throw new ValidationError('Invitation invalide', parsed.error);
+  const invitation = await findPendingInvitationById(deps.db, parsed.data);
+  if (!invitation) throw invitationNotFound();
+  await sendInvitation(deps, {
+    viewer,
+    viewerUserId,
+    personId: invitation.personId,
+    email: invitation.email,
+  });
+}
+
 const accessRequestSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.email(),
@@ -137,12 +203,15 @@ export async function requestAccess(
   const email = normalizeEmail(parsed.data.email);
   const now = deps.now();
 
-  // Une demande en attente par adresse : on ne relance pas les admins.
-  const [pending] = await deps.db
-    .select({ id: accessRequests.id })
+  // Une demande en attente par boîte (Gmail ignore les points) : on ne relance pas les admins.
+  const candidates = await deps.db
+    .select({ id: accessRequests.id, email: accessRequests.email })
     .from(accessRequests)
-    .where(and(eq(accessRequests.email, email), eq(accessRequests.status, 'en_attente')));
-  if (pending) return pending;
+    .where(
+      and(mailboxCandidates(accessRequests.email, email), eq(accessRequests.status, 'en_attente')),
+    );
+  const [pending] = sameMailbox(candidates, email);
+  if (pending) return { id: pending.id };
 
   const [recent] = await deps.db
     .select({ n: count() })
@@ -187,8 +256,7 @@ export async function decideAccessRequest(
   requestId: string,
   decision: { accept: true; personId: string } | { accept: false },
 ): Promise<void> {
-  const viewer = (await loadMembers(deps.db)).find((m) => m.userId === viewerUserId);
-  if (!viewer?.isAdmin) throw forbidden();
+  const viewer = await requireAdmin(deps.db, viewerUserId);
 
   const [request] = await deps.db
     .select()

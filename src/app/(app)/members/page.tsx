@@ -1,17 +1,19 @@
 // tdd-cover: e2e src/components/members/members-forms.test.tsx
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { inviteAction, setAdminAction } from '@/actions/members.actions';
-import { AdminToggle, InviteForm } from '@/components/members/members-forms';
+import { invitationAction, inviteAction, setAdminAction } from '@/actions/members.actions';
+import { AdminToggle, InviteForm, PendingInvitation } from '@/components/members/members-forms';
 import { requireSession } from '@/server/auth/session';
 import { getMembersDeps } from '@/server/members/members.instance';
-import { listMembers } from '@/server/members/members.service';
+import { listMembers, listPendingInvitations } from '@/server/members/members.service';
 
 export const metadata: Metadata = { title: 'Famille connectée' };
 
 export default async function MembersPage() {
   const { user } = await requireSession();
-  const { viewer, members, invitable } = await listMembers(getMembersDeps(), user.id);
+  const deps = getMembersDeps();
+  const { viewer, members, invitable } = await listMembers(deps, user.id);
+  const invitations = viewer.isAdmin ? await listPendingInvitations(deps, user.id) : [];
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-8 p-4 md:p-8">
@@ -30,6 +32,27 @@ export default async function MembersPage() {
         </p>
         <InviteForm action={inviteAction} invitable={invitable} />
       </section>
+
+      {viewer.isAdmin ? (
+        <section aria-labelledby="pending-invitations">
+          <h2 id="pending-invitations" className="font-display text-2xl">
+            Invitations en attente ({invitations.length})
+          </h2>
+          {invitations.length === 0 ? (
+            <p className="mt-2 text-[15px] text-ink-2">Aucune invitation n’attend de réponse.</p>
+          ) : (
+            <ul className="mt-4 divide-y divide-rule rounded-[var(--radius-panel)] border border-line bg-card">
+              {invitations.map((invitation) => (
+                // Une invitation en attente par fiche ; la clé survit au renvoi (nouvel
+                // identifiant), et le message « Nouveau lien envoyé » avec elle.
+                <li key={invitation.personId}>
+                  <PendingInvitation action={invitationAction} invitation={invitation} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : undefined}
 
       <section>
         <h2 className="font-display text-2xl">Déjà dans l’arbre ({members.length})</h2>

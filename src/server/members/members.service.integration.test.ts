@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { marchandFamily } from '../../../tests/fixtures/marchand-family';
 import { testDb } from '../../../tests/integration/test-db';
@@ -8,6 +8,7 @@ import { insertFamilyGraph } from '../family/family.repository';
 import type { EmailMessage } from '../notifications/email';
 import {
   ACCESS_REQUESTS_PER_HOUR,
+  cancelInvitation,
   claimOwnPerson,
   decideAccessRequest,
   getInvitationPreview,
@@ -15,8 +16,10 @@ import {
   inviteMember,
   listAccessRequests,
   listMembers,
+  listPendingInvitations,
   type MembersDeps,
   requestAccess,
+  resendInvitation,
   setAdmin,
 } from './members.service';
 
@@ -49,6 +52,22 @@ describe.skipIf(!db)('members.service (intégration)', () => {
       .returning({ id: memberships.id });
     return m?.id ?? '';
   }
+
+  /** Jeton en clair porté par le lien d'un email d'invitation. */
+  const tokenOf = (message: EmailMessage | undefined) =>
+    /\/invite\/([\w-]+)/.exec(message?.text ?? '')?.[1] ?? '';
+
+  const pendingFor = (personId: string) =>
+    client
+      .select()
+      .from(invitations)
+      .where(
+        and(
+          eq(invitations.personId, personId),
+          isNull(invitations.usedAt),
+          isNull(invitations.revokedAt),
+        ),
+      );
 
   beforeEach(async () => {
     await reset();
@@ -83,17 +102,114 @@ describe.skipIf(!db)('members.service (intégration)', () => {
       expect(sent).toHaveLength(0);
     });
 
-    it('une seconde invitation en attente pour la même fiche est refusée', async () => {
+    it('réinviter une fiche remplace l’invitation en attente : l’ancien lien ne sert plus', async () => {
       await inviteMember(deps(), 'u-hugo', { personId: 'lea', email: 'lea@exemple.fr' });
+      const first = tokenOf(sent[0]);
+      await inviteMember(deps(), 'u-owner', { personId: 'lea', email: 'autre@exemple.fr' });
+      const second = tokenOf(sent[1]);
+
+      expect(await getInvitationPreview(client, first, NOW)).toBeUndefined();
+      expect(await getInvitationPreview(client, second, NOW)).toMatchObject({
+        email: 'autre@exemple.fr',
+      });
+      const rows = await client.select().from(invitations).where(eq(invitations.personId, 'lea'));
+      expect(rows.map((r) => [r.email, r.revokedAt instanceof Date])).toEqual(
+        expect.arrayContaining([
+          ['lea@exemple.fr', true],
+          ['autre@exemple.fr', false],
+        ]),
+      );
+    });
+
+    it('réinviter à la même adresse remplace aussi', async () => {
+      await inviteMember(deps(), 'u-hugo', { personId: 'lea', email: 'lea@exemple.fr' });
+      await inviteMember(deps(), 'u-hugo', { personId: 'lea', email: 'Lea@Exemple.fr' });
+      expect(await pendingFor('lea')).toHaveLength(1);
+      expect(sent).toHaveLength(2);
+    });
+
+    it('une adresse déjà en attente pour une autre fiche est refusée, même sans ses points', async () => {
+      await inviteMember(deps(), 'u-owner', { personId: 'lea', email: 'lea.marchand@gmail.com' });
       await expect(
-        inviteMember(deps(), 'u-owner', { personId: 'lea', email: 'autre@exemple.fr' }),
-      ).rejects.toMatchObject({ code: 'MEMBERS_INVITATION_PENDING', status: 409 });
+        inviteMember(deps(), 'u-owner', { personId: 'isabelle', email: 'leamarchand@gmail.com' }),
+      ).rejects.toMatchObject({
+        code: 'MEMBERS_INVITATION_PENDING',
+        status: 409,
+        message: 'Cette adresse attend déjà une invitation pour une autre fiche.',
+      });
+      expect(await pendingFor('lea')).toHaveLength(1);
+      expect(await pendingFor('isabelle')).toHaveLength(0);
+      expect(sent).toHaveLength(1);
     });
 
     it('un visiteur sans compte n’invite personne', async () => {
       await expect(
         inviteMember(deps(), 'u-inconnu', { personId: 'lea', email: 'lea@exemple.fr' }),
       ).rejects.toMatchObject({ code: 'MEMBERS_FORBIDDEN' });
+    });
+  });
+
+  describe('invitations en attente (admin)', () => {
+    async function inviteLea() {
+      await inviteMember(deps(), 'u-hugo', { personId: 'lea', email: 'lea@exemple.fr' });
+      const [invitation] = await pendingFor('lea');
+      if (!invitation) throw new Error('invitation manquante');
+      return { id: invitation.id, token: tokenOf(sent.at(-1)) };
+    }
+
+    it('la liste montre la fiche, l’adresse, l’envoi et l’échéance', async () => {
+      await inviteLea();
+      expect(await listPendingInvitations(deps(), 'u-owner')).toEqual([
+        {
+          id: expect.any(String),
+          personId: 'lea',
+          label: 'Léa Marchand',
+          email: 'lea@exemple.fr',
+          sentAt: expect.any(Date),
+          expiresAt: new Date('2026-10-25T12:00:00Z'),
+          expired: false,
+        },
+      ]);
+      const after = { ...deps(), now: () => new Date('2026-10-25T12:00:00Z') };
+      expect((await listPendingInvitations(after, 'u-owner'))[0]?.expired).toBe(true);
+    });
+
+    it('« Annuler » révoque : le lien ne sert plus et la fiche se réinvite', async () => {
+      const { id, token } = await inviteLea();
+      await cancelInvitation(deps(), 'u-owner', id);
+      expect(await getInvitationPreview(client, token, NOW)).toBeUndefined();
+      expect(await listPendingInvitations(deps(), 'u-owner')).toEqual([]);
+      await expect(cancelInvitation(deps(), 'u-owner', id)).rejects.toMatchObject({
+        code: 'MEMBERS_NOT_FOUND',
+        status: 404,
+      });
+    });
+
+    it('« Renvoyer » envoie un nouveau lien et éteint l’ancien', async () => {
+      const { id, token } = await inviteLea();
+      await resendInvitation(deps(), 'u-owner', id);
+      expect(sent).toHaveLength(2);
+      expect(sent[1]?.to).toBe('lea@exemple.fr');
+      const fresh = tokenOf(sent[1]);
+      expect(fresh).not.toBe(token);
+      expect(await getInvitationPreview(client, token, NOW)).toBeUndefined();
+      expect(await getInvitationPreview(client, fresh, NOW)).toBeDefined();
+      expect(await pendingFor('lea')).toHaveLength(1);
+    });
+
+    it('seul un admin voit, annule ou renvoie', async () => {
+      const { id } = await inviteLea();
+      await expect(listPendingInvitations(deps(), 'u-hugo')).rejects.toMatchObject({
+        code: 'MEMBERS_FORBIDDEN',
+      });
+      await expect(cancelInvitation(deps(), 'u-hugo', id)).rejects.toMatchObject({
+        code: 'MEMBERS_FORBIDDEN',
+      });
+      await expect(resendInvitation(deps(), 'u-hugo', id)).rejects.toMatchObject({
+        code: 'MEMBERS_FORBIDDEN',
+      });
+      expect(await pendingFor('lea')).toHaveLength(1);
+      expect(sent).toHaveLength(1);
     });
   });
 
@@ -119,6 +235,22 @@ describe.skipIf(!db)('members.service (intégration)', () => {
       expect(invitation).toMatchObject({ email: 'isabelle@exemple.fr', personId: 'isabelle' });
       expect(sent[0]?.to).toBe('isabelle@exemple.fr');
       expect(sent[0]?.subject).toBe('Ta demande est acceptée : bienvenue dans l’arbre');
+    });
+
+    it('une demande en attente est reconnue sous l’autre forme d’une adresse Gmail', async () => {
+      const first = await requestAccess(deps(), {
+        name: 'Xavier Roux',
+        email: 'xavier.roux@gmail.com',
+        relation: 'Voisin',
+      });
+      const again = await requestAccess(deps(), {
+        name: 'Xavier Roux',
+        email: 'XavierRoux+arbre@googlemail.com',
+        relation: 'Voisin',
+      });
+      expect(again).toEqual(first);
+      expect(await client.select().from(accessRequests)).toHaveLength(1);
+      expect(sent).toHaveLength(1);
     });
 
     it('un refus ne crée rien et n’envoie rien au demandeur', async () => {

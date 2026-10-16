@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   decideAccessRequest: vi.fn(),
   setAdmin: vi.fn(),
   claimOwnPerson: vi.fn(),
+  cancelInvitation: vi.fn(),
+  resendInvitation: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 vi.mock('server-only', () => ({}));
@@ -20,11 +22,14 @@ vi.mock('@/server/members/members.service', () => ({
   decideAccessRequest: mocks.decideAccessRequest,
   setAdmin: mocks.setAdmin,
   claimOwnPerson: mocks.claimOwnPerson,
+  cancelInvitation: mocks.cancelInvitation,
+  resendInvitation: mocks.resendInvitation,
 }));
 
 import {
   claimPersonAction,
   decideAccessRequestAction,
+  invitationAction,
   inviteAction,
   requestAccessAction,
   setAdminAction,
@@ -138,5 +143,36 @@ describe('members.actions', () => {
     const result = await claimPersonAction(undefined, form({ personId: 'hugo' }));
     expect(result).toEqual({ ok: false, error: 'Cette fiche est déjà reliée à un autre compte.' });
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it('renvoie une invitation au nom de la session', async () => {
+    const result = await invitationAction(
+      undefined,
+      form({ invitationId: 'inv-1', intent: 'resend', userId: 'u-pirate' }),
+    );
+    expect(mocks.resendInvitation).toHaveBeenCalledWith({ deps: true }, 'u-hugo', 'inv-1');
+    expect(mocks.cancelInvitation).not.toHaveBeenCalled();
+    expect(result).toEqual({ ok: true, message: 'Nouveau lien envoyé.' });
+    expect(mocks.revalidatePath).toHaveBeenCalledWith('/members');
+  });
+
+  it('annule une invitation, et traduit un refus', async () => {
+    expect(
+      await invitationAction(undefined, form({ invitationId: 'inv-1', intent: 'cancel' })),
+    ).toEqual({
+      ok: true,
+      message: 'Invitation annulée.',
+    });
+    expect(mocks.cancelInvitation).toHaveBeenCalledWith({ deps: true }, 'u-hugo', 'inv-1');
+
+    mocks.cancelInvitation.mockRejectedValue(
+      new AppError({ message: 'Action réservée', code: 'MEMBERS_FORBIDDEN', status: 403 }),
+    );
+    expect(
+      await invitationAction(undefined, form({ invitationId: 'inv-1', intent: 'cancel' })),
+    ).toEqual({
+      ok: false,
+      error: 'Action réservée',
+    });
   });
 });
