@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aChildOf, anUnion, aPerson } from '../../../tests/fixtures/builders';
+import { aChildOf, anUnion, aPerson, yearOnly } from '../../../tests/fixtures/builders';
 import { extendedFamily } from '../../../tests/fixtures/extended-family';
 import { selectDisplayedGraph } from '../../server/family/family.display';
 import { familyOrder } from './tree.order';
@@ -132,5 +132,52 @@ describe('familyOrder sur des familles de conjoints imbriquées', () => {
     const at = (ids: string[]) => ids.map((id) => order.indexOf(id));
     expect(increasing(at(['gp-e+gm-e', 'gp-mt+gm-mt', 'gp-p+gm-p']))).toBe(true);
     expect([...order].sort()).toEqual(nested.map((b) => b.id).sort());
+  });
+});
+
+describe('familyOrder et l’ordre de naissance', () => {
+  // Le père est l'aîné de sa fratrie ; « moi » a une sœur aînée et un frère cadet.
+  const born = (id: string, year: number) => aPerson(id, { birth: { date: yearOnly(year) } });
+  const g = extendedFamily();
+  const dated = new Map([
+    ['pere', 1950],
+    ['oncle-p', 1955],
+    ['tante-p', 1958],
+    ['soeur', 1975],
+    ['moi', 1980],
+    ['frere', 1984],
+  ]);
+  g.persons = g.persons.map((p) => {
+    const year = dated.get(p.id);
+    return year ? born(p.id, year) : p;
+  });
+  g.persons.push(born('frere', 1984));
+  g.parentChildren.push(
+    aChildOf('pere', 'frere', { unionId: 'u-parents' }),
+    aChildOf('mere', 'frere', { unionId: 'u-parents' }),
+  );
+  const withBrother = [...blocks, { id: 'frere', persons: ['frere'] }];
+  const order = familyOrder(selectDisplayedGraph(g, { focusId: 'moi' }), withBrother, 'moi');
+  const at = (ids: string[]) => ids.map((id) => order.indexOf(id));
+
+  it('mon conjoint vient avec sa famille : je reste au bord, de son côté', () => {
+    expect(increasing(at(['soeur', 'frere', 'moi+conjoint', 'gp-c+gm-c']))).toBe(true);
+  });
+
+  it('sinon, ma fratrie dans l’ordre de naissance, l’aînée à gauche', () => {
+    const alone = {
+      ...g,
+      parentChildren: g.parentChildren.filter((l) => l.childId !== 'conjoint'),
+    };
+    const drawnAlone = selectDisplayedGraph(alone, { focusId: 'moi' });
+    const ranks = familyOrder(drawnAlone, withBrother, 'moi');
+    const of = (ids: string[]) => ids.map((id) => ranks.indexOf(id));
+    expect(increasing(of(['soeur', 'moi+conjoint', 'frere']))).toBe(true);
+  });
+
+  it('un ancêtre direct reste au bord intérieur, même aîné', () => {
+    expect(increasing(at(['oncle-p+epouse-oncle-p', 'tante-p+mari-tante-p', 'pere+mere']))).toBe(
+      true,
+    );
   });
 });
