@@ -16,6 +16,14 @@ async function openSettings(page: Page) {
   await settingsButton(page).click();
   const panel = page.getByRole('dialog', { name: 'Réglages de l’arbre' });
   await expect(panel).toBeVisible();
+  // Le bouton désigne le panneau réellement ouvert, feuille comme popover. Lu dans le
+  // DOM : la feuille modale du téléphone sort le reste de la page de l'arbre d'accessibilité.
+  const button = page.locator('button[aria-haspopup="dialog"][aria-label^="Réglages de l’arbre"]');
+  await expect(button).toHaveAttribute('aria-expanded', 'true');
+  await expect(button).toHaveAttribute(
+    'aria-controls',
+    (await panel.getAttribute('id')) ?? 'sans identifiant',
+  );
   return panel;
 }
 
@@ -59,7 +67,7 @@ test('Luc, en couple, s’ouvre sur notre famille : les deux lignées', async ({
   await expect(page.getByRole('treeitem', { name: /^Tom/ })).toHaveCount(0);
 });
 
-test('depuis une fiche, ses descendants ; puis revenir à moi', async ({ page }) => {
+test('depuis une fiche, ses descendants ; puis revenir à moi', async ({ page, isMobile }) => {
   await signIn(page, HUGO);
   await page.goto('/people/luc');
   await page.getByRole('link', { name: 'Ses descendants' }).click();
@@ -74,7 +82,16 @@ test('depuis une fiche, ses descendants ; puis revenir à moi', async ({ page })
 
   const panel = await openSettings(page);
   await expect(panel.getByText('Centré sur')).toContainText('Luc Marchand');
-  await panel.getByRole('link', { name: 'Revenir à moi' }).click();
+  const home = panel.getByRole('link', { name: 'Revenir à moi' });
+  if (!isMobile) {
+    // Ouvert dans un autre onglet : ici, rien ne change et les réglages restent ouverts.
+    const opened = page.context().waitForEvent('page');
+    await home.click({ modifiers: ['ControlOrMeta'] });
+    await (await opened).close();
+    await expect(panel).toBeVisible();
+    await expect(page).toHaveURL(/\/tree\?p=luc&view=descendants$/);
+  }
+  await home.click();
   // Les réglages se ferment : on voit l'arbre se redessiner autour de soi.
   await expect(panel).toBeHidden();
   await expect(page).toHaveURL(/\/tree\?view=descendants$/);

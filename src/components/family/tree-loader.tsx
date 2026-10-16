@@ -22,12 +22,10 @@ const delay = (ring: number, arc: number) => ({
   animationDelay: `${ring * RING_DELAY_S + arc * ARC_DELAY_S}s`,
 });
 
+/** Le signe et son texte ; l'appelant le pose dans une région `status` déjà montée. */
 export function TreeLoader() {
   return (
-    <p
-      role="status"
-      className="tree-loader flex flex-col items-center gap-4 text-[15px] text-ink-2"
-    >
+    <p className="tree-loader flex flex-col items-center gap-4 text-[15px] text-ink-2">
       <svg
         aria-hidden="true"
         viewBox="-1.5 3 35 21"

@@ -3,7 +3,14 @@
 
 import Link from 'next/link';
 import { Popover, Switch } from 'radix-ui';
-import { useId, useOptimistic, useState, useSyncExternalStore } from 'react';
+import {
+  type ReactNode,
+  useId,
+  useOptimistic,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { Drawer } from 'vaul';
 import { type TreeParams, treeHref } from '@/lib/tree/tree.params';
 import { useTreeLink, useTreeNavigate } from './tree-navigation';
@@ -52,6 +59,8 @@ export function TreeSettings({
   const [past, showPast] = useOptimistic(params.past);
   const changed = past || (centerName !== undefined && canReturn);
   const titleId = useId();
+  const panelId = useId();
+  const trigger = useRef<HTMLButtonElement>(null); // allow-null: contrat des refs de React
   const body = (
     <SettingsBody
       params={params}
@@ -66,9 +75,11 @@ export function TreeSettings({
   return (
     <Popover.Root open={open && wide} onOpenChange={setOpen}>
       <Popover.Trigger
+        ref={trigger}
         aria-label={changed ? `${TITLE}, modifiés` : TITLE}
-        // La feuille du téléphone n'est pas le popover : l'état ouvert est le nôtre.
+        // Popover ou feuille selon l'écran : l'état ouvert et le panneau visé sont les nôtres.
         aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
         className={`relative grid size-11 place-items-center rounded-full border border-line bg-card text-ink-2 hover:text-ink aria-expanded:border-ink aria-expanded:text-ink max-md:size-9 max-md:before:absolute max-md:before:-inset-1 max-md:before:content-[''] motion-safe:transition-colors ${focusRing}`}
       >
         <SlidersIcon />
@@ -82,6 +93,7 @@ export function TreeSettings({
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
+          id={panelId}
           aria-labelledby={titleId}
           align="end"
           sideOffset={8}
@@ -94,22 +106,56 @@ export function TreeSettings({
           {body}
         </Popover.Content>
       </Popover.Portal>
-      <Drawer.Root open={open && !wide} onOpenChange={setOpen}>
-        <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 z-40 bg-ink/20" />
-          <Drawer.Content
-            aria-describedby={undefined}
-            className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-[var(--radius-card)] bg-card shadow-float outline-none"
-          >
-            <Drawer.Handle className="mt-3 !w-12 !bg-line" />
-            <div className="px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              <Drawer.Title className="font-display text-ink text-xl">{TITLE}</Drawer.Title>
-              {body}
-            </div>
-          </Drawer.Content>
-        </Drawer.Portal>
-      </Drawer.Root>
+      <SettingsSheet
+        id={panelId}
+        open={open && !wide}
+        onOpenChange={setOpen}
+        onClosed={() => trigger.current?.focus()}
+      >
+        {body}
+      </SettingsSheet>
     </Popover.Root>
+  );
+}
+
+/**
+ * La feuille du téléphone. Sans Drawer.Trigger, Radix rendrait le focus à rien (le
+ * corps de la page) : on le rend nous-mêmes au bouton, après Échap comme après un glissé.
+ */
+function SettingsSheet({
+  id,
+  open,
+  onOpenChange,
+  onClosed,
+  children,
+}: {
+  id: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onClosed: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Drawer.Root open={open} onOpenChange={onOpenChange}>
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 z-40 bg-ink/20" />
+        <Drawer.Content
+          id={id}
+          aria-describedby={undefined}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            onClosed();
+          }}
+          className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-[var(--radius-card)] bg-card shadow-float outline-none"
+        >
+          <Drawer.Handle className="mt-3 !w-12 !bg-line" />
+          <div className="px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <Drawer.Title className="font-display text-ink text-xl">{TITLE}</Drawer.Title>
+            {children}
+          </div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   );
 }
 
@@ -146,9 +192,9 @@ function SettingsBody({
           {canReturn ? (
             <Link
               href={home}
+              // Dans l'onglet seulement : un ⌘-clic ouvre ailleurs, les réglages restent.
               onClick={(event) => {
-                onLeave();
-                follow(event, home);
+                if (follow(event, home)) onLeave();
               }}
               className={`inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-ink text-sm hover:bg-surface ${focusRing}`}
             >

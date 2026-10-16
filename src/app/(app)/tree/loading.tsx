@@ -14,7 +14,9 @@ export default function TreeLoading() {
         aria-busy="true"
         className="canvas-grid relative grid min-h-0 flex-1 place-items-center overflow-hidden rounded-[var(--radius-panel)] border border-line max-md:fixed max-md:inset-0 max-md:rounded-none max-md:border-0"
       >
-        <TreeLoader />
+        <div role="status">
+          <TreeLoader />
+        </div>
       </div>
     </main>
   );

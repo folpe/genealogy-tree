@@ -205,12 +205,15 @@ export function TreeWithSheet({
           quickActions={quickActions}
           reveal={reveal}
         />
-        {pending ? (
-          // L'arbre demandé se calcule : le signe pousse sur le canevas, l'ancien s'efface.
-          <div className="pointer-events-none absolute inset-0 z-[5] grid place-items-center">
-            <TreeLoader />
-          </div>
-        ) : undefined}
+        {/* L'arbre demandé se calcule : le signe pousse sur le canevas, l'ancien s'efface.
+            La région reste montée, vide hors chargement : un texte qui arrive dans une
+            région déjà là est annoncé, une région insérée avec lui ne l'est pas toujours. */}
+        <div
+          role="status"
+          className="pointer-events-none absolute inset-0 z-[5] grid place-items-center"
+        >
+          {pending ? <TreeLoader /> : undefined}
+        </div>
         {addingTo && adding ? (
           <AddRelativeDialog
             key={addingTo.id}

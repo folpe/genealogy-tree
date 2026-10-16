@@ -50,18 +50,20 @@ export function useTreePending(): boolean {
 
 /**
  * Suit un lien des réglages dans la transition. Clic du milieu, touche de modification :
- * le navigateur garde la main (nouvel onglet, nouvelle fenêtre).
+ * le navigateur garde la main (nouvel onglet, nouvelle fenêtre). Rend vrai si la
+ * navigation a lieu dans l'onglet.
  */
 export function useTreeLink() {
   const navigation = use(TreeNavigationContext);
   if (!navigation) throw new Error('useTreeLink hors de TreeNavigationProvider');
   const { navigate } = navigation;
   return useCallback(
-    (event: MouseEvent<HTMLAnchorElement>, href: string, optimistic?: () => void) => {
+    (event: MouseEvent<HTMLAnchorElement>, href: string, optimistic?: () => void): boolean => {
       const modified = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
-      if (event.defaultPrevented || event.button !== 0 || modified) return;
+      if (event.defaultPrevented || event.button !== 0 || modified) return false;
       event.preventDefault();
       navigate(href, optimistic);
+      return true;
     },
     [navigate],
   );
