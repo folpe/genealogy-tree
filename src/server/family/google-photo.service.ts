@@ -12,7 +12,7 @@ import { changePhoto, PHOTO_MAX_BYTES } from './person-photo.service';
 
 export type GooglePhotoDeps = MediaDeps & { fetch: typeof fetch };
 
-/** Le membre attend la fin de sa connexion : le téléchargement ne la retient pas plus. */
+/** Import planifié après la réponse : il tient dans la durée laissée à la route. */
 const GOOGLE_PHOTO_TIMEOUT_MS = 5000;
 
 export async function importGooglePhoto(

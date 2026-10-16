@@ -28,7 +28,7 @@ Garde-fous de l'import :
 - URL lue dans la revendication `picture` de l'idToken que better-auth vient de vérifier ; seuls `https:` et un hôte en `.googleusercontent.com` sont acceptés (SSRF), redirections refusées.
 - Téléchargement borné : délai de 5 s, type `image/*` exigé, taille limitée à celle d'un envoi de photo (4 Mo), vérifiée sur l'en-tête puis pendant la lecture.
 - Import par `changePhoto` au nom du membre : même policy de proximité, mêmes dérivées, EXIF retiré, comme un ajout à la main.
-- Un échec de l'import n'empêche jamais la connexion.
+- Import planifié après la réponse (`after` de Next, `waitUntil` sur Vercel) : la connexion n'attend ni Google ni la normalisation de l'image, et un échec de l'import ne l'empêche jamais.
 
 ## Consequences
 
@@ -39,7 +39,7 @@ Positive:
 
 Negative:
 
-- La première connexion Google attend l'import de la photo, au plus quelques secondes.
+- La photo peut n'apparaître qu'un instant après la première arrivée dans l'arbre.
 - Un échec de l'import est silencieux : le projet n'a pas encore de logger.
 - Un client OAuth Google à créer et à maintenir (URI de redirection par domaine).
 

@@ -1,5 +1,6 @@
 // tdd-cover: e2e src/server/auth/auth.integration.test.ts
 import 'server-only';
+import { after } from 'next/server';
 import { resolveAppUrl, resolveGoogleCredentials, resolvePasskeyRpID, serverEnv } from '../../env';
 import { getDb } from '../db/client';
 import { importGooglePhoto } from '../family/google-photo.service';
@@ -27,7 +28,18 @@ export function getAuth(): Auth {
     bootstrapAdminEmail: env.AUTH_BOOTSTRAP_ADMIN_EMAIL,
     sendMagicLink: async ({ email, url }) => sendEmail(await magicLinkEmail(email, url)),
     google: resolveGoogleCredentials(env),
-    onGoogleAccount: (account) => importGooglePhoto({ ...getMediaDeps(), fetch }, account),
+    // Planifié après la réponse (`waitUntil` sur Vercel) : la connexion n'attend ni le
+    // téléchargement chez Google ni la normalisation de l'image.
+    onGoogleAccount: async (account) => {
+      after(async () => {
+        try {
+          await importGooglePhoto({ ...getMediaDeps(), fetch }, account);
+        } catch {
+          // Après la réponse, rien ne remonte au membre : la photo n'est qu'un bonus, qu'il
+          // peut toujours choisir lui-même. Pas de logger dans le projet pour le tracer.
+        }
+      });
+    },
   });
   return cached;
 }
