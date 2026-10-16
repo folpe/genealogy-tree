@@ -66,6 +66,10 @@ async function pinch(page: Page, factor: number) {
  * souris, en pinçant au doigt, où les boutons cèdent la place au geste.
  */
 export async function zoom(page: Page, steps: number): Promise<Camera> {
+  // Comme les boutons, inactifs tant que la caméra n'est pas branchée : le geste l'attend.
+  await page
+    .locator('[data-camera-layer][data-camera-ready="true"]')
+    .waitFor({ state: 'attached' });
   const coarse = await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches);
   const name = steps > 0 ? 'Zoomer' : 'Dézoomer';
   for (let i = 0; i < Math.abs(steps); i += 1) {

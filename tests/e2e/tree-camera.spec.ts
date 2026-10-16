@@ -272,3 +272,59 @@ test('un tap pendant un vol arrête la caméra et finit le mouvement', async ({ 
   // Arrêtée net : elle n'a pas fini son vol jusqu'à « moi », elle est restée où le tap l'a prise.
   expect(await layer.evaluate((el) => el.style.transform)).toBe(stopped);
 });
+
+/**
+ * Petit glissé de `dx` px depuis le centre d'une bulle : au doigt par de vrais
+ * événements tactiles (le navigateur décide seul s'il en fait un tap), à la souris sinon.
+ */
+async function nudge(page: Page, target: Locator, dx: number, touch: boolean) {
+  const box = await target.boundingBox();
+  if (!box) throw new Error('bulle introuvable');
+  const x = box.x + box.width / 2;
+  const y = box.y + 30;
+  if (!touch) {
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + dx, y, { steps: dx });
+    await page.mouse.up();
+    return;
+  }
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  for (let i = 1; i <= dx; i += 1) {
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [{ x: x + i, y }],
+    });
+  }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.detach();
+}
+
+test('au doigt, un petit glissé sur une bulle ne l’ouvre pas ; le tap suivant, si', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'mobile', 'seuil de tap du doigt');
+  await openTree(page);
+  const me = page.getByRole('treeitem', { name: /c’est toi$/ });
+  const before = await settled(page);
+  // 6 px : au-delà du seuil de glissé du canevas, en deçà de celui du tap du navigateur.
+  await nudge(page, me, 6, true);
+  const after = await settled(page);
+  expect(after.x).not.toBe(before.x);
+  await page.waitForTimeout(300);
+  await expect(page).toHaveURL(/\/tree\?view=all$/);
+  await me.tap();
+  await expect(page).toHaveURL(/[?&]fiche=isabelle/);
+});
+
+test('Entrée sur une bulle juste après un glissé ouvre sa fiche', async ({ page }, info) => {
+  await openTree(page);
+  const me = page.getByRole('treeitem', { name: /c’est toi$/ });
+  await settled(page);
+  await nudge(page, me, 6, info.project.name === 'mobile');
+  // Aussitôt, sans attendre que le canevas oublie le glissé.
+  await me.focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/[?&]fiche=isabelle/);
+});
