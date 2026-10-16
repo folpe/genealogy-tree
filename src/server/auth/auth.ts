@@ -2,14 +2,14 @@
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
 import { passkey } from '@better-auth/passkey';
 import { betterAuth } from 'better-auth';
+import { createAuthMiddleware } from 'better-auth/api';
 import { nextCookies } from 'better-auth/next-js';
 import { magicLink } from 'better-auth/plugins';
-import { eq } from 'drizzle-orm';
 import { APP_NAME } from '../../lib/brand';
 import { accounts, passkeys, rateLimits, sessions, users, verifications } from '../db/schema';
 import type { Db } from '../db/types';
 import { decideAdmission, normalizeEmail } from '../members/admission';
-import { admitUser, findPendingInvitation } from '../members/members.repository';
+import { admitUser, findAccountEmail, findPendingInvitation } from '../members/members.repository';
 
 // Connexion sans mot de passe (spec section 6.5) : lien magique par email, puis
 // passkey proposée ; Google en plus quand il est configuré. Accès sur invitation
@@ -49,11 +49,7 @@ export function createAuth(deps: AuthDeps) {
   }
 
   async function hasAccount(email: string) {
-    const [user] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, normalizeEmail(email)));
-    return user !== undefined;
+    return (await findAccountEmail(db, email)) !== undefined;
   }
 
   return betterAuth({
@@ -74,7 +70,20 @@ export function createAuth(deps: AuthDeps) {
     ...(deps.google
       ? {
           socialProviders: {
-            google: { ...deps.google, prompt: 'select_account' as const },
+            google: {
+              ...deps.google,
+              prompt: 'select_account' as const,
+              // Gmail ignore les points : Google peut rendre `ab@gmail.com` pour un compte
+              // inscrit sous `a.b@gmail.com`. On présente l'adresse enregistrée, que la
+              // liaison implicite retrouve ; `email_verified` reste celui de Google, et la
+              // liaison l'exige toujours (better-auth 1.6.33,
+              // core/dist/social-providers/google.mjs ligne 113 : la carte complète le
+              // profil, async permis).
+              mapProfileToUser: async (profile: { email: string }) => {
+                const registered = await findAccountEmail(db, profile.email);
+                return registered ? { email: registered } : {};
+              },
+            },
           },
         }
       : {}),
@@ -94,6 +103,19 @@ export function createAuth(deps: AuthDeps) {
       // Les aînés se reconnectent rarement : 30 jours, prolongés à chaque visite.
       expiresIn: 60 * 60 * 24 * 30,
       updateAge: 60 * 60 * 24,
+    },
+    hooks: {
+      // Même boîte Gmail, même compte : le lien magique demandé sous une autre forme de
+      // l'adresse part vers l'adresse enregistrée, et le jeton la porte jusqu'à la
+      // vérification. Adresse inconnue : rien ne change, la réponse reste la même.
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== '/sign-in/magic-link') return;
+        const email: unknown = ctx.body?.email;
+        if (typeof email !== 'string') return;
+        const registered = await findAccountEmail(db, email);
+        if (!registered || registered === normalizeEmail(email)) return;
+        return { context: { body: { ...ctx.body, email: registered } } };
+      }),
     },
     databaseHooks: {
       user: {

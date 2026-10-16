@@ -121,6 +121,22 @@ describe.skipIf(!db)('members.service (intégration)', () => {
       expect(sent[0]?.subject).toBe('Ta demande est acceptée : bienvenue dans l’arbre');
     });
 
+    it('une demande en attente est reconnue sous l’autre forme d’une adresse Gmail', async () => {
+      const first = await requestAccess(deps(), {
+        name: 'Xavier Roux',
+        email: 'xavier.roux@gmail.com',
+        relation: 'Voisin',
+      });
+      const again = await requestAccess(deps(), {
+        name: 'Xavier Roux',
+        email: 'XavierRoux+arbre@googlemail.com',
+        relation: 'Voisin',
+      });
+      expect(again).toEqual(first);
+      expect(await client.select().from(accessRequests)).toHaveLength(1);
+      expect(sent).toHaveLength(1);
+    });
+
     it('un refus ne crée rien et n’envoie rien au demandeur', async () => {
       const { id } = await requestAccess(deps(), {
         name: 'Xavier Roux',

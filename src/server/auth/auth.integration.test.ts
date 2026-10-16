@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { z } from 'zod';
 import { marchandFamily } from '../../../tests/fixtures/marchand-family';
 import { testDb } from '../../../tests/integration/test-db';
-import { accounts, invitations, memberships, users } from '../db/schema';
+import { accounts, invitations, memberships, sessions, users } from '../db/schema';
 import { insertFamilyGraph } from '../family/family.repository';
 import { createInvitation } from '../members/members.repository';
 import { createAuth } from './auth';
@@ -261,6 +261,140 @@ describe.skipIf(!db)('auth (intégration)', () => {
       expect(googleAccounts).toHaveLength(0);
       expect(await client.select().from(users)).toHaveLength(2);
       expect(onGoogleAccount).not.toHaveBeenCalled();
+    });
+
+    describe('adresses Gmail, avec ou sans points', () => {
+      /** Luc, invité puis inscrit par lien magique sous `a.b@gmail.com`. */
+      async function lucAt(email: string) {
+        await signInWithLink(ADMIN);
+        const [admin] = await client.select().from(users);
+        if (!admin) throw new Error('admin manquant');
+        await createInvitation(client, {
+          email,
+          personId: 'luc',
+          invitedBy: admin.id,
+          now: new Date(),
+        });
+        await signInWithLink(email);
+        const [luc] = await client.select().from(users).where(eq(users.email, email));
+        if (!luc) throw new Error('compte de Luc manquant');
+        return luc;
+      }
+
+      it('Google rend l’adresse sans points : même compte, même fiche, rien de créé', async () => {
+        const luc = await lucAt('luc.marchand@gmail.com');
+        const response = await signInWithGoogle({ sub: 'g-luc', email: 'lucmarchand@gmail.com' });
+        expect(response.headers.get('set-cookie')).toContain('session_token');
+
+        expect(await client.select().from(users)).toHaveLength(2);
+        const [stored] = await client.select().from(users).where(eq(users.id, luc.id));
+        expect(stored?.email).toBe('luc.marchand@gmail.com');
+        const linked = await client
+          .select({ providerId: accounts.providerId })
+          .from(accounts)
+          .where(eq(accounts.userId, luc.id));
+        expect(linked.map((a) => a.providerId)).toContain('google');
+      });
+
+      it('sans `email_verified`, l’autre forme ne prend pas le compte', async () => {
+        await lucAt('luc.marchand@gmail.com');
+        const response = await signInWithGoogle({
+          sub: 'g-usurpateur',
+          email: 'lucmarchand@gmail.com',
+          email_verified: false,
+        });
+        const location = new URL(response.headers.get('location') ?? '', BASE_URL);
+        expect(location.searchParams.get('error')).toBe('account_not_linked');
+        expect(response.headers.get('set-cookie') ?? '').not.toContain('session_token=');
+        expect(
+          await client.select().from(accounts).where(eq(accounts.providerId, 'google')),
+        ).toHaveLength(0);
+        expect(await client.select().from(users)).toHaveLength(2);
+      });
+
+      it('le lien magique demandé sans points ouvre le même compte', async () => {
+        const luc = await lucAt('luc.marchand@gmail.com');
+        sent = [];
+        await auth.api.signInMagicLink({
+          body: { email: 'LucMarchand+arbre@gmail.com', callbackURL: '/tree' },
+          headers: new Headers({ origin: BASE_URL }),
+        });
+        const [link] = sent;
+        if (!link) throw new Error('lien manquant');
+        expect(link.email).toBe('luc.marchand@gmail.com');
+        const response = await auth.handler(
+          new Request(link.url, { headers: { origin: BASE_URL } }),
+        );
+        expect(response.headers.get('set-cookie')).toContain('session_token');
+        expect(await client.select().from(users)).toHaveLength(2);
+        // Une session à l'inscription, une seconde par ce lien : toutes deux à Luc.
+        expect(
+          await client.select().from(sessions).where(eq(sessions.userId, luc.id)),
+        ).toHaveLength(2);
+      });
+
+      it('une invitation à `a.b@gmail.com` s’accepte par Google sous `ab@gmail.com`', async () => {
+        await signInWithLink(ADMIN);
+        const [admin] = await client.select().from(users);
+        if (!admin) throw new Error('admin manquant');
+        await createInvitation(client, {
+          email: 'luc.marchand@gmail.com',
+          personId: 'luc',
+          invitedBy: admin.id,
+          now: new Date(),
+        });
+        const response = await signInWithGoogle({ sub: 'g-luc', email: 'lucmarchand@gmail.com' });
+        expect(response.headers.get('set-cookie')).toContain('session_token');
+
+        const [luc] = await client
+          .select()
+          .from(users)
+          .where(eq(users.email, 'lucmarchand@gmail.com'));
+        const [membership] = await client
+          .select()
+          .from(memberships)
+          .where(eq(memberships.userId, luc?.id ?? ''));
+        expect(membership?.personId).toBe('luc');
+        const [invitation] = await client.select().from(invitations);
+        expect(invitation?.usedAt).toBeInstanceOf(Date);
+      });
+
+      it('une invitation à `a.b@gmail.com` s’accepte par lien magique sous `ab@gmail.com`', async () => {
+        await signInWithLink(ADMIN);
+        const [admin] = await client.select().from(users);
+        if (!admin) throw new Error('admin manquant');
+        await createInvitation(client, {
+          email: 'luc.marchand@gmail.com',
+          personId: 'luc',
+          invitedBy: admin.id,
+          now: new Date(),
+        });
+        const response = await signInWithLink('lucmarchand@gmail.com');
+        expect(response?.headers.get('set-cookie')).toContain('session_token');
+        const [membership] = await client
+          .select()
+          .from(memberships)
+          .where(eq(memberships.personId, 'luc'));
+        expect(membership).toBeDefined();
+      });
+
+      it('hors Gmail, un point de différence fait deux personnes', async () => {
+        const luc = await lucAt('luc.marchand@exemple.fr');
+        const response = await signInWithGoogle({
+          sub: 'g-autre',
+          email: 'lucmarchand@exemple.fr',
+        });
+        const location = new URL(response.headers.get('location') ?? '', BASE_URL);
+        expect(location.searchParams.get('error')).toBe('unable_to_create_user');
+        expect(
+          await client.select().from(accounts).where(eq(accounts.userId, luc.id)),
+        ).toHaveLength(0);
+
+        sent = [];
+        await expect(signInWithLink('lucmarchand@exemple.fr')).resolves.toBeUndefined();
+        expect(sent).toHaveLength(0);
+        expect(await client.select().from(users)).toHaveLength(2);
+      });
     });
 
     it('un import de photo raté n’empêche pas d’entrer', async () => {
