@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { entryWaves } from './tree.entry';
+import { entryWaves, firstVisibleRow } from './tree.entry';
 
 const nodes = [
   { id: 'paul', row: 0, y: 40 },
@@ -44,5 +44,25 @@ describe('entryWaves', () => {
 
   it('un arbre vide ne rend aucune vague', () => {
     expect(entryWaves([], [])).toEqual({ persons: [], links: [], handles: [] });
+  });
+});
+
+describe('firstVisibleRow', () => {
+  const rows = [
+    { id: 'a', row: 0, y: 0 },
+    { id: 'b', row: 1, y: 200 },
+    { id: 'c', row: 2, y: 400 },
+  ];
+
+  it('rend la plus haute génération dont une bulle touche l’écran', () => {
+    expect(firstVisibleRow(rows, 150, 60)).toBe(1);
+    expect(firstVisibleRow(rows, 230, 60)).toBe(1);
+    expect(firstVisibleRow(rows, 270, 60)).toBe(2);
+  });
+
+  it('tout l’arbre à l’écran, ou rien au-dessous : la première génération', () => {
+    expect(firstVisibleRow(rows, -100, 60)).toBe(0);
+    expect(firstVisibleRow(rows, 900, 60)).toBe(0);
+    expect(firstVisibleRow([], 0, 60)).toBe(0);
   });
 });

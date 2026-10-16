@@ -254,11 +254,41 @@
   animation: step-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/*
+ * L'arbre se dessine (TreeLoader) : chaque génération du signe se trace, tient, puis
+ * s'efface dans le sens du tracé, en boucle ; les délais par arc sont posés en ligne.
+ * Le tout n'apparaît qu'après un instant : une vue servie vite ne clignote pas.
+ */
+@keyframes fan-grow {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  32%,
+  68% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+.tree-loader {
+  animation: fade-in 0.3s 0.15s both;
+}
+.fan-grow :is(path, circle) {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: fan-grow 2.6s cubic-bezier(0.65, 0, 0.35, 1) infinite both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .brand-draw :is(path, circle),
+  .fan-grow :is(path, circle),
   .sketch-link {
     animation: none;
     stroke-dashoffset: 0;
+  }
+  .tree-loader {
+    animation-duration: 0.15s;
   }
   .reveal-word,
   .sketch-bubble,

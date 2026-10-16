@@ -15,6 +15,12 @@ const VELOCITY_WINDOW_MS = 100;
 const VELOCITY_MAX = 3000;
 const WHEEL_ZOOM_SPEED = 0.01;
 const WHEEL_SETTLE_MS = 150;
+/**
+ * Après un glissé, le click que le navigateur envoie encore est avalé : celui de la
+ * souris, et celui du doigt, dont le seuil de tap (8 à 10 px) dépasse `DRAG_PX`. Il
+ * arrive aussitôt après le lâcher ; passé ce délai, plus rien n'est avalé.
+ */
+const SWALLOW_CLICK_MS = 400;
 const LINE_PX = 16;
 
 type Sample = { t: number; p: Point };
@@ -33,6 +39,7 @@ export function bindCameraGestures(viewport: HTMLElement, camera: CameraControll
   let interrupted = false;
   let samples: Sample[] = [];
   let wheelTimer: ReturnType<typeof setTimeout> | undefined;
+  let swallowTimer: ReturnType<typeof setTimeout> | undefined;
   let safari: { camera: Camera; point: Point } | undefined;
   const cleanups: (() => void)[] = [];
 
@@ -51,6 +58,12 @@ export function bindCameraGestures(viewport: HTMLElement, camera: CameraControll
     };
     viewport.addEventListener(type, guarded);
     cleanups.push(() => viewport.removeEventListener(type, guarded));
+  };
+
+  /** Le click d'après un glissé n'est plus attendu : aucun autre n'est avalé. */
+  const stopSwallowing = () => {
+    swallowClick = false;
+    clearTimeout(swallowTimer);
   };
 
   /** Position comptée depuis le centre du canevas, comme la caméra. */
@@ -89,9 +102,8 @@ export function bindCameraGestures(viewport: HTMLElement, camera: CameraControll
   on('pointerdown', (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     if (pointers.size >= 2) return;
-    // Un geste tactile qui a bougé n'émet pas de click : un nouvel appui repart à zéro,
-    // sinon le premier tap après un glissé serait avalé.
-    swallowClick = false;
+    // Un nouvel appui repart à zéro : le premier tap après un glissé n'est pas avalé.
+    stopSwallowing();
     if (camera.stop() && pointers.size === 0) interrupted = true;
     pointers.set(event.pointerId, local(event.clientX, event.clientY));
     if (pointers.size === 1) dragging = false;
@@ -140,18 +152,24 @@ export function bindCameraGestures(viewport: HTMLElement, camera: CameraControll
     interrupted = false;
     // Après un pincement, pas d'élan : seulement le retour dans les bornes.
     camera.release(start && start.distance > 0 ? { x: 0, y: 0 } : velocity());
+    // Le click qui suit peut-être le glissé, borné dans le temps : s'il ne vient pas (doigt
+    // au-delà du seuil de tap), le drapeau ne reste pas levé pour un click plus tardif.
     swallowClick = true;
+    clearTimeout(swallowTimer);
+    swallowTimer = setTimeout(stopSwallowing, SWALLOW_CLICK_MS);
     dragging = false;
     start = undefined;
   };
   on('pointerup', lift);
   on('pointercancel', lift);
+  // Une touche (Entrée sur une bulle) vient du clavier : son click n'est jamais avalé.
+  on('keydown', stopSwallowing, { capture: true });
 
   on(
     'click',
     (event) => {
       if (!swallowClick) return;
-      swallowClick = false;
+      stopSwallowing();
       event.preventDefault();
       event.stopPropagation();
     },
@@ -209,6 +227,7 @@ export function bindCameraGestures(viewport: HTMLElement, camera: CameraControll
 
   return () => {
     clearTimeout(wheelTimer);
+    clearTimeout(swallowTimer);
     for (const cleanup of cleanups) cleanup();
   };
 }

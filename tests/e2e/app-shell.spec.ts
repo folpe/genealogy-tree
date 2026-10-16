@@ -102,8 +102,10 @@ test('sur téléphone, les onglets flottent en bas, sous le pouce, sans rien cac
   expect(tab?.height ?? 0).toBeGreaterThanOrEqual(44);
   // L'arbre est plein écran sous la barre (maquette Mobile) ; ses commandes restent
   // au-dessus d'elle, à portée.
-  const zoom = await page.getByRole('button', { name: 'Dézoomer', exact: true }).boundingBox();
-  expect((zoom?.y ?? 0) + (zoom?.height ?? 0)).toBeLessThanOrEqual(bar?.y ?? 0);
+  // Au doigt, le pincement zoome : « Me retrouver » est la plus basse.
+  const home = await page.getByRole('button', { name: 'Me retrouver' }).boundingBox();
+  expect(home).not.toBeNull();
+  expect((home?.y ?? 0) + (home?.height ?? 0)).toBeLessThanOrEqual(bar?.y ?? 0);
   await nav.getByRole('link', { name: 'Ancêtres' }).click();
   await expect(page).toHaveURL(/\/ancestors$/);
   await expect(nav.getByRole('link', { name: 'Ancêtres' })).toHaveAttribute('aria-current', 'page');

@@ -51,6 +51,7 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 - [ ] Animations de la spec 9 : logo dessiné et titre révélé (Connexion), arbre qui pousse génération par génération au premier chargement, liens dessinés (DrawSVG), nœud créé qui apparaît à sa place (branché en phase 6).
   - [x] Logo dessiné et titre révélé (Connexion), en CSS seul : traits en `pathLength="1"` tracés par `stroke-dashoffset`, titre découpé mot à mot au rendu serveur (`RevealTitle`), petit arbre du canevas qui pousse rangée par rangée. La page de connexion ne charge pas GSAP (journal du 2026-10-15) ; fondu seul avec le mouvement réduit.
   - [x] Arbre qui pousse au premier affichage de l'onglet : génération par génération, bulles en échelle et fondu, traits tracés (DrawSVG), poignées en fondu (`src/motion/entry.ts`, vagues de `tree.entry.ts`). Marqué avant l'affichage par un script sous nonce : l'arbre rendu au serveur ne clignote pas ; repli CSS s'il ne vient pas. Fondu seul avec le mouvement réduit.
+  - [x] Arbre qui pousse à chaque nouvelle vue (« Toute la famille », un autre centre) : le tap répond aussitôt (transition de `TreeNavigationProvider`, vue choisie en optimiste), le signe pousse sur le canevas pendant le calcul serveur (`TreeLoader`, CSS seul, aussi dans `loading.tsx`), puis le nouvel arbre pousse depuis la première génération à l'écran. Fondus seuls avec le mouvement réduit.
 
 ### Lot 4 : fiche personne
 

@@ -24,7 +24,7 @@ import {
   VIRTUALIZE_ABOVE,
   visibleWorld,
 } from '@/lib/tree/tree.camera';
-import { entryWaves } from '@/lib/tree/tree.entry';
+import { entryWaves, firstVisibleRow } from '@/lib/tree/tree.entry';
 import { recallCamera, rememberCamera, type TreeMemory } from '@/lib/tree/tree.memory';
 import { DEFAULT_METRICS } from '@/lib/tree/tree.metrics';
 import type { PathHighlight } from '@/lib/tree/tree.path';
@@ -344,10 +344,9 @@ function CanvasControls({
   camera: CameraController | undefined;
   home: (() => void) | undefined;
 }) {
-  const button =
-    'grid size-[46px] place-items-center rounded-full bg-card text-ink shadow-float ' +
-    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ' +
-    'disabled:opacity-40';
+  const ring = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
+  // Au doigt (pointeur grossier), le pincement zoome : les boutons rendent leur place.
+  const zoom = `grid size-[46px] place-items-center rounded-full bg-card text-ink shadow-float pointer-coarse:hidden disabled:opacity-40 ${ring}`;
   return (
     <div className="absolute right-4 bottom-4 flex flex-col items-end gap-2 max-md:bottom-[var(--tab-bar-space)]">
       {home ? (
@@ -355,9 +354,11 @@ function CanvasControls({
           type="button"
           onClick={home}
           disabled={!camera}
-          className="h-[46px] rounded-full bg-card px-4 font-medium text-[15px] shadow-float focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-40"
+          // Sur le téléphone, un bouton rond de 44 px : le nom reste pour la lecture.
+          className={`grid h-[46px] place-items-center rounded-full bg-card px-4 font-medium text-[15px] text-ink shadow-float disabled:opacity-40 max-md:size-11 max-md:px-0 ${ring}`}
         >
-          Me retrouver
+          <LocateIcon />
+          <span className="max-md:sr-only">Me retrouver</span>
         </button>
       ) : undefined}
       <button
@@ -365,7 +366,7 @@ function CanvasControls({
         aria-label="Zoomer"
         disabled={!camera}
         onClick={() => camera?.zoomTo(camera.get().k * ZOOM_STEP)}
-        className={button}
+        className={zoom}
       >
         <span aria-hidden="true" className="text-[22px] leading-none">
           +
@@ -376,13 +377,34 @@ function CanvasControls({
         aria-label="Dézoomer"
         disabled={!camera}
         onClick={() => camera?.zoomTo(camera.get().k / ZOOM_STEP)}
-        className={button}
+        className={zoom}
       >
         <span aria-hidden="true" className="text-[22px] leading-none">
           −
         </span>
       </button>
     </div>
+  );
+}
+
+/** Viseur : « Me retrouver » sur le téléphone, au trait des autres icônes. */
+function LocateIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+      className="md:hidden"
+    >
+      <circle cx="12" cy="12" r="6.5" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+      <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" />
+    </svg>
   );
 }
 
@@ -433,6 +455,8 @@ export function FamilyTree({
   focusOn,
   quickActions,
   reveal,
+  grow = false,
+  pending = false,
 }: {
   /** Premier dessin, calculé au rendu serveur. */
   drawing: TreeDrawing;
@@ -461,6 +485,10 @@ export function FamilyTree({
    * fiche ; l'avatar de la fiche part alors d'une bulle à l'écran.
    */
   reveal?: { id: string; onArrive: () => void } | undefined;
+  /** Une autre vue vient remplacer l'arbre affiché : il pousse à son arrivée. */
+  grow?: boolean;
+  /** Le serveur calcule l'arbre demandé : celui-ci s'efface sous le chargement. */
+  pending?: boolean;
 }) {
   const fold = useFoldedTree(initial, graph);
   const { nodes, width, height } = fold.drawing;
@@ -517,22 +545,28 @@ export function FamilyTree({
   const nodesById = useRef(byId);
   nodesById.current = byId;
   // Premier affichage de l'arbre dans l'onglet (marqué avant l'affichage, voir
-  // TREE_ENTRY_SCRIPT) : il pousse. Un retour d'une fiche le retrouve tel quel.
+  // TREE_ENTRY_SCRIPT) ou nouvelle vue après le chargement (`grow`) : il pousse. Un
+  // retour d'une fiche le retrouve tel quel.
   const grown = useRef(false);
   const drawing = useRef(fold.drawing);
   drawing.current = fold.drawing;
+  const growOnMount = useRef(grow);
   useLayoutEffect(() => {
     if (!camera || grown.current) return;
     grown.current = true;
     const root = document.documentElement;
-    if (!root.hasAttribute(TREE_ENTRY_ATTRIBUTE)) return;
-    // Rendu à GSAP dans la même tâche : aucune image entre les deux.
-    root.removeAttribute(TREE_ENTRY_ATTRIBUTE);
-    // Hydratation tardive : le repli a déjà montré l'arbre, on ne le refait pas pousser.
-    if (performance.now() > TREE_ENTRY_FALLBACK_MS - ENTRY_LATE_MARGIN_MS) return;
+    if (root.hasAttribute(TREE_ENTRY_ATTRIBUTE)) {
+      // Rendu à GSAP dans la même tâche : aucune image entre les deux.
+      root.removeAttribute(TREE_ENTRY_ATTRIBUTE);
+      // Hydratation tardive : le repli a déjà montré l'arbre, on ne le refait pas pousser.
+      if (performance.now() > TREE_ENTRY_FALLBACK_MS - ENTRY_LATE_MARGIN_MS) return;
+    } else if (!growOnMount.current) return;
     const { nodes, links, branches } = drawing.current;
     const waves = entryWaves(nodes, links, branches);
-    return animateTreeEntry(waves, elements.current, layer.current ?? undefined);
+    // L'arbre pousse là où l'on regarde : depuis la plus haute génération à l'écran.
+    const top = visibleWorld(camera.get(), camera.viewport()).y0;
+    const fromRow = firstVisibleRow(nodes, top, BUBBLE_RADIUS + LABEL_HEIGHT);
+    return animateTreeEntry(waves, elements.current, layer.current ?? undefined, fromRow);
   }, [camera]);
   // Une fiche ouverte (recherche, lien) : la caméra va à sa bulle si elle n'est pas
   // déjà bien à l'écran. Un tap sur une bulle visible ne fait donc rien bouger.
@@ -701,6 +735,7 @@ export function FamilyTree({
       <section
         ref={viewport}
         aria-label="Canevas de l’arbre"
+        aria-busy={pending || undefined}
         // Niveau des échelles de départ ; la caméra le tient ensuite à jour.
         data-detail="mid"
         {...quick.canvas}
@@ -714,7 +749,8 @@ export function FamilyTree({
         <div
           ref={layer}
           data-camera-layer
-          className="absolute top-1/2 left-1/2 origin-top-left"
+          // L'ancien arbre s'efface sous le chargement ; le nouveau arrive d'emblée entier.
+          className={`absolute top-1/2 left-1/2 origin-top-left ${pending ? 'opacity-[0.14] transition-opacity duration-300' : ''}`}
           // Rendu serveur déjà centré sur la bulle de départ : pas de saut à l'hydratation.
           style={{
             width,

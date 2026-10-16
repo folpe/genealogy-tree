@@ -1,4 +1,4 @@
-import { settled } from './camera';
+import { settled, zoom } from './camera';
 import { expect, test } from './fixtures';
 import { signIn } from './outbox';
 
@@ -66,9 +66,7 @@ test('⌘K vers une bulle hors de l’écran : la caméra y va d’abord, puis l
   await signIn(page, 'hugo@famille.test');
   await settled(page);
   // De tout près : la bulle de Jeanne, deux générations plus haut, sort de l'écran.
-  const zoomIn = page.getByRole('button', { name: 'Zoomer', exact: true });
-  for (let i = 0; i < 6; i += 1) await zoomIn.click();
-  await settled(page);
+  await zoom(page, 6);
   const jeanne = page.locator('[data-person="jeanne"]');
   await expect(jeanne).not.toBeInViewport();
 
@@ -107,9 +105,7 @@ test('une seconde recherche pendant le vol l’emporte : la première fiche ne s
 }) => {
   await signIn(page, 'hugo@famille.test');
   await settled(page);
-  const zoomIn = page.getByRole('button', { name: 'Zoomer', exact: true });
-  for (let i = 0; i < 6; i += 1) await zoomIn.click();
-  await settled(page);
+  await zoom(page, 6);
   await page.evaluate(() => {
     const record = window as unknown as { pushed: string[] };
     record.pushed = [];
@@ -139,9 +135,7 @@ test('une seconde recherche pendant le vol l’emporte : la première fiche ne s
 test('quitter l’arbre pendant le vol abandonne la fiche cherchée', async ({ page }) => {
   await signIn(page, 'hugo@famille.test');
   await settled(page);
-  const zoomIn = page.getByRole('button', { name: 'Zoomer', exact: true });
-  for (let i = 0; i < 6; i += 1) await zoomIn.click();
-  await settled(page);
+  await zoom(page, 6);
   await page.evaluate(() => {
     const record = window as unknown as { pushed: string[] };
     record.pushed = [];
@@ -172,9 +166,7 @@ test('une recherche vers une bulle visible, pendant un vol, l’arrête net et p
 }) => {
   await signIn(page, 'hugo@famille.test');
   await settled(page);
-  const zoomIn = page.getByRole('button', { name: 'Zoomer', exact: true });
-  for (let i = 0; i < 6; i += 1) await zoomIn.click();
-  await settled(page);
+  await zoom(page, 6);
   const dialog = page.getByRole('dialog', { name: 'Trouver quelqu’un' });
   const search = async (query: string, name: RegExp) => {
     await page.keyboard.press('ControlOrMeta+k');

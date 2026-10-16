@@ -1,4 +1,4 @@
-import { settled } from './camera';
+import { settled, zoom } from './camera';
 import { E2E_ISABELLE_EMAIL } from './e2e.constants';
 import { expect, test } from './fixtures';
 import { signIn } from './outbox';
@@ -34,11 +34,7 @@ test('un clic sur une bulle ouvre sa fiche', async ({ page }) => {
   await page.goto('/tree?view=all');
   const henri = page.getByRole('treeitem', { name: /^Henri Marchand/ });
   // Henri est loin de ma bulle : on dézoome jusqu'à le voir, comme on le ferait.
-  const zoomOut = page.getByRole('button', { name: 'Dézoomer', exact: true });
-  for (let i = 0; i < 6; i += 1) {
-    await zoomOut.click();
-    await settled(page);
-  }
+  await zoom(page, -6);
   await expect(henri).toBeInViewport();
   // Une navigation dans l'app, pas un rechargement : la page garde son état.
   await page.evaluate(() => Reflect.set(window, 'stayedInApp', true));
@@ -94,8 +90,7 @@ test('au retour d’une fiche, l’arbre revient là où on l’avait laissé, p
   await page.getByRole('treeitem', { name: /^Luc Marchand/ }).focus();
   await page.keyboard.press('-');
   await expect(page.getByRole('treeitem', { name: /^Hugo Marchand/ })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Zoomer', exact: true }).click();
-  await settled(page);
+  await zoom(page, 1);
   // Retour sur Luc (la caméra peut le recadrer), puis Entrée ouvre sa fiche.
   await page.getByRole('treeitem', { name: /^Luc Marchand/ }).focus();
   const left = await settled(page);

@@ -62,10 +62,16 @@ for (const width of [360, undefined]) {
 
     const canvas = await boxOf(page.locator('[aria-label="Canevas de l’arbre"]'));
     const cardBox = await boxOf(card);
-    const buttons = [
-      await boxOf(page.getByRole('button', { name: 'Zoomer', exact: true })),
-      await boxOf(page.getByRole('button', { name: 'Dézoomer', exact: true })),
+    const zoomButtons = [
+      page.getByRole('button', { name: 'Zoomer', exact: true }),
+      page.getByRole('button', { name: 'Dézoomer', exact: true }),
     ];
+    // Au doigt, pas de boutons de zoom (le pincement suffit) : rien ne couvre le chemin.
+    const buttons = [];
+    for (const button of zoomButtons) {
+      if (isMobile) await expect(button).toBeHidden();
+      else buttons.push(await boxOf(button));
+    }
     const tree = page.locator('[role="tree"]');
     // Le chemin allumé, ancêtres communs compris.
     const framed = await tree.locator('[data-on-path="true"]').all();

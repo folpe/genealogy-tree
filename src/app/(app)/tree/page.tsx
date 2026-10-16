@@ -5,6 +5,7 @@ import { addRelativeAction } from '@/actions/family.actions';
 import { drawTree } from '@/components/family/family-tree.helper';
 import { personLabel } from '@/components/family/person.helper';
 import { TREE_ENTRY_SCRIPT } from '@/components/family/tree-memory.storage';
+import { TreeNavigationProvider } from '@/components/family/tree-navigation';
 import { TreeViewControls } from '@/components/family/tree-view-controls';
 import { TreeWithSheet } from '@/components/family/tree-with-sheet';
 import { getElk } from '@/lib/tree/tree.instance';
@@ -46,25 +47,29 @@ export default async function TreePage({
           choisis « C’est moi ».
         </p>
       )}
-      <TreeViewControls
-        params={params}
-        shownView={tree.shownView}
-        centerInCouple={tree.centerInCouple}
-        centerName={center ? personLabel(center) : undefined}
-        canReturn={tree.viewerPersonId !== undefined && tree.centerId !== tree.viewerPersonId}
-      />
-      {/* Avant le canevas dans le document : lu avant son premier affichage. */}
-      <script
-        nonce={nonce}
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: texte fixe du module, sans donnée de la page ni de l'utilisateur ; en enfant, React en échapperait les guillemets.
-        dangerouslySetInnerHTML={{ __html: TREE_ENTRY_SCRIPT }}
-      />
-      <TreeWithSheet
-        tree={tree}
-        drawing={drawing}
-        viewKey={treeHref(params)}
-        addAction={addRelativeAction}
-      />
+      {/* Une même transition pour les réglages et le canevas : les commandes répondent au
+          tap, l'arbre se dessine pendant que le serveur le calcule. */}
+      <TreeNavigationProvider>
+        <TreeViewControls
+          params={params}
+          shownView={tree.shownView}
+          centerInCouple={tree.centerInCouple}
+          centerName={center ? personLabel(center) : undefined}
+          canReturn={tree.viewerPersonId !== undefined && tree.centerId !== tree.viewerPersonId}
+        />
+        {/* Avant le canevas dans le document : lu avant son premier affichage. */}
+        <script
+          nonce={nonce}
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: texte fixe du module, sans donnée de la page ni de l'utilisateur ; en enfant, React en échapperait les guillemets.
+          dangerouslySetInnerHTML={{ __html: TREE_ENTRY_SCRIPT }}
+        />
+        <TreeWithSheet
+          tree={tree}
+          drawing={drawing}
+          viewKey={treeHref(params)}
+          addAction={addRelativeAction}
+        />
+      </TreeNavigationProvider>
     </main>
   );
 }

@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { camera, settled } from './camera';
+import { camera, settled, zoom } from './camera';
 import { E2E_ISABELLE_EMAIL } from './e2e.constants';
 import { expect, test } from './fixtures';
 import { signIn } from './outbox';
@@ -43,7 +43,8 @@ test('glisser déplace l’arbre, et un glissé sur une bulle n’ouvre pas sa f
   await expect(page).toHaveURL(/\/tree\?view=all$/);
 });
 
-test('zoomer et dézoomer avec les boutons, dans les limites', async ({ page }) => {
+test('zoomer et dézoomer avec les boutons, dans les limites', async ({ page }, info) => {
+  test.skip(info.project.name === 'mobile', 'au doigt, le pincement remplace les boutons');
   await openTree(page);
   const before = await settled(page);
   await page.getByRole('button', { name: 'Zoomer', exact: true }).click();
@@ -55,6 +56,24 @@ test('zoomer et dézoomer avec les boutons, dans les limites', async ({ page }) 
     await settled(page);
   }
   const far = await settled(page);
+  expect(far.k).toBeLessThan(before.k);
+  expect(far.k).toBeGreaterThan(0.05);
+});
+
+test('au doigt, les boutons de zoom laissent la place ; « Me retrouver » devient rond', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'mobile', 'pointeur grossier du téléphone');
+  await openTree(page);
+  await expect(page.getByRole('button', { name: 'Zoomer', exact: true })).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Dézoomer', exact: true })).toBeHidden();
+  const home = await page.getByRole('button', { name: 'Me retrouver' }).boundingBox();
+  expect(home?.width).toBe(44);
+  expect(home?.height).toBe(44);
+  // Dans les limites, au pincement comme aux boutons.
+  const before = await settled(page);
+  expect((await zoom(page, 1)).k).toBeGreaterThan(before.k);
+  const far = await zoom(page, -12);
   expect(far.k).toBeLessThan(before.k);
   expect(far.k).toBeGreaterThan(0.05);
 });
@@ -177,11 +196,7 @@ test('zoom sémantique : de près, le nom complet ; le texte reste net', async (
   const me = page.getByRole('treeitem', { name: /c’est toi$/ });
   await expect(canvas).toHaveAttribute('data-detail', 'mid');
   await expect(me.getByText('Toi', { exact: true })).toBeVisible();
-  const zoomIn = page.getByRole('button', { name: 'Zoomer', exact: true });
-  for (let i = 0; i < 3; i += 1) {
-    await zoomIn.click();
-    await settled(page);
-  }
+  await zoom(page, 3);
   await expect(canvas).toHaveAttribute('data-detail', 'near');
   // Le nom complet affiché ; le nom de la bulle, pour la lecture, est à part.
   await expect(
@@ -195,11 +210,7 @@ test('zoom sémantique : de près, le nom complet ; le texte reste net', async (
 test('zoom sémantique : de loin, des pastilles sans texte', async ({ page }, info) => {
   test.skip(info.project.name !== 'mobile', 'l’arbre de test tient en entier sur grand écran');
   const canvas = await openTree(page);
-  const zoomOut = page.getByRole('button', { name: 'Dézoomer', exact: true });
-  for (let i = 0; i < 4; i += 1) {
-    await zoomOut.click();
-    await settled(page);
-  }
+  await zoom(page, -4);
   await expect(canvas).toHaveAttribute('data-detail', 'far');
   const henri = page.getByRole('treeitem', { name: /^Henri Marchand/ });
   await expect(henri).toBeVisible();
@@ -260,4 +271,60 @@ test('un tap pendant un vol arrête la caméra et finit le mouvement', async ({ 
   await expect(layer).toHaveCSS('will-change', 'auto');
   // Arrêtée net : elle n'a pas fini son vol jusqu'à « moi », elle est restée où le tap l'a prise.
   expect(await layer.evaluate((el) => el.style.transform)).toBe(stopped);
+});
+
+/**
+ * Petit glissé de `dx` px depuis le centre d'une bulle : au doigt par de vrais
+ * événements tactiles (le navigateur décide seul s'il en fait un tap), à la souris sinon.
+ */
+async function nudge(page: Page, target: Locator, dx: number, touch: boolean) {
+  const box = await target.boundingBox();
+  if (!box) throw new Error('bulle introuvable');
+  const x = box.x + box.width / 2;
+  const y = box.y + 30;
+  if (!touch) {
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + dx, y, { steps: dx });
+    await page.mouse.up();
+    return;
+  }
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  for (let i = 1; i <= dx; i += 1) {
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [{ x: x + i, y }],
+    });
+  }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.detach();
+}
+
+test('au doigt, un petit glissé sur une bulle ne l’ouvre pas ; le tap suivant, si', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'mobile', 'seuil de tap du doigt');
+  await openTree(page);
+  const me = page.getByRole('treeitem', { name: /c’est toi$/ });
+  const before = await settled(page);
+  // 6 px : au-delà du seuil de glissé du canevas, en deçà de celui du tap du navigateur.
+  await nudge(page, me, 6, true);
+  const after = await settled(page);
+  expect(after.x).not.toBe(before.x);
+  await page.waitForTimeout(300);
+  await expect(page).toHaveURL(/\/tree\?view=all$/);
+  await me.tap();
+  await expect(page).toHaveURL(/[?&]fiche=isabelle/);
+});
+
+test('Entrée sur une bulle juste après un glissé ouvre sa fiche', async ({ page }, info) => {
+  await openTree(page);
+  const me = page.getByRole('treeitem', { name: /c’est toi$/ });
+  await settled(page);
+  await nudge(page, me, 6, info.project.name === 'mobile');
+  // Aussitôt, sans attendre que le canevas oublie le glissé.
+  await me.focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/[?&]fiche=isabelle/);
 });

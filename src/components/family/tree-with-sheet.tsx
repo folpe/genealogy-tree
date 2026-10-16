@@ -27,6 +27,8 @@ import { useOpenFicheRequests } from './open-fiche';
 import { personLabel } from './person.helper';
 import { RightsNoticeBox } from './rights-notice';
 import type { TreeDrawing } from './tree-drawing';
+import { TreeLoader } from './tree-loader';
+import { useTreePending } from './tree-navigation';
 import { quickItem } from './tree-quick-menu';
 
 // L'arbre et sa fiche (plan phase 5, lot 4) : un tap ouvre la fiche sans quitter
@@ -137,6 +139,17 @@ export function TreeWithSheet({
     setLink(undefined);
     setCardHeight(0);
   }
+  // Une autre vue, ou une autre personne au centre, est un autre arbre : il pousse à
+  // nouveau, génération par génération, au lieu de glisser depuis l'ancien. Les unions
+  // passées ou un ajout gardent le même arbre, dont les bulles glissent (useRelayout).
+  const treeKey = `${tree.shownView}:${tree.centerId ?? ''}`;
+  const [shownTreeKey, setShownTreeKey] = useState(treeKey);
+  const [regrown, setRegrown] = useState(false);
+  if (shownTreeKey !== treeKey) {
+    setShownTreeKey(treeKey);
+    setRegrown(true);
+  }
+  const pending = useTreePending();
   /** « Notre lien » : sur mobile, la feuille s'efface pour laisser voir le chemin. */
   const showLink = useCallback(
     (view: RelationshipView) => {
@@ -176,6 +189,9 @@ export function TreeWithSheet({
           />
         ) : undefined}
         <FamilyTree
+          key={treeKey}
+          grow={regrown}
+          pending={pending}
           drawing={drawing}
           graph={tree.drawn}
           focusId={tree.viewerPersonId}
@@ -189,6 +205,15 @@ export function TreeWithSheet({
           quickActions={quickActions}
           reveal={reveal}
         />
+        {/* L'arbre demandé se calcule : le signe pousse sur le canevas, l'ancien s'efface.
+            La région reste montée, vide hors chargement : un texte qui arrive dans une
+            région déjà là est annoncé, une région insérée avec lui ne l'est pas toujours. */}
+        <div
+          role="status"
+          className="pointer-events-none absolute inset-0 z-[5] grid place-items-center"
+        >
+          {pending ? <TreeLoader /> : undefined}
+        </div>
         {addingTo && adding ? (
           <AddRelativeDialog
             key={addingTo.id}
