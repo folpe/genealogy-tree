@@ -3,13 +3,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { magicLink, passkeySignIn, push } = vi.hoisted(() => ({
+const { magicLink, passkeySignIn, social, push } = vi.hoisted(() => ({
   magicLink: vi.fn(),
   passkeySignIn: vi.fn(),
+  social: vi.fn(),
   push: vi.fn(),
 }));
 vi.mock('@/lib/auth-client', () => ({
-  authClient: { signIn: { magicLink, passkey: passkeySignIn } },
+  authClient: { signIn: { magicLink, passkey: passkeySignIn, social } },
 }));
 vi.stubGlobal('location', { assign: push });
 
@@ -19,6 +20,7 @@ describe('LoginForm', () => {
   beforeEach(() => {
     magicLink.mockReset().mockResolvedValue({ data: { status: true }, error: null });
     passkeySignIn.mockReset();
+    social.mockReset().mockResolvedValue({ data: { redirect: true }, error: null });
     push.mockReset();
   });
 
@@ -93,5 +95,27 @@ describe('LoginForm', () => {
     await userEvent.type(screen.getByRole('textbox', { name: 'Ton email' }), 'luc@exemple.fr');
     await userEvent.click(screen.getByRole('button', { name: 'Recevoir mon lien' }));
     expect(screen.queryByRole('link', { name: 'Demander l’accès' })).toBeNull();
+  });
+
+  it('sans Google configuré, pas de bouton Google', () => {
+    render(<LoginForm />);
+    expect(screen.queryByRole('button', { name: 'Continuer avec Google' })).toBeNull();
+  });
+
+  it('avec Google, part chez Google vers la même destination que le lien', async () => {
+    render(<LoginForm google />);
+    await userEvent.click(screen.getByRole('button', { name: 'Continuer avec Google' }));
+    expect(social).toHaveBeenCalledWith({
+      provider: 'google',
+      callbackURL: '/login/passkey',
+      errorCallbackURL: '/login?via=google',
+    });
+  });
+
+  it('dit qu’il faut réessayer si le départ vers Google échoue', async () => {
+    social.mockResolvedValue({ data: null, error: { status: 500, message: 'Erreur' } });
+    render(<LoginForm google />);
+    await userEvent.click(screen.getByRole('button', { name: 'Continuer avec Google' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('La connexion avec Google n’a pas abouti');
   });
 });

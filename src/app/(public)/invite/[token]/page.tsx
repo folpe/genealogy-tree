@@ -1,9 +1,9 @@
-// tdd-cover: e2e src/server/members/members.service.integration.test.ts
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { Kicker, pillPrimary } from '@/components/auth/auth-ui';
 import { RevealTitle } from '@/components/auth/reveal-title';
+import { googleSignInEnabled } from '@/env';
 import { getDb } from '@/server/db/client';
 import { getInvitationPreview } from '@/server/members/members.service';
 import { LoginForm } from '../../login/login-form';
@@ -24,6 +24,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
             title: `Bonjour ${invitation.firstName}`,
             lead: `${invitation.inviterName} t’invite dans l’arbre de la famille. Pas de mot de passe : reçois ton lien de connexion par email.`,
           }}
+          google={googleSignInEnabled()}
         />
       ) : (
         <div className="flex flex-col gap-[22px]">

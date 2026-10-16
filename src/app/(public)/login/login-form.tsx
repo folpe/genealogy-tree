@@ -3,6 +3,7 @@
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
 import {
   fieldLabel,
+  GoogleIcon,
   KeyIcon,
   Kicker,
   MailIcon,
@@ -31,12 +32,15 @@ const LOGIN_INTRO: Intro = {
 const AFTER_LINK = '/login/passkey';
 /** Lien expiré ou déjà servi : better-auth y ajoute `?error=…`, lu par la page. */
 const LINK_FAILED = '/login';
+/** Échec au retour de Google (adresse non invitée, abandon) : la page le distingue d'un lien. */
+const GOOGLE_FAILED = '/login?via=google';
 
 export function LoginForm({
   defaultEmail = '',
   intro = LOGIN_INTRO,
   notice,
   footer,
+  google = false,
 }: {
   defaultEmail?: string;
   intro?: Intro;
@@ -44,6 +48,8 @@ export function LoginForm({
   notice?: string | undefined;
   /** Sous l'étape email seulement (lien vers la demande d'accès). */
   footer?: ReactNode;
+  /** Connexion Google configurée côté serveur. */
+  google?: boolean;
 }) {
   const [step, setStep] = useState<Step>({ name: 'email' });
   const [email, setEmail] = useState(defaultEmail);
@@ -110,6 +116,7 @@ export function LoginForm({
         if (await sendLink()) goTo({ name: 'sent', email });
       }}
       footer={footer}
+      google={google}
       entering={moved}
     />
   );
@@ -127,8 +134,21 @@ function EmailStep(props: {
   onError: (error: string) => void;
   onSubmit: () => Promise<void>;
   footer: ReactNode;
+  google: boolean;
   entering: boolean;
 }) {
+  async function signInWithGoogle() {
+    // Réussi, le client part chez Google ; le retour passe par la même étape que le lien.
+    const { error } = await authClient.signIn.social({
+      provider: 'google',
+      callbackURL: AFTER_LINK,
+      errorCallbackURL: GOOGLE_FAILED,
+    });
+    if (error) {
+      props.onError('La connexion avec Google n’a pas abouti. Réessaie, ou reçois plutôt un lien.');
+    }
+  }
+
   async function signInWithPasskey() {
     const result = await authClient.signIn.passkey();
     if (result?.error) {
@@ -181,6 +201,12 @@ function EmailStep(props: {
           <KeyIcon />
           Me connecter avec une passkey
         </button>
+        {props.google ? (
+          <button type="button" onClick={signInWithGoogle} className={pillSecondary}>
+            <GoogleIcon />
+            Continuer avec Google
+          </button>
+        ) : undefined}
       </div>
       {props.error ? <ErrorNote>{props.error}</ErrorNote> : undefined}
       {props.footer}

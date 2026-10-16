@@ -118,4 +118,17 @@ describe.skipIf(!db)('media.service (intégration)', () => {
     expect(photos.get('luc')).toMatchObject({ mediaId, width: 900, height: 600 });
     expect(photos.get('luc')?.blurDataUrl).toMatch(/^data:image\/webp/);
   });
+
+  it('remplace la photo, sauf avec onlyIfEmpty si la fiche en a déjà une', async () => {
+    const deps = { db: client, blob: memoryBlobStore().store };
+    const first = await storeImage(deps, { personId: 'luc', bytes: await aJpeg(40) });
+    const second = await storeImage(deps, { personId: 'luc', bytes: await aJpeg(200) });
+
+    expect(await setProfilePhoto(client, 'luc', first.mediaId, { onlyIfEmpty: true })).toBe(true);
+    expect(await setProfilePhoto(client, 'luc', second.mediaId, { onlyIfEmpty: true })).toBe(false);
+    expect((await loadProfilePhotos(client)).get('luc')?.mediaId).toBe(first.mediaId);
+
+    expect(await setProfilePhoto(client, 'luc', second.mediaId)).toBe(true);
+    expect((await loadProfilePhotos(client)).get('luc')?.mediaId).toBe(second.mediaId);
+  });
 });

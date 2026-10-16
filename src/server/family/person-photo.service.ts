@@ -9,9 +9,10 @@ import { loadFamilyGraph } from './family.repository';
 // Changer la photo d'une fiche (retour de Folpe). La policy décide comme pour les
 // autres champs ; le service média normalise (rotation, EXIF et GPS retirés,
 // dérivées WebP) et la photo devient celle de la fiche. L'ancienne reste rangée.
+// `onlyIfEmpty` sert à l'import automatique : il ne remplace jamais une photo.
 
 /** Au-delà, l'envoi est refusé : le navigateur réduit la photo avant de l'envoyer. */
-const PHOTO_MAX_BYTES = 4 * 1024 * 1024;
+export const PHOTO_MAX_BYTES = 4 * 1024 * 1024;
 
 const UNREADABLE = /Image non prise en charge|unsupported image format|Input buffer/i;
 
@@ -20,7 +21,8 @@ export async function changePhoto(
   viewerUserId: string,
   personId: string,
   bytes: Buffer,
-): Promise<void> {
+  options: { onlyIfEmpty?: boolean } = {},
+): Promise<{ applied: boolean }> {
   if (bytes.length > PHOTO_MAX_BYTES) {
     throw new AppError({
       message: 'Photo trop lourde : 4 Mo au plus.',
@@ -77,5 +79,7 @@ export async function changePhoto(
     }
     throw error;
   }
-  await setProfilePhoto(deps.db, personId, mediaId);
+  // Non posée (fiche photographiée entre-temps) : le média reste rangé avec la fiche,
+  // comme une photo remplacée.
+  return { applied: await setProfilePhoto(deps.db, personId, mediaId, options) };
 }

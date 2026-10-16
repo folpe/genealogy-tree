@@ -12,8 +12,9 @@ import { decideAdmission, normalizeEmail } from '../members/admission';
 import { admitUser, findPendingInvitation } from '../members/members.repository';
 
 // Connexion sans mot de passe (spec section 6.5) : lien magique par email, puis
-// passkey proposée. Accès sur invitation seulement : la règle d'admission est
-// vérifiée avant l'envoi du lien et, par sécurité, à la création du compte.
+// passkey proposée ; Google en plus quand il est configuré. Accès sur invitation
+// seulement : la règle d'admission est vérifiée avant l'envoi du lien et, pour tous
+// les moyens de connexion, à la création du compte.
 
 /** Durée de validité d'un lien de connexion. */
 const MAGIC_LINK_TTL_SECONDS = 15 * 60;
@@ -26,6 +27,12 @@ export type AuthDeps = {
   passkeyRpID: string;
   bootstrapAdminEmail?: string | undefined;
   sendMagicLink: (message: { email: string; url: string }) => Promise<void>;
+  /** Identifiants OAuth Google ; sans eux, pas de connexion Google. */
+  google?: { clientId: string; clientSecret: string } | undefined;
+  /** Compte Google tout juste créé ou rattaché : import de la photo sur la fiche. */
+  onGoogleAccount?:
+    | ((account: { userId: string; idToken: string | undefined }) => Promise<unknown>)
+    | undefined;
 };
 
 export function createAuth(deps: AuthDeps) {
@@ -64,6 +71,25 @@ export function createAuth(deps: AuthDeps) {
         passkey: passkeys,
       },
     }),
+    ...(deps.google
+      ? {
+          socialProviders: {
+            google: { ...deps.google, prompt: 'select_account' as const },
+          },
+        }
+      : {}),
+    account: {
+      // Liaison implicite, le défaut de better-auth rendu explicite : un membre inscrit
+      // par lien magique (email vérifié) qui arrive par Google à la même adresse, que
+      // Google dit vérifiée, retrouve son compte. Google n'est pas « de confiance » :
+      // sans `email_verified`, pas de liaison. Conditions portées par
+      // `handleOAuthUserInfo`, better-auth 1.6.33, dist/oauth2/link-account.mjs :
+      // ligne 21 (fournisseur de confiance), ligne 22 (`requireLocalEmailVerified`,
+      // vrai par défaut), ligne 23 (refus si l'IdP ne dit pas l'adresse vérifiée, si le
+      // compte local ne l'est pas, ou si la liaison est coupée), lignes 25-28
+      // (`account not linked`). Prouvé par auth.integration.test.ts.
+      accountLinking: { enabled: true },
+    },
     session: {
       // Les aînés se reconnectent rarement : 30 jours, prolongés à chaque visite.
       expiresIn: 60 * 60 * 24 * 30,
@@ -82,6 +108,23 @@ export function createAuth(deps: AuthDeps) {
             const admission = await admissionFor(user.email);
             if (!admission.admitted) return;
             await admitUser(db, { userId: user.id, admission, now: new Date() });
+          },
+        },
+      },
+      account: {
+        create: {
+          // Nouveau membre ou liaison : après `user.create.after`, le membre est relié à sa fiche.
+          after: async (account) => {
+            if (account.providerId !== 'google' || !deps.onGoogleAccount) return;
+            try {
+              await deps.onGoogleAccount({
+                userId: account.userId,
+                idToken: account.idToken ?? undefined,
+              });
+            } catch {
+              // La photo n'est qu'un bonus : un téléchargement ou un import raté ne doit
+              // jamais empêcher d'entrer. Le membre peut toujours la choisir lui-même.
+            }
           },
         },
       },

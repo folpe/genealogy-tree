@@ -1,6 +1,6 @@
 // tdd-cover: e2e src/server/media/media.service.integration.test.ts
 import { createHash } from 'node:crypto';
-import { eq, isNotNull } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 import { media, mediaPersons, persons } from '../db/schema';
 import type { Db } from '../db/types';
 import type { BlobStore, StoredFile } from './media.blob';
@@ -74,8 +74,24 @@ export async function storeImage(
   return { mediaId, created: true };
 }
 
-export async function setProfilePhoto(db: Db, personId: string, mediaId: string) {
-  await db.update(persons).set({ photoMediaId: mediaId }).where(eq(persons.id, personId));
+/**
+ * Pose la photo de profil ; renvoie si elle l'a été. `onlyIfEmpty` (import automatique)
+ * ne la pose que si la fiche n'en a toujours pas au moment d'écrire : une photo posée
+ * entre-temps par la famille n'est jamais écrasée.
+ */
+export async function setProfilePhoto(
+  db: Db,
+  personId: string,
+  mediaId: string,
+  options: { onlyIfEmpty?: boolean } = {},
+): Promise<boolean> {
+  const target = eq(persons.id, personId);
+  const updated = await db
+    .update(persons)
+    .set({ photoMediaId: mediaId })
+    .where(options.onlyIfEmpty ? and(target, isNull(persons.photoMediaId)) : target)
+    .returning({ id: persons.id });
+  return updated.length > 0;
 }
 
 /** Photo de profil par fiche. Ne dit rien des droits : l'appelant applique la policy. */
