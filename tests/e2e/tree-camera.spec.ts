@@ -7,15 +7,11 @@ import { signIn } from './outbox';
 // Caméra du canevas (plan phase 4, lot 4), dans un vrai navigateur : glisser,
 // pincer, zoomer, revenir à soi. On lit l'état sur la transformation du calque.
 
-const WHOLE_TREE = '/tree?view=all&famille=jeanne,sophie';
-const ON_WHOLE_TREE = /\/tree\?view=all&famille=jeanne,sophie$/;
-
 async function openTree(page: Page) {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await signIn(page, E2E_ISABELLE_EMAIL);
-  // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne),
-  // familles des conjoints dépliées.
-  await page.goto(WHOLE_TREE);
+  // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
+  await page.goto('/tree?view=all');
   await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
   return page.getByRole('region', { name: 'Canevas de l’arbre' });
 }
@@ -44,7 +40,7 @@ test('glisser déplace l’arbre, et un glissé sur une bulle n’ouvre pas sa f
   const after = await settled(page);
   expect(after.x).toBeLessThan(before.x - 60);
   expect(after.y).toBeLessThan(before.y - 40);
-  await expect(page).toHaveURL(ON_WHOLE_TREE);
+  await expect(page).toHaveURL(/\/tree\?view=all$/);
 });
 
 test('zoomer et dézoomer avec les boutons, dans les limites', async ({ page }) => {
@@ -259,7 +255,7 @@ test('un tap pendant un vol arrête la caméra et finit le mouvement', async ({ 
     }
     throw new Error('aucun point vide dans le canevas');
   });
-  await expect(page).toHaveURL(ON_WHOLE_TREE);
+  await expect(page).toHaveURL(/\/tree\?view=all$/);
   await settled(page);
   await expect(layer).toHaveCSS('will-change', 'auto');
   // Arrêtée net : elle n'a pas fini son vol jusqu'à « moi », elle est restée où le tap l'a prise.

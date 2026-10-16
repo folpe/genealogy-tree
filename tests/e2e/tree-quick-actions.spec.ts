@@ -61,8 +61,7 @@ test('dans sa lignée : le geste propose les ajouts, puis ouvre le dialogue rég
 
 test('hors de sa lignée : pas d’ajout, les chemins de la fiche restent', async ({ page }) => {
   await signIn(page, 'anne@famille.test');
-  // Bernard, père de Sophie : sa famille est repliée derrière elle, on la déplie.
-  await openTree(page, '/tree?view=all&famille=sophie');
+  await openTree(page, '/tree?view=all');
   // Bernard est au bord de l'arbre : la caméra va le chercher, son menu s'ouvre à l'écran.
   await bubble(page, 'bernard').focus();
   await settled(page);
