@@ -36,6 +36,9 @@ export async function importGooglePhoto(
     timeoutMs: GOOGLE_PHOTO_TIMEOUT_MS,
     maxBytes: PHOTO_MAX_BYTES,
   });
-  await changePhoto(deps, input.userId, decision.personId, bytes);
-  return decision;
+  // La fiche a pu recevoir une photo pendant le téléchargement : écriture conditionnelle.
+  const { applied } = await changePhoto(deps, input.userId, decision.personId, bytes, {
+    onlyIfEmpty: true,
+  });
+  return applied ? decision : { import: false, reason: 'already-has-photo' };
 }

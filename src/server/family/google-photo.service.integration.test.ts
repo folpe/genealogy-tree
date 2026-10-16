@@ -1,9 +1,11 @@
+import { createHash } from 'node:crypto';
+import { eq } from 'drizzle-orm';
 import sharp from 'sharp';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { marchandFamily } from '../../../tests/fixtures/marchand-family';
 import { memoryBlobStore } from '../../../tests/fixtures/memory-blob-store';
 import { testDb } from '../../../tests/integration/test-db';
-import { memberships, users } from '../db/schema';
+import { media, memberships, users } from '../db/schema';
 import { loadProfilePhotos } from '../media/media.service';
 import { insertFamilyGraph } from './family.repository';
 import { importGooglePhoto } from './google-photo.service';
@@ -19,6 +21,7 @@ const aJpeg = (shade: number) =>
   })
     .jpeg()
     .toBuffer();
+const sha256 = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
 const anIdToken = (claims: Record<string, unknown>) =>
   ['e30', Buffer.from(JSON.stringify(claims)).toString('base64url'), 'sig'].join('.');
 
@@ -78,6 +81,34 @@ describe.skipIf(!db)('google-photo.service (intégration)', () => {
     expect(decision).toEqual({ import: false, reason: 'already-has-photo' });
     expect(fetchFn).not.toHaveBeenCalled();
     expect(await loadProfilePhotos(client)).toEqual(before);
+  });
+
+  it('une photo posée pendant le téléchargement reste : Google ne l’écrase pas', async () => {
+    await aMember('u-luc', 'luc');
+    await aMember('u-hugo', 'hugo');
+    const blob = memoryBlobStore();
+    const googleBytes = await aJpeg(150);
+    // Hugo pose une photo de Luc entre la décision (fiche vide) et l'écriture.
+    const fetchFn = vi.fn<typeof fetch>(async () => {
+      await changePhoto({ db: client, blob: blob.store }, 'u-hugo', 'luc', await aJpeg(30));
+      return new Response(googleBytes, { headers: { 'content-type': 'image/jpeg' } });
+    });
+    const deps = { db: client, blob: blob.store, fetch: fetchFn };
+
+    const decision = await importGooglePhoto(deps, {
+      userId: 'u-luc',
+      idToken: anIdToken({ picture: PICTURE }),
+    });
+    expect(decision).toEqual({ import: false, reason: 'already-has-photo' });
+    expect(fetchFn).toHaveBeenCalledOnce();
+
+    const [hugoPhoto] = await client
+      .select({ mediaId: media.id })
+      .from(media)
+      .where(eq(media.sha256, sha256(await aJpeg(30))));
+    expect((await loadProfilePhotos(client)).get('luc')?.mediaId).toBe(hugoPhoto?.mediaId);
+    // La photo Google reste rangée avec la fiche, comme une photo remplacée.
+    expect(await client.select().from(media)).toHaveLength(2);
   });
 
   it('compte sans fiche liée, ou sans membre : rien', async () => {
