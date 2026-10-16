@@ -2,6 +2,8 @@
 import 'server-only';
 import { resolveAppUrl, resolveGoogleCredentials, resolvePasskeyRpID, serverEnv } from '../../env';
 import { getDb } from '../db/client';
+import { importGooglePhoto } from '../family/google-photo.service';
+import { getMediaDeps } from '../media/media.instance';
 import { magicLinkEmail } from '../notifications/email';
 import { getEmailSender } from '../notifications/email.instance';
 import { type Auth, createAuth } from './auth';
@@ -25,6 +27,7 @@ export function getAuth(): Auth {
     bootstrapAdminEmail: env.AUTH_BOOTSTRAP_ADMIN_EMAIL,
     sendMagicLink: async ({ email, url }) => sendEmail(await magicLinkEmail(email, url)),
     google: resolveGoogleCredentials(env),
+    onGoogleAccount: (account) => importGooglePhoto({ ...getMediaDeps(), fetch }, account),
   });
   return cached;
 }

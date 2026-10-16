@@ -11,7 +11,7 @@ import { loadFamilyGraph } from './family.repository';
 // dérivées WebP) et la photo devient celle de la fiche. L'ancienne reste rangée.
 
 /** Au-delà, l'envoi est refusé : le navigateur réduit la photo avant de l'envoyer. */
-const PHOTO_MAX_BYTES = 4 * 1024 * 1024;
+export const PHOTO_MAX_BYTES = 4 * 1024 * 1024;
 
 const UNREADABLE = /Image non prise en charge|unsupported image format|Input buffer/i;
 
