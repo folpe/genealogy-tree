@@ -5,7 +5,8 @@ import {
   FILIATION_KINDS,
   isOngoing,
 } from './family.helper';
-import type { FamilyGraph, ParentChildKind, Union } from './family.types';
+import type { FamilyGraph, ParentChild, ParentChildKind, Union } from './family.types';
+import { compareFuzzyDates } from './fuzzy-date.helper';
 
 export type DisplayedUnion = {
   id: string;
@@ -106,7 +107,7 @@ export function selectDisplayedGraph(
   }
 
   const childEdges = new Set<string>();
-  for (const link of graph.parentChildren) {
+  for (const link of byBirth(index, graph.parentChildren)) {
     if (hiddenPartners.has(link.parentId)) continue;
     if (link.kind === 'a_eleve') {
       edges.push({ kind: 'raised', from: link.parentId, to: link.childId });
@@ -125,4 +126,19 @@ export function selectDisplayedGraph(
   }
 
   return { personIds, unions: [...shown.values()], edges };
+}
+
+/**
+ * Les liens de filiation par ordre de naissance de l'enfant, l'aîné d'abord (retour de
+ * Folpe, 2026-10-16) ; les dates inconnues après, dans leur ordre. Le placement range
+ * chaque fratrie dans l'ordre de ces arêtes.
+ */
+function byBirth(index: FamilyIndex, links: ParentChild[]): ParentChild[] {
+  const birthOf = (id: string) => index.persons.get(id)?.birth?.date;
+  return [...links].sort((a, b) => {
+    const da = birthOf(a.childId);
+    const db = birthOf(b.childId);
+    if (!da || !db) return (da ? 0 : 1) - (db ? 0 : 1);
+    return compareFuzzyDates(da, db);
+  });
 }

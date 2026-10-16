@@ -5,7 +5,8 @@ import type { DisplayedGraph } from '../../server/family/family.display';
 // quitte à glisser la famille d'un conjoint au milieu d'une fratrie. On lui impose donc
 // l'ordre d'un arbre généalogique : autour de la personne au centre, chaque fratrie de
 // ses ascendants d'un tenant, la lignée directe au bord intérieur (le côté du premier
-// partenaire à gauche, celui du second à droite), et les familles d'origine des
+// partenaire à gauche, celui du second à droite), les autres fratries par ordre de
+// naissance, l'aîné à gauche (selectDisplayedGraph), et les familles d'origine des
 // conjoints à l'extérieur de la nôtre, du côté de leur conjoint.
 
 export type OrderedBlock = { id: string; persons: string[] };
@@ -57,7 +58,9 @@ export function familyOrder(
   const order = focusId ? centered(focusId) : [];
   /**
    * La personne au centre : son bloc et sa descendance au cœur de la lignée de ses
-   * parents (côté paternel à gauche, maternel à droite), sa fratrie de son côté.
+   * parents (côté paternel à gauche, maternel à droite), parmi sa fratrie dans l'ordre
+   * de naissance. Si son conjoint vient avec sa famille, elle reste au bord, de son côté,
+   * comme la lignée directe : une fratrie entre eux croiserait ses traits.
    */
   function centered(focus: string): string[] {
     const focusBlock = g.blockOf(focus);
@@ -66,13 +69,21 @@ export function familyOrder(
     if (!origin || origin === focusBlock) return descendants(focusBlock);
     const persons = g.blocks.get(focusBlock) ?? [];
     const onLeft = persons.indexOf(focus) < (persons.length - 1) / 2 || persons.length === 1;
+    const partnerFamily = persons.some((p) => p !== focus && g.parentBlock.has(p));
     visited.add(focusBlock);
     return lineage(origin, () => {
       visited.add(origin);
       visited.delete(focusBlock);
-      const siblings = others(origin, focus);
-      const own = descendants(focusBlock);
-      return [origin, ...(onLeft ? [...siblings, ...own] : [...own, ...siblings])];
+      if (partnerFamily) {
+        const siblings = others(origin, focus);
+        const own = descendants(focusBlock);
+        return [origin, ...(onLeft ? [...siblings, ...own] : [...own, ...siblings])];
+      }
+      // Les enfants viennent par ordre de naissance (selectDisplayedGraph).
+      const sibship = g
+        .childrenOf(origin)
+        .flatMap((child) => descendants(child === focus ? focusBlock : g.blockOf(child)));
+      return [origin, ...sibship];
     });
   }
   // Les familles d'origine des conjoints, chacune avec ses ascendants, puis le reste.

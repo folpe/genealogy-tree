@@ -111,3 +111,34 @@ describe('selectDisplayedGraph, parent inconnu', () => {
     expect(view.edges).toContainEqual(edge('child', 'u', 'k'));
   });
 });
+
+describe('selectDisplayedGraph, ordre des fratries', () => {
+  it('donne les enfants par ordre de naissance, l’aîné d’abord, les dates inconnues après', () => {
+    const graph: FamilyGraph = {
+      ...emptyGraph(),
+      persons: [
+        aPerson('mere'),
+        aPerson('pere'),
+        aPerson('cadet', { birth: { date: yearOnly(1990) } }),
+        aPerson('inconnu'),
+        aPerson('aine', { birth: { date: yearOnly(1985) } }),
+        aPerson('seul', { birth: { date: yearOnly(2001) } }),
+        aPerson('premier', { birth: { date: yearOnly(1980) } }),
+      ],
+      unions: [anUnion('u', 'pere', 'mere')],
+      parentChildren: [
+        ...['cadet', 'inconnu', 'aine'].flatMap((child) => [
+          aChildOf('pere', child, { unionId: 'u' }),
+          aChildOf('mere', child, { unionId: 'u' }),
+        ]),
+        aChildOf('pere', 'seul'),
+        aChildOf('pere', 'premier'),
+      ],
+    };
+    const view = selectDisplayedGraph(graph, { focusId: 'cadet' });
+    const children = view.edges.flatMap((e) => (e.kind === 'child' ? [e.to] : []));
+    expect(children).toEqual(['aine', 'cadet', 'inconnu']);
+    const fromParent = view.edges.flatMap((e) => (e.kind === 'parent' ? [e.to] : []));
+    expect(fromParent).toEqual(['premier', 'seul']);
+  });
+});

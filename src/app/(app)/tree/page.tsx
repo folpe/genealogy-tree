@@ -8,7 +8,7 @@ import { TREE_ENTRY_SCRIPT } from '@/components/family/tree-memory.storage';
 import { TreeViewControls } from '@/components/family/tree-view-controls';
 import { TreeWithSheet } from '@/components/family/tree-with-sheet';
 import { getElk } from '@/lib/tree/tree.instance';
-import { familyToggleHref, parseTreeParams, treeHref } from '@/lib/tree/tree.params';
+import { parseTreeParams, treeHref } from '@/lib/tree/tree.params';
 import { requireSession } from '@/server/auth/session';
 import { getFamilyDeps } from '@/server/family/family.instance';
 import { getTreeForViewer } from '@/server/family/family.service';
@@ -62,12 +62,6 @@ export default async function TreePage({
       <TreeWithSheet
         tree={tree}
         drawing={drawing}
-        families={Object.fromEntries(
-          Object.entries(tree.inLawFamilies).map(([spouse, family]) => [
-            spouse,
-            { ...family, href: familyToggleHref(params, spouse, family.open) },
-          ]),
-        )}
         viewKey={treeHref(params)}
         addAction={addRelativeAction}
       />
