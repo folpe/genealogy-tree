@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveAppUrl, resolvePasskeyRpID } from './env';
+import { resolveAppUrl, resolveGoogleCredentials, resolvePasskeyRpID } from './env';
 
 describe('resolveAppUrl', () => {
   it('prend l’URL explicite d’abord', () => {
@@ -43,5 +43,22 @@ describe('resolvePasskeyRpID', () => {
   it('sinon, l’hôte de l’app (preview, local)', () => {
     expect(resolvePasskeyRpID('https://branche.vercel.app', undefined)).toBe('branche.vercel.app');
     expect(resolvePasskeyRpID('http://localhost:3000', undefined)).toBe('localhost');
+  });
+});
+
+describe('resolveGoogleCredentials', () => {
+  it('active Google quand l’identifiant et le secret sont là', () => {
+    expect(
+      resolveGoogleCredentials({
+        GOOGLE_CLIENT_ID: 'id-test',
+        GOOGLE_CLIENT_SECRET: 'secret-test',
+      }),
+    ).toEqual({ clientId: 'id-test', clientSecret: 'secret-test' });
+  });
+
+  it('le laisse éteint s’il en manque un', () => {
+    expect(resolveGoogleCredentials({ GOOGLE_CLIENT_ID: 'id-test' })).toBeUndefined();
+    expect(resolveGoogleCredentials({ GOOGLE_CLIENT_SECRET: 'secret-test' })).toBeUndefined();
+    expect(resolveGoogleCredentials({})).toBeUndefined();
   });
 });

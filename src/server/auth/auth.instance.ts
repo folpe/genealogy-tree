@@ -1,6 +1,6 @@
 // tdd-cover: e2e src/server/auth/auth.integration.test.ts
 import 'server-only';
-import { resolveAppUrl, resolvePasskeyRpID, serverEnv } from '../../env';
+import { resolveAppUrl, resolveGoogleCredentials, resolvePasskeyRpID, serverEnv } from '../../env';
 import { getDb } from '../db/client';
 import { magicLinkEmail } from '../notifications/email';
 import { getEmailSender } from '../notifications/email.instance';
@@ -24,6 +24,7 @@ export function getAuth(): Auth {
     passkeyRpID: resolvePasskeyRpID(baseURL, env.PASSKEY_RP_ID),
     bootstrapAdminEmail: env.AUTH_BOOTSTRAP_ADMIN_EMAIL,
     sendMagicLink: async ({ email, url }) => sendEmail(await magicLinkEmail(email, url)),
+    google: resolveGoogleCredentials(env),
   });
   return cached;
 }

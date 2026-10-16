@@ -27,6 +27,19 @@ export function resolvePasskeyRpID(appUrl: string, configured: string | undefine
   return configured ?? new URL(appUrl).hostname;
 }
 
+type GoogleSources = {
+  GOOGLE_CLIENT_ID?: string | undefined;
+  GOOGLE_CLIENT_SECRET?: string | undefined;
+};
+
+/** Connexion Google : active seulement si l'identifiant et le secret sont tous deux fournis. */
+export function resolveGoogleCredentials(
+  sources: GoogleSources,
+): { clientId: string; clientSecret: string } | undefined {
+  if (!sources.GOOGLE_CLIENT_ID || !sources.GOOGLE_CLIENT_SECRET) return undefined;
+  return { clientId: sources.GOOGLE_CLIENT_ID, clientSecret: sources.GOOGLE_CLIENT_SECRET };
+}
+
 function load() {
   return createEnv({
     server: {
@@ -35,6 +48,8 @@ function load() {
       BETTER_AUTH_URL: z.url().optional(),
       AUTH_BOOTSTRAP_ADMIN_EMAIL: z.email().optional(),
       PASSKEY_RP_ID: z.string().min(1).optional(),
+      GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+      GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
       RESEND_API_KEY: z.string().startsWith('re_').optional(),
       EMAIL_FROM: z.string().min(3).default(`${APP_NAME} <famille@mail.folpe.me>`),
       VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
@@ -50,6 +65,8 @@ function load() {
       BETTER_AUTH_URL: process.env['BETTER_AUTH_URL'],
       AUTH_BOOTSTRAP_ADMIN_EMAIL: process.env['AUTH_BOOTSTRAP_ADMIN_EMAIL'],
       PASSKEY_RP_ID: process.env['PASSKEY_RP_ID'],
+      GOOGLE_CLIENT_ID: process.env['GOOGLE_CLIENT_ID'],
+      GOOGLE_CLIENT_SECRET: process.env['GOOGLE_CLIENT_SECRET'],
       RESEND_API_KEY: process.env['RESEND_API_KEY'],
       EMAIL_FROM: process.env['EMAIL_FROM'],
       VERCEL_ENV: process.env['VERCEL_ENV'],
