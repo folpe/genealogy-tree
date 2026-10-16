@@ -77,7 +77,7 @@ test('cocher « décédé » garde le formulaire ouvert, la date suit, puis on a
 }) => {
   await signIn(page, 'anne@famille.test');
   await page.goto('/people/tom');
-  await page.getByRole('button', { name: /^Décès : En vie/ }).click();
+  await page.getByRole('button', { name: 'Indiquer un décès' }).click();
   await page.getByText('Décédé ou décédée').click();
   // Toucher la case, à l'intérieur du formulaire, ne le ferme pas.
   // Le calendrier du téléphone ; la date s'affiche en lettres.
@@ -88,7 +88,7 @@ test('cocher « décédé » garde le formulaire ouvert, la date suit, puis on a
   await date.press('Enter');
   await expect(page.getByRole('button', { name: /^Décès : 9 mai 2024/ })).toBeVisible();
   await page.getByRole('button', { name: 'Annuler la modification' }).click();
-  await expect(page.getByRole('button', { name: /^Décès : En vie/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Indiquer un décès' })).toBeVisible();
 });
 
 test('une date approximative se saisit avec sa précision et se relit sans perte', async ({
@@ -96,7 +96,7 @@ test('une date approximative se saisit avec sa précision et se relit sans perte
 }) => {
   await signIn(page, 'anne@famille.test');
   await page.goto('/people/tom');
-  await page.getByRole('button', { name: /^Décès : En vie/ }).click();
+  await page.getByRole('button', { name: 'Indiquer un décès' }).click();
   await page.getByText('Date approximative').click();
   await page.getByLabel('Date du décès : précision').selectOption('vers');
   // Choisir la précision n'est pas encore une date : « décédé » reste décoché.
@@ -112,7 +112,7 @@ test('une date approximative se saisit avec sa précision et se relit sans perte
   await expect(page.getByLabel('Date du décès : précision')).toHaveValue('vers');
   await page.getByLabel('Décédé ou décédée').uncheck();
   await page.getByLabel('Date du décès : année').press('Enter');
-  await expect(page.getByRole('button', { name: /^Décès : En vie/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Indiquer un décès' })).toBeVisible();
 });
 
 test('toucher ailleurs dans la page enregistre, comme quitter le champ', async ({ page }) => {
