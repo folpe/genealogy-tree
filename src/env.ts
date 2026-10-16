@@ -84,3 +84,8 @@ export function serverEnv() {
   cached ??= load();
   return cached;
 }
+
+/** Le bouton Google n'apparaît que si le serveur sait s'y connecter ; le secret reste ici. */
+export function googleSignInEnabled(): boolean {
+  return resolveGoogleCredentials(serverEnv()) !== undefined;
+}

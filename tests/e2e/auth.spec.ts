@@ -12,6 +12,12 @@ async function askForLink(page: Page, email: string) {
   await expect(page.getByRole('heading', { name: 'Regarde tes emails' })).toBeVisible();
 }
 
+test('sans identifiants Google, la connexion ne propose pas Google', async ({ page }) => {
+  await page.goto('/login');
+  await expect(page.getByRole('button', { name: 'Me connecter avec une passkey' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continuer avec Google' })).toHaveCount(0);
+});
+
 test('la proposition de passkey demande une session', async ({ page }) => {
   await page.goto('/login/passkey');
   await expect(page).toHaveURL(/\/login$/);
