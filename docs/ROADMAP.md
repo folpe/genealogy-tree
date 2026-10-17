@@ -19,7 +19,7 @@ Point d'entrée pour savoir où en est la refonte et ce qu'il reste à faire. Le
 | 3 | [Socle Next, Neon, auth, migration Notion](plans/2026-10-09-phase-3-socle-next-neon.md) | Faite, bascule reportée | App en ligne sur `famille.folpe.me` avec comptes et données migrées |
 | 4 | [Moteur de rendu](plans/2026-10-09-phase-4-moteur-rendu.md) | En cours | Arbre complet et fluide |
 | 5 | [Design et animations](plans/2026-10-09-phase-5-design-animations.md) | Terminée, validée par Folpe le 2026-10-16 (reste : vérifications sur iPhone réel) | Maquettes implémentées |
-| 6 | [Édition et droits](plans/2026-10-09-phase-6-edition-droits.md) | À faire | La famille contribue |
+| 6 | [Édition et droits](plans/2026-10-09-phase-6-edition-droits.md) | En cours (ajouts, édition sur place, photo, corbeille, membres et invitations livrés) | La famille contribue |
 | 7 | [Vues éventail, frise, carte](plans/2026-10-09-phase-7-vues.md) | À faire | Effet waouh |
 | 8 | [Récits](plans/2026-10-09-phase-8-recits.md) | À faire | Mémoire collectée |
 | 9 | [Récits animés, poster, PWA](plans/2026-10-09-phase-9-recits-animes-pwa.md) | À faire | |
@@ -35,7 +35,7 @@ Point d'entrée pour savoir où en est la refonte et ce qu'il reste à faire. Le
 ## Actions qui reviennent à Folpe
 
 - [x] Protection de branche `main` sur GitHub (check `quality`) : posée le 2026-10-16 (PR obligatoire, `quality` exigé, admins compris, ni force-push ni suppression).
-- [ ] Phase 3 : comptes et accès Neon, Vercel, Resend ; enregistrements DNS de `folpe.me` (CNAME `famille`, SPF, DKIM, DMARC) ; secrets Notion pour l'extraction.
+- [x] Phase 3 : comptes et accès Neon, Vercel, Resend ; enregistrements DNS de `folpe.me` (CNAME `famille`, SPF, DKIM, DMARC) ; secrets Notion pour l'extraction.
 - [x] Phase 3 : relecture du rapport d'anomalies de la migration avant la production (chargement validé le 2026-10-12).
 - [ ] Bascule, après parité : feu vert pour couper Notion et Netlify.
 - [ ] Questions ouvertes de la spec (section 18) au moment de leur phase.

@@ -28,29 +28,29 @@ Sortie : un membre crée, modifie et supprime des fiches dans son périmètre ; 
 
 ### Lot 1 : autorisation côté serveur
 
-- [ ] Chaque service d'écriture (`family`, `suggestions`, `members`) appelle la policy avant toute écriture ; aucune décision de droit côté client.
+- [ ] Chaque service d'écriture (`family`, `suggestions`, `members`) appelle la policy avant toute écriture ; aucune décision de droit côté client. Fait pour `family` et `members` ; `suggestions` avec son lot.
 - [ ] `server/access/access.service.ts` : calcul du périmètre et des gardiens à partir du graphe en base, mis en cache par requête (React `cache`) et invalidé à chaque écriture de filiation.
-- [ ] Projection de visibilité appliquée dans les repositories / mappers : les champs masqués ne quittent jamais le serveur (vivants hors périmètre, mineurs, `visibility = cercle`).
-- [ ] Journal des consultations admin de fiches restreintes.
-- [ ] Actions : `defineAction` / `defineFormAction` avec Zod, erreurs typées (`hors_perimetre`, `invariant`, `source_requise`, `conflit`).
+- [x] Projection de visibilité appliquée dans les repositories / mappers : les champs masqués ne quittent jamais le serveur (vivants hors périmètre, mineurs, `visibility = cercle`). Fait en phase 3, lot 5 : projection au service (`viewTreeAs`), avant sérialisation.
+- [x] Journal des consultations admin de fiches restreintes. Fait en phase 3 (lot 5, `admin_record_views`).
+- [ ] Actions : `defineAction` / `defineFormAction` avec Zod, erreurs typées (`hors_perimetre`, `invariant`, `source_requise`, `conflit`). Partiel : Zod et `AppError` codés par action ; reste l'enveloppe commune et le code `conflit`.
 
 ### Lot 2 : éditeur intégré
 
 - [x] Version minimale avancée (2026-10-13) : « + Parent », « + Enfant », « + Conjoint » sur la fiche, dans le périmètre seulement (policy `editableIds`, revérifiée à l'écriture), invariants du graphe, dates en saisie libre, lieu réutilisé, verrou contre un troisième parent. Pas encore : modification, suppression, recherche anti doublon, photos, ligne `activity` (lot 4, migration à valider).
 
 - [ ] Actions rapides sur le nœud (survol desktop, appui long mobile) : "+ Parent", "+ Enfant", "+ Conjoint", "Modifier" ou "Suggérer" selon la policy (maquette Arbre). Fait (2026-10-14) : appui long, clic droit, Maj + F10, ajouts selon la policy ; reste « Modifier » et « Suggérer ».
-- [ ] `components/EditDrawer/` : tiroir desktop, bottom sheet mobile, react-hook-form + Zod, raison affichée ("Ta lignée directe", "Fiche ouverte") ou destinataire de la suggestion.
+- [ ] `components/EditDrawer/` : tiroir desktop, bottom sheet mobile, react-hook-form + Zod, raison affichée ("Ta lignée directe", "Fiche ouverte") ou destinataire de la suggestion. Remplacé (2026-10-14) : modification sur place dans la fiche (#124) ; reste le destinataire de la suggestion.
 - [ ] Recherche d'une personne existante avant création (anti doublon), fusion de doublons réservée aux admins.
-- [ ] Dates à précision variable (`exacte`, `mois`, `annee`, `vers`, `avant`, `apres`, `entre`) avec saisie naturelle ("vers 1850").
+- [x] Dates à précision variable (`exacte`, `mois`, `annee`, `vers`, `avant`, `apres`, `entre`) avec saisie naturelle ("vers 1850"). Fait (2026-10-14, #128) : les 7 précisions ; saisie libre remplacée par calendrier et « Date approximative ».
 - [ ] Lieux : autocomplétion BAN (France) et Nominatim (étranger), géocodage immédiat.
-- [ ] Photos : glisser-déposer vers Vercel Blob (upload client signé), recadrage circulaire, suppression EXIF GPS, blur placeholder.
-- [ ] Après enregistrement : re-layout ELK et apparition animée du nœud (phase 4 et 5).
-- [ ] Suppression : fiche sans descendants uniquement, sinon passage par un admin ; confirmation explicite.
+- [ ] Photos : glisser-déposer vers Vercel Blob (upload client signé), recadrage circulaire, suppression EXIF GPS, blur placeholder. Fait (2026-10-14, #125) : photo depuis l'appareil, EXIF et GPS retirés, aperçu flou ; reste le glisser-déposer, le recadrage et l'upload client signé.
+- [ ] Après enregistrement : re-layout ELK et apparition animée du nœud (phase 4 et 5). Mécanisme en place (`use-relayout.ts`) ; reste à vérifier et à tester sur un ajout.
+- [x] Suppression : fiche sans descendants uniquement, sinon passage par un admin ; confirmation explicite. Fait (2026-10-14, #126) : corbeille restaurable par un admin plutôt qu'un effacement.
 
 ### Lot 3 : faits sourcés
 
-- [ ] `sources` liées aux événements ; badge "Sourcé" sur la fiche.
-- [ ] Modifier un fait sourcé exige une nouvelle source, sinon la modification devient une suggestion.
+- [ ] `sources` liées aux événements ; badge "Sourcé" sur la fiche. Badge fait (phase 5) ; reste la source affichée et saisie.
+- [ ] Modifier un fait sourcé exige une nouvelle source, sinon la modification devient une suggestion. Garde-fou posé (modification refusée) ; reste la source exigée ou la suggestion.
 
 ### Lot 4 : journal d'activité, historique et restauration
 
@@ -79,13 +79,13 @@ Sortie : un membre crée, modifie et supprime des fiches dans son périmètre ; 
 
 ### Lot 8 : membres, invitations, demandes d'accès
 
-- [ ] Écran Famille connectée (maquette Membres) : liste des membres avec fiche liée et statut, invitations en cours.
-- [ ] Inviter un proche : tout membre, pour une fiche de son cercle proche ou de ses descendants sans compte ; email avec lien d'acceptation qui lie le compte à la fiche.
-- [ ] Vue admin : demandes d'accès à valider en reliant à une fiche, suggestions escaladées, "Nommer admin" / "Retirer admin" ; le propriétaire ne peut pas être rétrogradé, impossible de retirer le dernier admin.
+- [x] Écran Famille connectée (maquette Membres) : liste des membres avec fiche liée et statut, invitations en cours. Fait (#76, 2026-10-16 #157) : membres, statut, invitations en attente (admins) avec Annuler et Renvoyer.
+- [x] Inviter un proche : tout membre, pour une fiche de son cercle proche ou de ses descendants sans compte ; email avec lien d'acceptation qui lie le compte à la fiche. Fait (phase 3, #76 ; complété par #155 et #157 le 2026-10-16).
+- [ ] Vue admin : demandes d'accès à valider en reliant à une fiche, suggestions escaladées, "Nommer admin" / "Retirer admin" ; le propriétaire ne peut pas être rétrogradé, impossible de retirer le dernier admin. Fait sauf les suggestions escaladées.
 
 ### Lot 9 : emails
 
-- [ ] React Email + Resend depuis `famille@mail.folpe.me` : invitation, magic link (phase 3), veille de lignée (maquette EmailVeille : avant / après, source, "C'est bon", "Annuler la modification"), suggestion reçue, décision sur ma suggestion, escalade, résumé quotidien.
+- [ ] React Email + Resend depuis `famille@mail.folpe.me` : invitation, magic link (phase 3), veille de lignée (maquette EmailVeille : avant / après, source, "C'est bon", "Annuler la modification"), suggestion reçue, décision sur ma suggestion, escalade, résumé quotidien. Fait : connexion, invitation, demande d'accès ; reste veille, suggestion, décision, escalade, résumé.
 - [ ] Liens d'action signés, désinscription et passage au résumé quotidien en un clic.
 
 ### Lot 10 : GEDCOM
@@ -102,7 +102,7 @@ Sortie : un membre crée, modifie et supprime des fiches dans son périmètre ; 
 ## Critères d'acceptation
 
 - [ ] Le scénario de la spec 6.6 passe de bout en bout : Hugo modifie Henri, Isabelle suggère sur Luc, Luc accepte, Isabelle corrige Henri et Hugo annule depuis l'email.
-- [ ] Aucune donnée masquée dans les réponses réseau d'un membre hors périmètre (test e2e qui inspecte les payloads).
+- [ ] Aucune donnée masquée dans les réponses réseau d'un membre hors périmètre (test e2e qui inspecte les payloads). Partiel : document servi contrôlé en e2e ; reste les réponses des server actions.
 - [ ] Toute écriture a sa ligne d'activité, toute version est restaurable.
 - [ ] Suggestion sans réponse escaladée à J+14 exactement une fois.
 

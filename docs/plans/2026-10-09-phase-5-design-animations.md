@@ -36,19 +36,19 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 
 ### Lot 2 : composants de base
 
-- [ ] (Remplacé : composants à la demande, décision du 2026-10-13) `components/ui/` : Button (principal encre, secondaire cerclé, discret), IconButton rond 46 px, Pill / Segmented (nav des vues), Chip personne (bulle 30 px + prénom), Switch, Input, Select, Tabs, Badge, Kicker (petites capitales accent), Card 24-28 px, Sheet (vaul), Dialog (Radix), Toast (sonner), Tooltip.
-- [ ] Variantes avec cva, `cn` (clsx + tailwind-merge), icônes lucide, tout conforme à DESIGN.md.
-- [ ] Header d'app : logo, nav pilule Arbre / Ancêtres / Frise / Carte / Récits, recherche, cloche Activité avec pastille, avatar.
+- [x] (Remplacé : composants à la demande, décision du 2026-10-13) `components/ui/` : Button (principal encre, secondaire cerclé, discret), IconButton rond 46 px, Pill / Segmented (nav des vues), Chip personne (bulle 30 px + prénom), Switch, Input, Select, Tabs, Badge, Kicker (petites capitales accent), Card 24-28 px, Sheet (vaul), Dialog (Radix), Toast (sonner), Tooltip.
+- [x] Variantes avec cva, `cn` (clsx + tailwind-merge), icônes lucide, tout conforme à DESIGN.md. Remplacé (2026-10-13) : pas de cva ni de tailwind-merge sans besoin.
+- [ ] Header d'app : logo, nav pilule Arbre / Ancêtres / Frise / Carte / Récits, recherche, cloche Activité avec pastille, avatar. Recherche faite (⌘K, #117) ; reste la cloche (phase 6) et les vues des phases 7-8.
   - [x] Logo, onglets Arbre et Ancêtres, avatar (les autres vues, la recherche et la cloche arrivent avec leurs lots).
-- [ ] Page de démonstration interne `/dev/ui` (exclue en production) pour la revue visuelle.
+- [x] Page de démonstration interne `/dev/ui` (exclue en production) pour la revue visuelle. Remplacé (2026-10-13) : revue sur les écrans réels.
 
 ### Lot 3 : système d'animation
 
-- [ ] `src/motion/` : enregistrement unique des plugins (DrawSVG, Flip, SplitText, InertiaPlugin, Draggable), presets de durée et d'easing (doux, jamais élastique excessif), `gsap.matchMedia()` pour `prefers-reduced-motion` (fondus courts uniquement).
+- [x] `src/motion/` : enregistrement unique des plugins (DrawSVG, Flip, SplitText, InertiaPlugin, Draggable), presets de durée et d'easing (doux, jamais élastique excessif), `gsap.matchMedia()` pour `prefers-reduced-motion` (fondus courts uniquement). Fait dans la forme retenue : point d'entrée unique (`src/motion/gsap.ts`), mouvement réduit par `matchMedia` natif ; Flip, SplitText et Draggable pas encore utilisés, ajoutés avec leur premier usage.
   - [x] `src/motion/gsap.ts` : point d'entrée unique, DrawSVG et Inertia enregistrés, mouvement réduit lu au même endroit (caméra, relayout, éventail, chemin). Flip, SplitText et Draggable s'y ajouteront avec leur premier usage ; les durées restent près de chaque animation.
 - [x] Chargement différé de GSAP et des plugins hors du chemin critique (import dynamique après le premier rendu) : écarté après mesure, décision validée par Folpe le 2026-10-15.
   - [x] Mesuré (2026-10-15) : ~32 Ko gzip, chargés seulement par `/tree` et `/ancestors` (découpage par route) ; sur ces pages GSAP est le chemin critique (caméra, entrée). Retenu : pas d'import dynamique (journal du 2026-10-15, GSAP sans import différé).
-- [ ] Animations de la spec 9 : logo dessiné et titre révélé (Connexion), arbre qui pousse génération par génération au premier chargement, liens dessinés (DrawSVG), nœud créé qui apparaît à sa place (branché en phase 6).
+- [ ] Animations de la spec 9 : logo dessiné et titre révélé (Connexion), arbre qui pousse génération par génération au premier chargement, liens dessinés (DrawSVG), nœud créé qui apparaît à sa place (branché en phase 6). Reste : nœud créé, à vérifier avec la phase 6.
   - [x] Logo dessiné et titre révélé (Connexion), en CSS seul : traits en `pathLength="1"` tracés par `stroke-dashoffset`, titre découpé mot à mot au rendu serveur (`RevealTitle`), petit arbre du canevas qui pousse rangée par rangée. La page de connexion ne charge pas GSAP (journal du 2026-10-15) ; fondu seul avec le mouvement réduit.
   - [x] Arbre qui pousse au premier affichage de l'onglet : génération par génération, bulles en échelle et fondu, traits tracés (DrawSVG), poignées en fondu (`src/motion/entry.ts`, vagues de `tree.entry.ts`). Marqué avant l'affichage par un script sous nonce : l'arbre rendu au serveur ne clignote pas ; repli CSS s'il ne vient pas. Fondu seul avec le mouvement réduit.
   - [x] Arbre qui pousse à chaque nouvelle vue (« Toute la famille », un autre centre) : le tap répond aussitôt (transition de `TreeNavigationProvider`, vue choisie en optimiste), le signe pousse sur le canevas pendant le calcul serveur (`TreeLoader`, CSS seul, aussi dans `loading.tsx`), puis le nouvel arbre pousse depuis la première génération à l'écran. Fondus seuls avec le mouvement réduit.
@@ -83,7 +83,7 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 - [ ] Layout mobile conforme à MobileAlbum : arbre plein écran, barre de recherche et cloche en haut, barre d'onglets flottante en bas, fiche en bottom sheet.
   - [x] Arbre plein écran sous l'en-tête et les onglets, signe de la marque, barre « Trouver quelqu'un » en haut, vues et « Unions passées » en pastilles flottantes (effacées sous une carte « Notre lien »), commandes de caméra au-dessus des onglets. Reste : la cloche (phase 6).
 - [x] Gestes : pan, pinch, tap, appui long pour les actions rapides ; cibles >= 44 px. Appui long, clic droit ou Maj + F10 : menu accroché à la bulle (ajouts selon la policy, ouvrir, centrer, ancêtres), pas de survol (journal du 2026-10-14).
-- [ ] Safe areas iOS, `100dvh`, clavier virtuel sans casse de mise en page.
+- [ ] Safe areas iOS, `100dvh`, clavier virtuel sans casse de mise en page. Safe areas et `dvh` posés, clavier virtuel testé en e2e ; reste la vérification sur iPhone réel.
   - [x] Clavier virtuel : `--keyboard-inset` mesuré par `visualViewport` (`keyboard-inset.ts`), dialogue d'ajout posé au-dessus, liste ⌘K raccourcie, champ en cours ramené en vue (feuille vaul, page de fiche). Vérifié en émulation Pixel 7 ; reste à confirmer sur un iPhone réel, avec les marges sûres.
 
 ### Lot 8 : écran Connexion

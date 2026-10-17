@@ -93,13 +93,13 @@ Prototype sur la famille réelle (branche `notion-import`, 103 fiches) le 2026-1
 
 ## Critères d'acceptation
 
-- [ ] Aucune long task > 50 ms sur le thread principal pendant le calcul du layout (ELK dans le worker).
+- [x] Aucune long task > 50 ms sur le thread principal pendant le calcul du layout (ELK dans le worker). Remplacé (2026-10-12/13) : premier placement calculé au serveur ; tout nouveau placement fait dans le navigateur passe par le Web Worker.
 - [ ] Pan et zoom à 60 fps sur la famille réelle (trace Chrome, appareil de référence documenté).
-- [ ] LCP de `/tree` < 2,5 s en 4G simulée, premier rendu depuis le cache de layout au retour.
-- [ ] Famille recomposée rendue comme la maquette Arbre : Maxime rattaché à Luc seul, ancienne conjointe absente, aucune légende, aucun marqueur d'union.
-- [ ] La trame de points suit exactement la caméra (pas de glissement au zoom).
-- [ ] Navigation au clavier complète et annoncée par VoiceOver (rôles d'arbre).
-- [ ] `prefers-reduced-motion` respecté.
+- [ ] LCP de `/tree` < 2,5 s en 4G simulée, premier rendu depuis le cache de layout au retour. Reste : mesurer le LCP de `/tree` en 4G simulée (le cache de layout est abandonné, le rendu arrive du serveur).
+- [ ] Famille recomposée rendue comme la maquette Arbre : Maxime rattaché à Luc seul, ancienne conjointe absente, aucune légende, aucun marqueur d'union. Fait (e2e) : Maxime rattaché à Luc seul, ancienne conjointe masquée ; reste une revue visuelle contre la maquette.
+- [x] La trame de points suit exactement la caméra (pas de glissement au zoom). Fait : même setter que le calque (`camera.ts`), vérifié à l'œil ; pas de test automatisé.
+- [ ] Navigation au clavier complète et annoncée par VoiceOver (rôles d'arbre). Clavier fait et testé ; reste un passage VoiceOver réel.
+- [x] `prefers-reduced-motion` respecté. Fait : couvert en e2e (caméra, entrée, lien, fiche).
 
 ## Risques
 
