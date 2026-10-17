@@ -1,6 +1,7 @@
 import type { Locator, Page, TestInfo } from '@playwright/test';
 import { settled } from './camera';
 import { expect, test } from './fixtures';
+import { showWholeFamily } from './folds';
 import { signIn } from './outbox';
 
 // Actions rapides d'une bulle (plan phase 5, lot 7) : appui long au doigt, clic droit
@@ -49,6 +50,7 @@ test('dans sa lignée : le geste propose les ajouts, puis ouvre le dialogue rég
     'Ouvrir la fiche',
     'Centrer l’arbre ici',
     'Ses ancêtres',
+    'Masquer sa famille',
   ]);
   await expect(page).not.toHaveURL(/fiche=/);
   await menu.getByRole('menuitem', { name: '+ Conjoint' }).click();
@@ -62,6 +64,8 @@ test('dans sa lignée : le geste propose les ajouts, puis ouvre le dialogue rég
 test('hors de sa lignée : pas d’ajout, les chemins de la fiche restent', async ({ page }) => {
   await signIn(page, 'anne@famille.test');
   await openTree(page, '/tree?view=all');
+  // Bernard, beau-père de son frère, est replié au départ (lignées seules).
+  await showWholeFamily(page);
   // Bernard est au bord de l'arbre : la caméra va le chercher, son menu s'ouvre à l'écran.
   await bubble(page, 'bernard').focus();
   await settled(page);

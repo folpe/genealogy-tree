@@ -1,16 +1,21 @@
 import ELK from 'elkjs/lib/elk.bundled.js';
 import { describe, expect, it } from 'vitest';
-import type { ElkLike } from '@/lib/tree/tree.layout';
+import { foldGraph } from '@/lib/tree/tree.fold';
+import { computeTreeLayout, type ElkLike } from '@/lib/tree/tree.layout';
+import { defaultFolds } from '@/lib/tree/tree.lineage';
 import { treeForViewer } from '../../../tests/fixtures/tree-for-viewer';
 import { drawTree } from './family-tree.helper';
+import { drawFolded } from './tree-drawing';
 
 const elk: ElkLike = new ELK();
 const hugo = treeForViewer('m-hugo');
 
 describe('drawTree', () => {
-  it('une bulle par personne dessinée, dans l’ordre de lecture', async () => {
-    const { nodes } = await drawTree(hugo, elk);
-    expect(nodes.map((n) => n.id).sort()).toEqual([...hugo.drawn.personIds].sort());
+  it('une bulle par personne affichée, lignées seules, dans l’ordre de lecture', async () => {
+    const { nodes, folded } = await drawTree(hugo, elk);
+    const shown = foldGraph(hugo.drawn, new Set(defaultFolds(hugo.drawn, 'hugo')), 'hugo');
+    expect(folded).toEqual(defaultFolds(hugo.drawn, 'hugo'));
+    expect(nodes.map((n) => n.id).sort()).toEqual([...shown.personIds].sort());
     for (const [i, node] of nodes.entries()) {
       const next = nodes[i + 1];
       if (!next) continue;
@@ -43,8 +48,9 @@ describe('drawTree', () => {
   });
 
   it('un mineur hors du cercle proche : prénom et initiale, sans années', async () => {
-    const { nodes } = await drawTree(hugo, elk);
-    const jade = nodes.find((n) => n.id === 'jade');
+    // Repliée au départ (fille de sa sœur) : son texte voyage pour quand elle revient.
+    const { people } = await drawTree(hugo, elk);
+    const jade = people['jade'];
     expect(jade).toMatchObject({ name: 'Jade', fullName: 'Jade M.', label: 'Jade M.' });
     expect(jade?.years).toBeUndefined();
   });
@@ -63,7 +69,11 @@ describe('drawTree', () => {
   });
 
   it('signale les bulles d’où part la branche d’un parent seul', async () => {
-    const { nodes, links } = await drawTree(hugo, elk);
+    // Tout affiché : Maxime, fils de Luc seul, est replié au départ.
+    const { people } = await drawTree(hugo, elk);
+    const { nodes, links } = await drawFolded(hugo.drawn, [], 'hugo', people, (g, options) =>
+      computeTreeLayout(g, elk, options),
+    );
     const from = new Set(links.flatMap((l) => (l.parentId ? [l.parentId] : [])));
     expect(from.size).toBeGreaterThan(0);
     for (const node of nodes) expect(node.branchesBelow).toBe(from.has(node.id));
@@ -87,16 +97,11 @@ describe('drawTree', () => {
       links: [],
       unknownPartners: [],
       branches: [],
+      markers: [],
       width: 0,
       height: 0,
-      layout: {
-        persons: {},
-        unions: {},
-        unknownPartners: {},
-        detachedUnions: [],
-        width: 0,
-        height: 0,
-      },
+      folded: [],
+      people: {},
     });
   });
 });

@@ -31,6 +31,7 @@ const layoutWith = (persons: TreeLayout['persons']): TreeLayout => ({
   unions: { 'u-pm': at(60, 0) },
   unknownPartners: {},
   detachedUnions: [],
+  markers: {},
   width: 800,
   height: 300,
 });

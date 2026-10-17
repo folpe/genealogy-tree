@@ -1,9 +1,12 @@
 import ELK from 'elkjs/lib/elk.bundled.js';
 import { describe, expect, it } from 'vitest';
 import { aChildOf, anUnion, aPerson } from '../../../tests/fixtures/builders';
+import { lineagesFamily } from '../../../tests/fixtures/lineages-family';
 import { marchandFamily } from '../../../tests/fixtures/marchand-family';
 import { selectDisplayedGraph } from '../../server/family/family.display';
-import { computeTreeLayout, type ElkLike } from './tree.layout';
+import { foldGraph, originKey } from './tree.fold';
+import { computeTreeLayout, type ElkLike, type TreeLayout } from './tree.layout';
+import { defaultFolds, hiddenSiblings } from './tree.lineage';
 import { DEFAULT_METRICS } from './tree.metrics';
 
 // ELK tourne ici dans le thread de test (version « bundled ») ; dans l'app, il tourne
@@ -195,6 +198,7 @@ describe('computeTreeLayout', () => {
       unions: {},
       unknownPartners: {},
       detachedUnions: [],
+      markers: {},
       width: 0,
       height: 0,
     });
@@ -203,5 +207,57 @@ describe('computeTreeLayout', () => {
   it('refuse une réponse d’ELK sans positions', async () => {
     const broken: ElkLike = { layout: async (graph) => ({ id: graph.id }) };
     await expect(computeTreeLayout(marchand, broken)).rejects.toThrow();
+  });
+});
+
+describe('computeTreeLayout, les lignées (retour de Folpe, 2026-10-17)', () => {
+  const drawn = selectDisplayedGraph(lineagesFamily(), { focusId: 'moi' });
+  /** Le placement d'un état de pliage, repères compris. */
+  const placed = async (folded: string[]) => {
+    const keys = new Set(folded);
+    const shown = foldGraph(drawn, keys, 'moi');
+    const markers = [...hiddenSiblings(drawn, keys, 'moi').keys()];
+    return computeTreeLayout(shown, elk, { focusId: 'moi', markers });
+  };
+  const leftToRight = (layout: TreeLayout, ids: string[]) =>
+    ids.map((id) => layout.persons[id]?.x ?? layout.markers[id]?.x ?? Number.NaN);
+  const increasing = (xs: number[]) => xs.every((x, i) => i === 0 || (xs[i - 1] ?? 0) < x);
+
+  it('ma lignée dépliée, la sienne repliée : moi à mon rang, elle à ma droite', async () => {
+    const layout = await placed([originKey('elle')]);
+    expect(increasing(leftToRight(layout, ['frere', 'moi', 'elle', 'soeur']))).toBe(true);
+  });
+
+  it('sa lignée dépliée, la mienne repliée : elle à son rang, moi à sa gauche', async () => {
+    const layout = await placed([originKey('moi')]);
+    expect(increasing(leftToRight(layout, ['soeur-e', 'moi', 'elle', 'frere-e']))).toBe(true);
+  });
+
+  it('les deux dépliées : moi au bord droit de ma fratrie, elle au bord gauche de la sienne', async () => {
+    const layout = await placed([]);
+    const row = ['frere', 'soeur', 'moi', 'elle', 'soeur-e', 'frere-e'];
+    expect(increasing(leftToRight(layout, row))).toBe(true);
+  });
+
+  it('la famille de la mère et la sienne repliées : le père reprend son rang', async () => {
+    const layout = await placed([originKey('mere'), originKey('elle')]);
+    expect(increasing(leftToRight(layout, ['oncle-a', 'pere', 'mere', 'tante-a']))).toBe(true);
+  });
+
+  it('la famille de la mère repliée, la sienne dépliée : le père reste au bord', async () => {
+    // À son rang, la tante cadette et ses descendants passeraient à droite de mon couple
+    // et croiseraient la famille d'elle : un ancêtre se range aussi pour celle-là.
+    const layout = await placed([originKey('mere')]);
+    expect(increasing(leftToRight(layout, ['oncle-a', 'tante-a', 'pere', 'mere']))).toBe(true);
+  });
+
+  it('par défaut, lignées seules : un repère au bout de chaque fratrie, côté extérieur', async () => {
+    const layout = await placed(defaultFolds(drawn, 'moi'));
+    const row0 = ['u-parents', 'moi', 'elle', 'u-parents-e'];
+    const row1 = ['u-gp-a', 'pere', 'mere', 'u-gp-b'];
+    expect(increasing(leftToRight(layout, row0))).toBe(true);
+    expect(increasing(leftToRight(layout, row1))).toBe(true);
+    expect(layout.markers['u-parents']?.y).toBe(layout.persons['moi']?.y);
+    expect(layout.persons['frere']).toBeUndefined();
   });
 });

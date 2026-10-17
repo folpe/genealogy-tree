@@ -2,17 +2,20 @@ import type { Locator, Page } from '@playwright/test';
 import { camera, settled, zoom } from './camera';
 import { E2E_ISABELLE_EMAIL } from './e2e.constants';
 import { expect, test } from './fixtures';
+import { showWholeFamily } from './folds';
 import { signIn } from './outbox';
 
 // Caméra du canevas (plan phase 4, lot 4), dans un vrai navigateur : glisser,
 // pincer, zoomer, revenir à soi. On lit l'état sur la transformation du calque.
 
-async function openTree(page: Page) {
+async function openTree(page: Page, { whole = true } = {}) {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await signIn(page, E2E_ISABELLE_EMAIL);
   // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
   await page.goto('/tree?view=all');
-  await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+  if (whole) await showWholeFamily(page);
+  else
+    await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
   return page.getByRole('region', { name: 'Canevas de l’arbre' });
 }
 
@@ -108,8 +111,24 @@ test('pincer à deux doigts zoome autour des doigts', async ({ page }) => {
 test('« Me retrouver » ramène ma bulle à l’écran', async ({ page }) => {
   const canvas = await openTree(page);
   const me = page.getByRole('treeitem', { name: /c’est toi$/ });
-  // Vers la droite : l'arbre d'Isabelle s'étend surtout à sa gauche.
-  for (let i = 0; i < 4; i += 1) await drag(page, canvas, [20, 300], [300, 20]);
+  // Vers la gauche : l'arbre d'Isabelle s'étend surtout à sa droite (la famille de sa
+  // mère, la mère à droite du père).
+  for (let i = 0; i < 4; i += 1) await drag(page, canvas, [300, 300], [20, 20]);
+  await settled(page);
+  await expect(me).not.toBeInViewport();
+  await page.getByRole('button', { name: 'Me retrouver' }).click();
+  await settled(page);
+  await expect(me).toBeInViewport();
+});
+
+test('« Me retrouver » ramène ma bulle à l’écran, lignées seules', async ({ page }) => {
+  const canvas = await openTree(page, { whole: false });
+  await expect(page.locator('[data-marker]').first()).toBeAttached();
+  const me = page.getByRole('treeitem', { name: /c’est toi$/ });
+  // L'arbre lignées seules tient presque dans l'écran d'un ordinateur : de près, il
+  // déborde, et un glissé peut emporter ma bulle hors du cadre.
+  await zoom(page, 3);
+  for (let i = 0; i < 4; i += 1) await drag(page, canvas, [300, 300], [20, 20]);
   await settled(page);
   await expect(me).not.toBeInViewport();
   await page.getByRole('button', { name: 'Me retrouver' }).click();

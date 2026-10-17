@@ -94,6 +94,7 @@ export function TreeViewControls({
           params={params}
           centerName={view !== 'all' ? centerName : undefined}
           canReturn={canReturn}
+          lineages={view === 'all'}
         />
       </div>
     </div>

@@ -142,3 +142,30 @@ describe('selectDisplayedGraph, ordre des fratries', () => {
     expect(fromParent).toEqual(['premier', 'seul']);
   });
 });
+
+describe('selectDisplayedGraph, côté de chaque partenaire', () => {
+  // Convention des tableaux d'ascendance (retour de Folpe, 2026-10-17) : le père à
+  // gauche, la mère à droite. Le placement met le premier partenaire à gauche.
+  const graph = (a: string, b: string): FamilyGraph => ({
+    persons: [
+      aPerson('h', { gender: 'homme' }),
+      aPerson('f', { gender: 'femme' }),
+      aPerson('x', { gender: 'inconnu' }),
+      aPerson('f2', { gender: 'femme' }),
+    ],
+    unions: [anUnion('u', a, b)],
+    parentChildren: [],
+  });
+  const partners = (a: string, b: string) =>
+    selectDisplayedGraph(graph(a, b), { focusId: a }).unions[0]?.partnerIds;
+
+  it('l’homme d’un couple homme-femme vient en premier, quel que soit l’ordre enregistré', () => {
+    expect(partners('f', 'h')).toEqual(['h', 'f']);
+    expect(partners('h', 'f')).toEqual(['h', 'f']);
+  });
+
+  it('couple de même sexe ou sexe inconnu : l’ordre enregistré', () => {
+    expect(partners('f2', 'f')).toEqual(['f2', 'f']);
+    expect(partners('x', 'h')).toEqual(['x', 'h']);
+  });
+});

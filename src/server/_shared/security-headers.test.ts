@@ -37,6 +37,11 @@ describe('contentSecurityPolicy', () => {
     expect(csp.get('default-src')).toBe("'self'");
   });
 
+  it('n’autorise que les workers servis par l’app (placement de l’arbre)', () => {
+    const csp = directives(contentSecurityPolicy('abc123', { isDev: false }));
+    expect(csp.get('worker-src')).toBe("'self'");
+  });
+
   it('interdit l’affichage dans une iframe, les plugins et les formulaires externes', () => {
     const csp = directives(contentSecurityPolicy('n', { isDev: false }));
     expect(csp.get('frame-ancestors')).toBe("'none'");

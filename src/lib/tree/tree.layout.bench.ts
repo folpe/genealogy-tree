@@ -4,7 +4,9 @@ import { bench, describe } from 'vitest';
 import { aChildOf, anUnion, aPerson } from '../../../tests/fixtures/builders';
 import { selectDisplayedGraph } from '../../server/family/family.display';
 import type { FamilyGraph } from '../../server/family/family.types';
+import { foldGraph } from './tree.fold';
 import { computeTreeLayout } from './tree.layout';
+import { defaultFolds, hiddenSiblings } from './tree.lineage';
 
 // Mesure, pas un test : le comportement est couvert par tree.layout.test.ts.
 // Plan phase 4, lot 2 : objectif < 150 ms pour 500 personnes, hors thread principal.
@@ -43,6 +45,25 @@ describe('computeTreeLayout', () => {
     const drawn = selectDisplayedGraph(syntheticFamily(size), { focusId: 'p0' });
     bench(`${size} personnes`, async () => {
       await computeTreeLayout(drawn, elk);
+    });
+  }
+});
+
+// Ordre des lignées (retour de Folpe, 2026-10-17) : centré sur une personne de la
+// dernière génération, tout déplié (le pire cas d'un re-layout), puis lignées seules.
+describe('computeTreeLayout, autour d’une personne', () => {
+  for (const size of [200, 500]) {
+    const family = syntheticFamily(size);
+    const focusId = family.persons.at(-2)?.id ?? 'p0';
+    const drawn = selectDisplayedGraph(family, { focusId });
+    bench(`${size} personnes, tout déplié`, async () => {
+      await computeTreeLayout(drawn, elk, { focusId });
+    });
+    const folded = new Set(defaultFolds(drawn, focusId));
+    const shown = foldGraph(drawn, folded, focusId);
+    const markers = [...hiddenSiblings(drawn, folded, focusId).keys()];
+    bench(`${size} personnes, lignées seules`, async () => {
+      await computeTreeLayout(shown, elk, { focusId, markers });
     });
   }
 });

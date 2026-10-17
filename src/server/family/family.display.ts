@@ -75,7 +75,7 @@ export function selectDisplayedGraph(
     if (!past || showPastUnions || childOfFocusLineage) {
       shown.set(union.id, {
         id: union.id,
-        partnerIds: union.partnerIds,
+        partnerIds: fatherFirst(index, union.partnerIds),
         past,
         unknownPartner: union.partnerIds[1] === null,
       });
@@ -126,6 +126,18 @@ export function selectDisplayedGraph(
   }
 
   return { personIds, unions: [...shown.values()], edges };
+}
+
+/**
+ * Le père à gauche, la mère à droite (retour de Folpe, 2026-10-17, convention des
+ * tableaux d'ascendance) : le placement met le premier partenaire à gauche. Couple de
+ * même sexe ou sexe inconnu : l'ordre enregistré.
+ */
+type Partners = DisplayedUnion['partnerIds'];
+
+function fatherFirst(index: FamilyIndex, [a, b]: Partners): Partners {
+  const gender = (id: Partners[number]) => (id ? index.persons.get(id)?.gender : undefined);
+  return gender(a) === 'femme' && gender(b) === 'homme' && b ? [b, a] : [a, b];
 }
 
 /**

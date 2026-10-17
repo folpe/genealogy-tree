@@ -12,6 +12,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import type { FoldAction } from '@/lib/tree/tree.lineage';
 import { createLongPress } from './long-press';
 
 // Actions rapides d'une bulle (plan phase 5, lot 7 ; maquette Arbre) : appui long au
@@ -148,5 +149,30 @@ export function QuickMenu({
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
+  );
+}
+
+/** Replier ou afficher autour de la bulle : sa famille, sa fratrie, sa branche. */
+export function QuickFoldItems({
+  actions,
+  onSelect,
+}: {
+  actions: FoldAction[];
+  onSelect: (action: FoldAction) => void;
+}) {
+  if (actions.length === 0) return undefined;
+  return (
+    <>
+      <DropdownMenu.Separator className="mx-3 my-1 h-px bg-rule" />
+      {actions.map((action) => (
+        <DropdownMenu.Item
+          key={action.label}
+          className={quickItem}
+          onSelect={() => onSelect(action)}
+        >
+          {action.label}
+        </DropdownMenu.Item>
+      ))}
+    </>
   );
 }

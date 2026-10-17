@@ -36,6 +36,7 @@ const layout: TreeLayout = {
   unions: {},
   unknownPartners: {},
   detachedUnions: [],
+  markers: {},
   width: 500,
   height: 500,
 };

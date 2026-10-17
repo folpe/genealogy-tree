@@ -1,16 +1,22 @@
 import { settled } from './camera';
 import { E2E_ISABELLE_EMAIL } from './e2e.constants';
 import { expect, test } from './fixtures';
+import { redrawn, showWholeFamily } from './folds';
 import { signIn } from './outbox';
 
-// Plier et déplier une branche (plan phase 4, lot 5) : la branche se retire et
-// revient sans qu'aucune autre bulle ne bouge.
+// Plier et déplier une branche (plan phase 4, lot 5) : l'arbre se redessine serré sur
+// ce qui reste (retour de Folpe, 2026-10-17), placé par le worker, dans le vrai
+// navigateur, sous la CSP de production ; la bulle pliée reste en place à l'écran.
 
-test('« - » replie une branche, « + » la rouvre, rien d’autre ne bouge', async ({ page }) => {
+test('« - » replie une branche, « + » la rouvre, la bulle reste en place', async ({ page }) => {
+  const refused: string[] = [];
+  page.on('console', (message) => {
+    if (/Content Security Policy|worker/i.test(message.text())) refused.push(message.text());
+  });
   await signIn(page, E2E_ISABELLE_EMAIL);
   // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
   await page.goto('/tree?view=all');
-  await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+  await showWholeFamily(page);
   const items = page.getByRole('treeitem');
   const before = await items.count();
   const luc = page.getByRole('treeitem', { name: /^Luc Marchand/ });
@@ -27,8 +33,8 @@ test('« - » replie une branche, « + » la rouvre, rien d’autre ne bouge', a
       name: /^Déplier la branche de Luc Marchand et Sophie Marchand, \d+ personnes$/,
     }),
   ).toBeAttached();
-  // Même placement : Luc n'a pas bougé à l'écran.
-  await settled(page);
+  // La caméra suit le nouveau placement : Luc n'a pas bougé à l'écran.
+  await redrawn(page);
   const after = await luc.boundingBox();
   expect(Math.abs((after?.x ?? 0) - (anchored?.x ?? 0))).toBeLessThan(2);
   expect(Math.abs((after?.y ?? 0) - (anchored?.y ?? 0))).toBeLessThan(2);
@@ -36,13 +42,14 @@ test('« - » replie une branche, « + » la rouvre, rien d’autre ne bouge', a
   await page.keyboard.press('+');
   await expect(luc).toHaveAttribute('aria-expanded', 'true');
   await expect(items).toHaveCount(before);
+  expect(refused).toEqual([]);
 });
 
 test('la poignée sous une bulle plie sa branche au doigt ou à la souris', async ({ page }) => {
   await signIn(page, E2E_ISABELLE_EMAIL);
   // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
   await page.goto('/tree?view=all');
-  await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+  await showWholeFamily(page);
   const toggle = page.getByRole('button', {
     name: 'Replier la branche de Luc Marchand et Sophie Marchand',
   });

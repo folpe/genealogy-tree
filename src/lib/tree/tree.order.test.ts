@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { aChildOf, anUnion, aPerson, yearOnly } from '../../../tests/fixtures/builders';
 import { extendedFamily } from '../../../tests/fixtures/extended-family';
 import { selectDisplayedGraph } from '../../server/family/family.display';
-import { familyOrder } from './tree.order';
+import { arrangeFamilies } from './tree.order';
+
+const familyOrder = (...args: Parameters<typeof arrangeFamilies>) => arrangeFamilies(...args).order;
 
 // Ordre généalogique des blocs (couples soudés) : la fratrie paternelle à gauche, la
 // lignée directe à son bord intérieur, puis le couple des parents, puis la fratrie
 // maternelle ; les familles d'origine des conjoints à l'extérieur, du côté du conjoint.
+// L'ordre ne vaut qu'entre blocs d'une même rangée : chaque attente compare une rangée.
 
 const drawn = selectDisplayedGraph(extendedFamily(), { focusId: 'moi' });
 
@@ -50,8 +53,8 @@ describe('familyOrder', () => {
 
   it('les grands-parents : paternels, puis maternels, les familles des conjoints autour', () => {
     // Le mari de la tante paternelle est à gauche : ses parents, au bord gauche.
-    expect(increasing(ranked(['gp-mt+gm-mt', 'gp-p+gm-p', 'gp-m+gm-m']))).toBe(true);
-    expect(increasing(ranked(['gp-m+gm-m', 'gp-mm+gm-mm', 'gp-c+gm-c']))).toBe(true);
+    // Celui de la tante maternelle, à droite : ses parents, au bord droit.
+    expect(increasing(ranked(['gp-mt+gm-mt', 'gp-p+gm-p', 'gp-m+gm-m', 'gp-mm+gm-mm']))).toBe(true);
   });
 
   it('les parents entre les deux fratries, chaque fratrie d’un tenant', () => {
@@ -71,11 +74,12 @@ describe('familyOrder', () => {
     expect(order.indexOf('frere-mt')).toBeLessThan(order.indexOf('oncle-p+epouse-oncle-p'));
     const last = Math.max(...['tante-m2', 'pere+mere'].map((id) => order.indexOf(id)));
     expect(order.indexOf('soeur-mm')).toBeGreaterThan(last);
+    expect(order.indexOf('gp-c+gm-c')).toBeGreaterThan(order.indexOf('tante-m2'));
     expect(order.indexOf('soeur-c')).toBeGreaterThan(order.indexOf('cousin-m2'));
   });
 
-  it('mes enfants sous mon couple, entre les cousins des deux côtés', () => {
-    expect(increasing(ranked(['cousin-p3', 'moi+conjoint', 'enfant1', 'cousin-m1']))).toBe(true);
+  it('mon couple entre les cousins des deux côtés', () => {
+    expect(increasing(ranked(['cousin-p3', 'moi+conjoint', 'cousin-m1']))).toBe(true);
   });
 });
 
@@ -161,7 +165,7 @@ describe('familyOrder et l’ordre de naissance', () => {
   const at = (ids: string[]) => ids.map((id) => order.indexOf(id));
 
   it('mon conjoint vient avec sa famille : je reste au bord, de son côté', () => {
-    expect(increasing(at(['soeur', 'frere', 'moi+conjoint', 'gp-c+gm-c']))).toBe(true);
+    expect(increasing(at(['soeur', 'frere', 'moi+conjoint', 'soeur-c']))).toBe(true);
   });
 
   it('sinon, ma fratrie dans l’ordre de naissance, l’aînée à gauche', () => {

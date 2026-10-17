@@ -1,6 +1,7 @@
 import { settled, zoom } from './camera';
 import { E2E_ISABELLE_EMAIL } from './e2e.constants';
 import { expect, test } from './fixtures';
+import { showWholeFamily } from './folds';
 import { signIn } from './outbox';
 
 // L'arbre dessiné (plan phase 4, lot 3), dans un vrai navigateur : placement calculé
@@ -50,7 +51,7 @@ test('les liens sont tracés sous les bulles', async ({ page }) => {
   await signIn(page, E2E_ISABELLE_EMAIL);
   // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
   await page.goto('/tree?view=all');
-  await expect(page.getByRole('tree')).toBeVisible();
+  await showWholeFamily(page);
   const paths = page.locator('svg[aria-hidden="true"] path');
   expect(await paths.count()).toBeGreaterThan(10);
 });
@@ -86,7 +87,7 @@ test('au retour d’une fiche, l’arbre revient là où on l’avait laissé, p
   await signIn(page, E2E_ISABELLE_EMAIL);
   // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
   await page.goto('/tree?view=all');
-  await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+  await showWholeFamily(page);
   await page.getByRole('treeitem', { name: /^Luc Marchand/ }).focus();
   await page.keyboard.press('-');
   await expect(page.getByRole('treeitem', { name: /^Hugo Marchand/ })).toHaveCount(0);
@@ -109,14 +110,12 @@ test('au retour d’une fiche, l’arbre revient là où on l’avait laissé, p
   await expect(luc).toHaveAttribute('aria-selected', 'true');
 });
 
-test('un pli fait sans bouger l’arbre tient sur deux allers-retours vers une fiche', async ({
-  page,
-}) => {
+test('un pli tient sur deux allers-retours vers une fiche', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await signIn(page, E2E_ISABELLE_EMAIL);
   // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
   await page.goto('/tree?view=all');
-  await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+  await showWholeFamily(page);
   const luc = page.getByRole('treeitem', { name: /^Luc Marchand/ });
   await luc.focus();
   await settled(page);
