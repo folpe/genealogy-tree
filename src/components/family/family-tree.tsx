@@ -37,6 +37,7 @@ import { animatePath } from '@/motion/path';
 import type { DisplayedGraph } from '@/server/family/family.display';
 import { PersonBubble } from './person-bubble';
 import type { BranchHandle, SiblingMarker, TreeDrawing, TreeNode } from './tree-drawing';
+import { closureNotice } from './tree-fold-notice';
 import { useTreeFoldsRequests } from './tree-folds';
 import { readFolds, writeFolds } from './tree-folds.storage';
 import {
@@ -47,7 +48,7 @@ import {
 } from './tree-memory.storage';
 import { TreeMinimap } from './tree-minimap';
 import { QuickFoldItems, QuickMenu, useQuickPress } from './tree-quick-menu';
-import { useFoldedTree } from './use-folded-tree';
+import { type FoldNotice, useFoldedTree } from './use-folded-tree';
 import { useRelayout } from './use-relayout';
 import { useTreeCamera } from './use-tree-camera';
 
@@ -423,6 +424,39 @@ function CanvasControls({
         </span>
       </button>
     </div>
+  );
+}
+
+/** Le temps de lire l'annonce d'un pli posé tout seul. */
+const NOTICE_MS = 5000;
+
+/**
+ * Un pli posé tout seul pour garder l'arbre lisible (tree.contest.ts) : une pilule
+ * discrète en haut du canevas, qui s'efface d'elle-même. La région reste montée : un
+ * texte qui arrive dans une région déjà là est annoncé.
+ */
+function FoldNoticeRegion({
+  notice,
+  people,
+}: {
+  notice: FoldNotice | undefined;
+  people: TreeDrawing['people'];
+}) {
+  const [readId, setReadId] = useState<number>();
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setReadId(notice.id), NOTICE_MS);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+  const text = notice && notice.id !== readId ? closureNotice(notice.closed, people) : '';
+  return (
+    <p
+      role="status"
+      data-fold-notice
+      className="pointer-events-none absolute top-4 left-1/2 z-[6] w-max max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-full bg-card px-4 py-2 text-center text-ink-2 text-sm shadow-float empty:hidden"
+    >
+      {text}
+    </p>
   );
 }
 
@@ -945,6 +979,7 @@ export function FamilyTree({
       <p role="status" className="absolute top-4 left-4 text-sm text-ink-2 empty:hidden">
         {fold.failed ? 'L’arbre n’a pas pu se redessiner. Réessaie dans un instant.' : undefined}
       </p>
+      <FoldNoticeRegion notice={fold.notice} people={fold.drawing.people} />
     </div>
   );
 }

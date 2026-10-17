@@ -185,3 +185,18 @@ describe('familyOrder et l’ordre de naissance', () => {
     );
   });
 });
+
+describe('arrangeFamilies, côté de chaque collatéral', () => {
+  it('chaque frère et sœur de la lignée, du côté où sa fratrie le range', () => {
+    const { sides } = arrangeFamilies(drawn, blocks, 'moi');
+    // Le père, à gauche de la mère : sa fratrie à gauche ; celle de la mère, à droite.
+    expect(sides.get('oncle-p')).toBe('left');
+    expect(sides.get('tante-p')).toBe('left');
+    expect(sides.get('tante-m1')).toBe('right');
+    expect(sides.get('tante-m2')).toBe('right');
+    // Mon conjoint vient avec sa famille, à ma droite : ma sœur à gauche, la sienne à droite.
+    expect(sides.get('soeur')).toBe('left');
+    expect(sides.get('soeur-c')).toBe('right');
+    expect(sides.has('moi')).toBe(false);
+  });
+});

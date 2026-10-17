@@ -8,7 +8,7 @@ import { foldGraph, hideKey, originKey } from './tree.fold';
 // venu d'ailleurs. Chaque fratrie repliée laisse un repère ; chaque collatéral se
 // replie et se redéplie un par un.
 
-type Kin = {
+export type Kin = {
   /** Départs de branche (union ou parent seul) d'où descend chaque personne. */
   sourcesOf: Map<string, string[]>;
   /** Enfants de chaque départ de branche, dans l'ordre de naissance. */
@@ -19,7 +19,7 @@ type Kin = {
   partnersOf: Map<string, string[]>;
 };
 
-function kinOf(drawn: DisplayedGraph): Kin {
+export function kinOf(drawn: DisplayedGraph): Kin {
   const kin: Kin = {
     sourcesOf: new Map(),
     childrenOf: new Map(),
@@ -62,7 +62,7 @@ const climb = (kin: Kin, starts: string[]): Set<string> => {
   return seen;
 };
 
-const descend = (kin: Kin, starts: Iterable<string>): Set<string> => {
+export const descend = (kin: Kin, starts: Iterable<string>): Set<string> => {
   const seen = new Set(starts);
   for (const pending = [...seen]; pending.length > 0; ) {
     for (const child of kin.kidsOf.get(pending.pop() ?? '') ?? []) {
@@ -83,7 +83,7 @@ export function lineageOf(drawn: DisplayedGraph, focusId: string): Set<string> {
 }
 
 /** Frères et sœurs, demi-frères et demi-sœurs compris : les autres enfants de ses parents. */
-function siblingsOf(kin: Kin, person: string): string[] {
+export function siblingsOf(kin: Kin, person: string): string[] {
   const kids = (kin.parentsOf.get(person) ?? []).flatMap((p) => kin.kidsOf.get(p) ?? []);
   return [...new Set(kids)].filter((child) => child !== person);
 }
