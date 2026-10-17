@@ -44,7 +44,7 @@ Sortie : les écrans Connexion, Arbre (fiche, recherche ⌘K, lien de parenté) 
 
 ### Lot 3 : système d'animation
 
-- [x] `src/motion/` : enregistrement unique des plugins (DrawSVG, Flip, SplitText, InertiaPlugin, Draggable), presets de durée et d'easing (doux, jamais élastique excessif), `gsap.matchMedia()` pour `prefers-reduced-motion` (fondus courts uniquement). Fait dans la forme retenue : point d'entrée unique (`src/motion/gsap.ts`), mouvement réduit par `matchMedia` natif ; Flip, SplitText et Draggable écartés par leur usage réel.
+- [x] `src/motion/` : enregistrement unique des plugins (DrawSVG, Flip, SplitText, InertiaPlugin, Draggable), presets de durée et d'easing (doux, jamais élastique excessif), `gsap.matchMedia()` pour `prefers-reduced-motion` (fondus courts uniquement). Fait dans la forme retenue : point d'entrée unique (`src/motion/gsap.ts`), mouvement réduit par `matchMedia` natif ; Flip, SplitText et Draggable pas encore utilisés, ajoutés avec leur premier usage.
   - [x] `src/motion/gsap.ts` : point d'entrée unique, DrawSVG et Inertia enregistrés, mouvement réduit lu au même endroit (caméra, relayout, éventail, chemin). Flip, SplitText et Draggable s'y ajouteront avec leur premier usage ; les durées restent près de chaque animation.
 - [x] Chargement différé de GSAP et des plugins hors du chemin critique (import dynamique après le premier rendu) : écarté après mesure, décision validée par Folpe le 2026-10-15.
   - [x] Mesuré (2026-10-15) : ~32 Ko gzip, chargés seulement par `/tree` et `/ancestors` (découpage par route) ; sur ces pages GSAP est le chemin critique (caméra, entrée). Retenu : pas d'import dynamique (journal du 2026-10-15, GSAP sans import différé).
