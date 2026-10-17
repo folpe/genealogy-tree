@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { DisplayedGraph } from '../../server/family/family.display';
 import { countCrossings } from './tree.crossings';
 import { DEFAULT_METRICS, type LayoutMetrics, type Point } from './tree.metrics';
-import { familyOrder } from './tree.order';
+import { arrangeFamilies } from './tree.order';
 
 // Placement de l'arbre (plan phase 4, lot 2). ELK (algorithme `layered`) ne connaît
 // pas les couples : laissé seul, il éloigne des partenaires et ajoute une couche par
@@ -25,6 +25,8 @@ export type TreeLayout = {
    * au-dessus des bulles et les enfants partent de chaque parent.
    */
   detachedUnions: string[];
+  /** Repère de chaque fratrie repliée, par départ de branche (tree.lineage.ts). */
+  markers: Record<string, Point>;
   width: number;
   height: number;
 };
@@ -32,7 +34,10 @@ export type TreeLayout = {
 /** Ce que ce module attend d'ELK : la version Web Worker comme la version « bundled ». */
 export type ElkLike = { layout: (graph: ElkNode) => Promise<ElkNode> };
 
-type Slot = { kind: 'person'; id: string } | { kind: 'unknown'; unionId: string };
+type Slot =
+  | { kind: 'person'; id: string }
+  | { kind: 'unknown'; unionId: string }
+  | { kind: 'marker'; branch: string };
 type Block = { id: string; slots: Slot[]; unionSlots: Map<string, [number, number]> };
 
 /**
@@ -132,6 +137,7 @@ const emptyLayout = (): TreeLayout => ({
   unions: {},
   unknownPartners: {},
   detachedUnions: [],
+  markers: {},
   width: 0,
   height: 0,
 });
@@ -142,13 +148,18 @@ export type LayoutOptions = {
    * (tree.order.ts). Sans elle, ELK range librement chaque rangée.
    */
   focusId?: string | undefined;
+  /**
+   * Départs de branche dont des enfants sont masqués : chacun reçoit un repère, à la
+   * place d'une bulle, au bout de la fratrie (tree.order.ts).
+   */
+  markers?: string[];
   metrics?: LayoutMetrics;
 };
 
 export async function computeTreeLayout(
   drawn: DisplayedGraph,
   elk: ElkLike,
-  { focusId, metrics = DEFAULT_METRICS }: LayoutOptions = {},
+  { focusId, markers = [], metrics = DEFAULT_METRICS }: LayoutOptions = {},
 ): Promise<TreeLayout> {
   if (drawn.personIds.length === 0) return emptyLayout();
   // La minimisation des croisements d'ELK est une heuristique qui peut s'arrêter sur
@@ -157,7 +168,7 @@ export async function computeTreeLayout(
   let best: { layout: TreeLayout; crossings: number } | undefined;
   // Ordre imposé : ELK ne minimise plus rien, la graine n'y change rien, une passe suffit.
   for (const seed of focusId ? SEEDS.slice(0, 1) : SEEDS) {
-    const layout = await placeOnce(drawn, elk, { metrics, focusId, seed });
+    const layout = await placeOnce(drawn, elk, { metrics, focusId, seed, markers });
     const crossings = countCrossings(drawn, layout);
     if (!best || crossings < best.crossings) best = { layout, crossings };
     if (crossings === 0) break;
@@ -168,16 +179,49 @@ export async function computeTreeLayout(
 /** Graines essayées, dans l'ordre ; la première suffit presque toujours. */
 const SEEDS = [1, 2, 3] as const;
 
-type Pass = { metrics: LayoutMetrics; focusId: string | undefined; seed: number };
+type Pass = {
+  metrics: LayoutMetrics;
+  focusId: string | undefined;
+  seed: number;
+  markers: string[];
+};
+
+const personsOf = (block: Block) => block.slots.flatMap((s) => (s.kind === 'person' ? [s.id] : []));
 
 async function placeOnce(drawn: DisplayedGraph, elk: ElkLike, pass: Pass): Promise<TreeLayout> {
   const { blocks, detached } = buildBlocks(drawn);
-  const first = await placeBlocks(drawn, blocks, detached, elk, pass);
+  const markers = pass.markers.map((branch, index) => ({ id: `repere-${index}`, branch }));
+  const all: Block[] = [
+    ...blocks,
+    ...markers.map((m) => ({
+      id: m.id,
+      slots: [{ kind: 'marker' as const, branch: m.branch }],
+      unionSlots: new Map(),
+    })),
+  ];
+  if (pass.focusId) {
+    // Ordre et côtés imposés (tree.order.ts) : un seul passage.
+    const { order, persons } = arrangeFamilies(
+      drawn,
+      blocks.map((b) => ({ id: b.id, persons: personsOf(b) })),
+      pass.focusId,
+      markers,
+    );
+    for (const block of blocks) {
+      const [left] = persons.get(block.id) ?? [];
+      const [first] = block.slots;
+      if (block.slots.length === 2 && first?.kind === 'person' && left && first.id !== left) {
+        block.slots.reverse();
+      }
+    }
+    return placeBlocks(drawn, all, detached, elk, pass, order);
+  }
+  const first = await placeBlocks(drawn, all, detached, elk, pass, undefined);
   // ELK range les blocs mais ne retourne pas un couple : chaque partenaire passe du
   // côté de sa famille d'origine, puis on replace (retour de Folpe, 2026-10-13).
   if (!orientCouples(drawn, blocks, first)) return first;
   // Le second passage peut ranger les blocs autrement : on garde le plus lisible.
-  const turned = await placeBlocks(drawn, blocks, detached, elk, pass);
+  const turned = await placeBlocks(drawn, all, detached, elk, pass, undefined);
   return countCrossings(drawn, turned) <= countCrossings(drawn, first) ? turned : first;
 }
 
@@ -258,32 +302,14 @@ function elkOptions(metrics: LayoutMetrics, seed: number, ordered: boolean) {
   };
 }
 
-/** Les blocs dans l'ordre généalogique autour de la personne au centre, s'il y en a une. */
-function inFamilyOrder(drawn: DisplayedGraph, blocks: Block[], focusId: string | undefined) {
-  if (!focusId) return blocks;
-  const persons = (block: Block) => block.slots.flatMap((s) => (s.kind === 'person' ? [s.id] : []));
-  const order = familyOrder(
-    drawn,
-    blocks.map((b) => ({ id: b.id, persons: persons(b) })),
-    focusId,
-  );
-  const rank = new Map(order.map((id, index) => [id, index]));
-  return [...blocks].sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
-}
-
-async function placeBlocks(
-  drawn: DisplayedGraph,
-  blocks: Block[],
-  detached: Set<string>,
-  elk: ElkLike,
-  { metrics, focusId, seed }: Pass,
-): Promise<TreeLayout> {
+/** Les blocs et leurs liens, tels qu'ELK les reçoit : ports fixes, un lien par filiation. */
+function elkGraph(drawn: DisplayedGraph, blocks: Block[], metrics: LayoutMetrics) {
   const slot = metrics.nodeWidth + metrics.gap;
   const slotX = (index: number) => index * slot + metrics.nodeWidth / 2;
-  const personSlot = new Map<string, { block: Block; index: number }>();
+  const slotOf = new Map<string, { block: Block; index: number }>();
   for (const block of blocks) {
     block.slots.forEach((s, index) => {
-      if (s.kind === 'person') personSlot.set(s.id, { block, index });
+      if (s.kind !== 'unknown') slotOf.set(s.kind === 'person' ? s.id : s.branch, { block, index });
     });
   }
   const unionSlot = new Map<string, { block: Block; x: number }>();
@@ -292,64 +318,72 @@ async function placeBlocks(
       unionSlot.set(unionId, { block, x: (slotX(a) + slotX(b)) / 2 });
     }
   }
-
   // Ports : sortie au bas du bloc (milieu d'union ou bulle), entrée en haut de l'enfant.
   const ports = new Map<string, ElkPort[]>(blocks.map((b) => [b.id, []]));
   const port = (block: Block, key: string, x: number, side: 'SOUTH' | 'NORTH') => {
     const id = `${block.id}:${key}`;
     const list = ports.get(block.id) ?? [];
     if (!list.some((p) => p.id === id)) {
-      list.push({
-        id,
-        x,
-        y: side === 'SOUTH' ? metrics.nodeHeight : 0,
-        width: 0,
-        height: 0,
-        layoutOptions: { 'elk.port.side': side },
-      });
+      const y = side === 'SOUTH' ? metrics.nodeHeight : 0;
+      list.push({ id, x, y, width: 0, height: 0, layoutOptions: { 'elk.port.side': side } });
     }
     return id;
   };
   const edges: ElkExtendedEdge[] = [];
-  const link = (source: { block: Block; x: number }, key: string, childId: string) => {
-    const child = personSlot.get(childId);
+  /** Un enfant, ou le repère d'une fratrie repliée (clé : son départ de branche). */
+  const link = (source: { block: Block; x: number }, key: string, target: string) => {
+    const child = slotOf.get(target);
     if (!child) return;
     edges.push({
       id: `lien-${edges.length}`,
       sources: [port(source.block, `sortie-${key}`, source.x, 'SOUTH')],
-      targets: [port(child.block, `entree-${childId}`, slotX(child.index), 'NORTH')],
+      targets: [port(child.block, `entree-${target}`, slotX(child.index), 'NORTH')],
     });
   };
+  const partnersOf = new Map(
+    drawn.unions.map((u) => [u.id, u.partnerIds.filter((p) => typeof p === 'string')]),
+  );
   const fromPerson = (id: string) => {
-    const at = personSlot.get(id);
+    const at = slotOf.get(id);
     return at && { block: at.block, x: slotX(at.index) };
   };
-  const partnersOf = new Map(drawn.unions.map((u) => [u.id, u.partnerIds]));
+  const linkFrom = (source: string, target: string) => {
+    const union = unionSlot.get(source);
+    if (union) return link(union, source, target);
+    // Parent seul, ou union détachée : l'enfant tient à chacun de ses parents placés.
+    for (const parentId of partnersOf.get(source) ?? [source]) {
+      const from = fromPerson(parentId);
+      if (from) link(from, parentId, target);
+    }
+  };
   for (const edge of drawn.edges) {
     // Les partenaires sont dans le bloc ; « a élevé » ne pèse pas sur les générations.
-    if (edge.kind === 'partner' || edge.kind === 'raised') continue;
-    if (edge.kind === 'parent') {
-      const source = fromPerson(edge.from);
-      if (source) link(source, edge.from, edge.to);
-      continue;
-    }
-    const union = unionSlot.get(edge.from);
-    if (union) {
-      link(union, edge.from, edge.to);
-      continue;
-    }
-    // Union détachée : l'enfant tient à chacun de ses parents placés.
-    for (const parentId of partnersOf.get(edge.from) ?? []) {
-      const source = typeof parentId === 'string' ? fromPerson(parentId) : undefined;
-      if (source && typeof parentId === 'string') link(source, parentId, edge.to);
-    }
+    if (edge.kind === 'child' || edge.kind === 'parent') linkFrom(edge.from, edge.to);
   }
+  for (const block of blocks) {
+    for (const s of block.slots) if (s.kind === 'marker') linkFrom(s.branch, s.branch);
+  }
+  return { slot, slotX, unionSlot, ports, edges };
+}
 
+async function placeBlocks(
+  drawn: DisplayedGraph,
+  blocks: Block[],
+  detached: Set<string>,
+  elk: ElkLike,
+  { metrics, seed }: Pass,
+  order: string[] | undefined,
+): Promise<TreeLayout> {
+  const { slot, slotX, unionSlot, ports, edges } = elkGraph(drawn, blocks, metrics);
+  const rank = new Map((order ?? []).map((id, index) => [id, index]));
+  const ordered = order
+    ? [...blocks].sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0))
+    : blocks;
   const result = elkResultSchema.parse(
     await elk.layout({
       id: 'arbre',
-      layoutOptions: elkOptions(metrics, seed, focusId !== undefined),
-      children: inFamilyOrder(drawn, blocks, focusId).map((block) => ({
+      layoutOptions: elkOptions(metrics, seed, order !== undefined),
+      children: ordered.map((block) => ({
         id: block.id,
         width: block.slots.length * slot - metrics.gap,
         height: metrics.nodeHeight,
@@ -374,8 +408,10 @@ async function placeBlocks(
   };
   for (const block of blocks) {
     block.slots.forEach((s, index) => {
-      if (s.kind === 'person') layout.persons[s.id] = at(block, slotX(index));
-      else layout.unknownPartners[s.unionId] = at(block, slotX(index));
+      const point = at(block, slotX(index));
+      if (s.kind === 'person') layout.persons[s.id] = point;
+      else if (s.kind === 'unknown') layout.unknownPartners[s.unionId] = point;
+      else layout.markers[s.branch] = point;
     });
   }
   for (const [unionId, { block, x }] of unionSlot) layout.unions[unionId] = at(block, x);

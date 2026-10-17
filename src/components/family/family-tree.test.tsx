@@ -13,6 +13,7 @@ const emptyLayout = {
   unions: {},
   unknownPartners: {},
   detachedUnions: [],
+  markers: {},
   width: 0,
   height: 0,
 };

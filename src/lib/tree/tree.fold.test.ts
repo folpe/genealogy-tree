@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayedGraph } from '../../server/family/family.display';
-import { branchesOf, branchKeys, foldGraph } from './tree.fold';
+import { branchesOf, branchKeys, foldGraph, hideKey, originKey } from './tree.fold';
 
 // a + b -> c ; c + d -> e, f ; g + h -> d ; f + i -> j ; e seul -> k ;
 // c a élevé m, fils de n.
@@ -95,5 +95,46 @@ describe('branchesOf', () => {
     expect(of.get('c')).toEqual(['u-cd']);
     expect(of.get('e')).toEqual(['e']);
     expect(of.get('m')).toBeUndefined();
+  });
+});
+
+describe('foldGraph, une personne masquée (hide:)', () => {
+  it('cache la personne, ses descendants et le conjoint venu par elle', () => {
+    const folded = foldGraph(graph, new Set([hideKey('f')]), 'a');
+    for (const id of ['f', 'i', 'j']) expect(folded.personIds).not.toContain(id);
+    expect(folded.personIds).toContain('e');
+    expect(folded.unions.map((u) => u.id)).not.toContain('u-fi');
+  });
+
+  it('avec la personne au centre, ce qui ne tient plus à elle part aussi', () => {
+    // m, élevé par c, a son parent n hors de l'arbre : sans c, m et n ne tiennent plus à a.
+    const folded = foldGraph(graph, new Set([hideKey('c')]), 'a');
+    expect(folded.personIds).toEqual(['a', 'b']);
+  });
+
+  it('une famille sans lien avec la personne au centre reste affichée', () => {
+    const apart: DisplayedGraph = {
+      ...graph,
+      personIds: [...graph.personIds, 'x', 'y'],
+      unions: [...graph.unions, union('u-xy', 'x', 'y')],
+    };
+    expect(foldGraph(apart, new Set([hideKey('c')]), 'a').personIds).toEqual(['a', 'b', 'x', 'y']);
+  });
+});
+
+describe('foldGraph, une famille d’origine repliée (origin:)', () => {
+  it('cache les parents de d et ce qui ne tient qu’à eux, garde d', () => {
+    const folded = foldGraph(graph, new Set([originKey('d')]), 'e');
+    expect(folded.personIds).not.toContain('g');
+    expect(folded.personIds).not.toContain('h');
+    expect(folded.personIds).toContain('d');
+    expect(folded.edges).not.toContainEqual({ kind: 'child', from: 'u-gh', to: 'd' });
+  });
+
+  it('replier la famille de c en garde la descendance, centrée sur un enfant', () => {
+    const folded = foldGraph(graph, new Set([originKey('c')]), 'e');
+    expect(folded.personIds).not.toContain('a');
+    expect(folded.personIds).toContain('c');
+    expect(folded.personIds).toContain('g');
   });
 });
