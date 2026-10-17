@@ -2,6 +2,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type Closure, settleFolds } from '@/lib/tree/tree.contest';
 import { branchesOf, branchKeys, foldGraph } from '@/lib/tree/tree.fold';
 import { defaultFolds, revealing } from '@/lib/tree/tree.lineage';
 import type { DisplayedGraph } from '@/server/family/family.display';
@@ -14,7 +15,9 @@ import { createLayoutClient, type LayoutClient } from './tree-layout.client';
 // au worker ELK, et la bulle touchée reste à sa place à l'écran pendant que le reste
 // glisse (`use-relayout.ts`). Remplace la règle du 2026-10-13, où plier ne déplaçait
 // rien (journal des décisions, 2026-10-17 « Lignées seules, arbre resserré »). Les
-// dessins déjà calculés restent en cache ; seule la dernière demande compte.
+// dessins déjà calculés restent en cache ; seule la dernière demande compte. Chaque
+// demande passe par `settleFolds` : déplier un côté qui croiserait la famille d'un
+// conjoint replie l'autre, et le pli posé tout seul s'annonce (`notice`).
 
 export type FoldedTree = {
   drawing: TreeDrawing;
@@ -39,7 +42,11 @@ export type FoldedTree = {
   replaceFolded: (keys: readonly string[], anchorId: string | undefined) => void;
   /** Lève les plis qui cachent ces personnes (fiche, recherche, « Notre lien »). */
   reveal: (persons: string[], anchorId: string | undefined) => void;
+  /** Les plis posés tout seuls à la dernière demande, pour les annoncer ; `id` change à chacune. */
+  notice: FoldNotice | undefined;
 };
+
+export type FoldNotice = { id: number; closed: readonly Closure[] };
 
 const keyOf = (folded: Iterable<string>) => [...folded].sort().join(' ');
 
@@ -171,6 +178,16 @@ export function useFoldedTree(
   );
   useServerResync(initial, valid, requests);
 
+  // Chaque demande, réglée pour qu'aucune famille n'en croise une autre (tree.contest.ts).
+  const [notice, setNotice] = useState<FoldNotice>();
+  const settle = useCallback(
+    (next: Iterable<string>, anchorId: string | undefined) => {
+      const { folded, closed } = settleFolds(graph, focusId, requested.current, next);
+      if (closed.length > 0) setNotice((n) => ({ id: (n?.id ?? 0) + 1, closed }));
+      request(new Set(folded), anchorId);
+    },
+    [graph, focusId, request, requested],
+  );
   const setFolded = useCallback(
     (changed: string[], fold: boolean, anchorId: string | undefined) => {
       const next = new Set(requested.current);
@@ -178,22 +195,24 @@ export function useFoldedTree(
         if (fold) next.add(key);
         else next.delete(key);
       }
-      request(next, anchorId);
+      settle(next, anchorId);
     },
-    [valid, request, requested],
+    [valid, settle, requested],
   );
   const replaceFolded = useCallback(
-    (all: readonly string[], anchorId: string | undefined) =>
-      request(new Set(all.filter(valid)), anchorId),
-    [valid, request],
+    (all: readonly string[], anchorId: string | undefined) => settle(all.filter(valid), anchorId),
+    [valid, settle],
   );
   const reveal = useCallback(
     (persons: string[], anchorId: string | undefined) => {
       const lifted = new Set(revealing(graph, requested.current, focusId, persons));
       if (lifted.size === 0) return;
-      request(new Set([...requested.current].filter((k) => !lifted.has(k))), anchorId);
+      settle(
+        [...requested.current].filter((k) => !lifted.has(k)),
+        anchorId,
+      );
     },
-    [graph, focusId, request, requested],
+    [graph, focusId, settle, requested],
   );
   const hiddenBelow = useCallback(
     (key: string) => graph.personIds.length - foldGraph(graph, new Set([key])).personIds.length,
@@ -212,5 +231,6 @@ export function useFoldedTree(
     setFolded,
     replaceFolded,
     reveal,
+    notice,
   };
 }
