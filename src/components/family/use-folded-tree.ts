@@ -135,27 +135,33 @@ function useLayoutRequests(
 type Requests = ReturnType<typeof useLayoutRequests>;
 
 /**
- * Nouveau rendu serveur (données changées) : ses plis de départ, sauf si l'on avait
- * déplié ou replié autre chose, qu'on garde (une fiche ajoutée chez un oncle déplié).
+ * Nouveau rendu serveur dans la même vue (une fiche ajoutée, modifiée) : les plis du
+ * lecteur restent, pas ceux de départ du serveur. Une clé qui ne vaut plus (une
+ * personne partie) tombe ; une personne nouvelle reste visible, sa branche dépliée.
  */
 function useServerResync(
   initial: TreeDrawing,
+  graph: DisplayedGraph,
+  focusId: string | undefined,
   valid: (key: string) => boolean,
   requests: Requests,
 ) {
   const { requested, cache, request, reset, setState } = requests;
-  const shown = useRef(initial);
+  const shown = useRef({ initial, graph });
   useEffect(() => {
-    if (shown.current === initial) return;
-    const before = shown.current;
-    shown.current = initial;
+    if (shown.current.initial === initial) return;
+    const before = new Set(shown.current.graph.personIds);
+    shown.current = { initial, graph };
     const kept = new Set([...requested.current].filter(valid));
-    const untouched = keyOf(requested.current) === keyOf(before.folded);
-    if (untouched || keyOf(kept) === keyOf(initial.folded)) return reset(initial);
+    const added = graph.personIds.filter((id) => !before.has(id));
+    const lifted = new Set(revealing(graph, kept, focusId, added));
+    const asked = [...kept].filter((key) => !lifted.has(key));
+    const next = new Set(settleFolds(graph, focusId, kept, asked).folded);
+    if (keyOf(next) === keyOf(initial.folded)) return reset(initial);
     cache.current = new Map([[keyOf(initial.folded), initial]]);
     setState((s) => ({ ...s, initial }));
-    request(kept, undefined, true);
-  }, [initial, valid, requested, cache, request, reset, setState]);
+    request(next, undefined, true);
+  }, [initial, graph, focusId, valid, requested, cache, request, reset, setState]);
 }
 
 export function useFoldedTree(
@@ -176,7 +182,7 @@ export function useFoldedTree(
     },
     [keys, graph],
   );
-  useServerResync(initial, valid, requests);
+  useServerResync(initial, graph, focusId, valid, requests);
 
   // Chaque demande, réglée pour qu'aucune famille n'en croise une autre (tree.contest.ts).
   const [notice, setNotice] = useState<FoldNotice>();

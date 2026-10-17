@@ -27,6 +27,8 @@ const blank = Object.fromEntries(
 );
 
 const WRITES = /\.writes\.spec\.ts$/;
+/** Écrit des fiches qu'il relit ensuite : une fois suffit, sur le téléphone. */
+const MOBILE_ONLY = /tree-no-crossing\.writes\.spec\.ts$/;
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -52,6 +54,7 @@ export default defineConfig({
       name: 'writes-desktop',
       use: { ...devices['Desktop Chrome'] },
       testMatch: WRITES,
+      testIgnore: MOBILE_ONLY,
       dependencies: ['mobile', 'desktop'],
     },
   ],
