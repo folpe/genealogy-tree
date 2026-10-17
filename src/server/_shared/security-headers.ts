@@ -29,6 +29,10 @@ export function contentSecurityPolicy(nonce: string, { isDev }: { isDev: boolean
     `img-src 'self' blob: data: ${BLOB_ORIGIN}`,
     "font-src 'self'",
     "connect-src 'self'",
+    // Worker de placement de l'arbre. Sans cette directive, les workers retombent sur
+    // script-src, dont l'effet de 'strict-dynamic' sur un worker varie selon le
+    // navigateur (Chromium l'accepte, Safari non vérifié) : on le dit explicitement.
+    "worker-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

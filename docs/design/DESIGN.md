@@ -212,6 +212,7 @@ Petites capitales accent (relation, catégorie) : 12px, 600, `letter-spacing: 0.
 7. Lien de parenté : le chemin passe en accent, 3px ; le reste à 32 % d'opacité.
 8. Périmètre ("Ce que je peux modifier") : hors périmètre à 32 % d'opacité, dans le périmètre bord encre 2px.
 9. "Toi" : nom en accent à la place du prénom.
+10. Lignées seules (retour de Folpe, 2026-10-17) : Toute la famille s'ouvre sur la lignée directe, chaque fratrie de la lignée repliée derrière un repère « +N frères et sœurs » (cercle pointillé `--color-link`, 56 px, au bout de la fratrie, côté extérieur). Dans un couple, le père à gauche, la mère à droite ; chaque fratrie par ordre de naissance, l'aîné à gauche. Un pli redessine l'arbre serré, la bulle touchée reste en place à l'écran.
 
 ## 8. Composants à créer
 

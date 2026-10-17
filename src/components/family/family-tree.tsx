@@ -25,6 +25,8 @@ import {
   visibleWorld,
 } from '@/lib/tree/tree.camera';
 import { entryWaves, firstVisibleRow } from '@/lib/tree/tree.entry';
+import { hideKey } from '@/lib/tree/tree.fold';
+import { foldActions } from '@/lib/tree/tree.lineage';
 import { recallCamera, rememberCamera, type TreeMemory } from '@/lib/tree/tree.memory';
 import { DEFAULT_METRICS } from '@/lib/tree/tree.metrics';
 import type { PathHighlight } from '@/lib/tree/tree.path';
@@ -34,7 +36,8 @@ import { animateTreeEntry } from '@/motion/entry';
 import { animatePath } from '@/motion/path';
 import type { DisplayedGraph } from '@/server/family/family.display';
 import { PersonBubble } from './person-bubble';
-import type { BranchHandle, TreeDrawing, TreeNode } from './tree-drawing';
+import type { BranchHandle, SiblingMarker, TreeDrawing, TreeNode } from './tree-drawing';
+import { useTreeFoldsRequests } from './tree-folds';
 import {
   readTreeMemory,
   TREE_ENTRY_ATTRIBUTE,
@@ -42,7 +45,7 @@ import {
   writeTreeMemory,
 } from './tree-memory.storage';
 import { TreeMinimap } from './tree-minimap';
-import { QuickMenu, useQuickPress } from './tree-quick-menu';
+import { QuickFoldItems, QuickMenu, useQuickPress } from './tree-quick-menu';
 import { useFoldedTree } from './use-folded-tree';
 import { useRelayout } from './use-relayout';
 import { useTreeCamera } from './use-tree-camera';
@@ -55,9 +58,11 @@ import { useTreeCamera } from './use-tree-camera';
 // Zoom sémantique : la caméra pose `data-detail` (far, mid, near) sur le canevas, et
 // chaque bulle porte déjà ses trois rendus ; le CSS montre le bon, sans re-rendu.
 //
-// Branches : sur le trait de chaque branche, une poignée la plie ou la déplie. Rien
-// d'autre ne bouge, le dessin plié garde le placement d'origine (`use-folded-tree.ts`) ;
-// les bulles cachées s'effacent, celles qui reviennent apparaissent (`use-relayout.ts`).
+// Plis : lignées dépliées, collatéraux repliés au départ (`use-folded-tree.ts`). Chaque
+// fratrie repliée laisse un repère au bout de la fratrie ; le menu d'une bulle replie
+// ou affiche sa famille, sa fratrie, sa branche ; sur le trait de chaque branche, une
+// poignée plie ses enfants. Chaque pli redessine l'arbre serré sur ce qui est affiché,
+// la bulle touchée reste en place à l'écran et le reste glisse (`use-relayout.ts`).
 
 /** Sélecteurs du niveau de détail, posé sur le canevas (`group/canvas`). */
 const FAR_HIDDEN = 'group-data-[detail=far]/canvas:hidden';
@@ -327,6 +332,39 @@ const BranchToggle = memo(function BranchToggle({
   );
 });
 
+/** « +5 frères et sœurs » : le repère d'une fratrie repliée, qui la déplie au toucher. */
+const SiblingMarkerButton = memo(function SiblingMarkerButton({
+  marker,
+  onShow,
+}: {
+  marker: SiblingMarker;
+  onShow: (marker: SiblingMarker) => void;
+}) {
+  const count = marker.hidden.length;
+  const noun = count > 1 ? 'frères et sœurs' : 'frère ou sœur';
+  return (
+    <button
+      type="button"
+      data-marker={marker.id}
+      aria-expanded={false}
+      aria-label={`+${count} ${noun}${marker.of ? ` de ${marker.of}` : ''}`}
+      onClick={() => onShow(marker)}
+      className="group/marker absolute flex w-[120px] cursor-pointer flex-col items-center outline-none"
+      style={{ left: marker.x - NODE_HALF_WIDTH, top: marker.y - BUBBLE_RADIUS }}
+    >
+      <span
+        aria-hidden="true"
+        className="mt-[10px] grid size-14 place-items-center rounded-full border-2 border-link border-dashed bg-card font-display text-[20px] text-ink-2 tabular-nums outline-offset-2 group-hover/marker:text-ink group-focus-visible/marker:outline-2 group-focus-visible/marker:outline-ink"
+      >
+        +{count}
+      </span>
+      <span aria-hidden="true" className={`mt-1.5 text-xs text-ink-2 ${FAR_HIDDEN}`}>
+        {noun}
+      </span>
+    </button>
+  );
+});
+
 /** Marge d'écran sous laquelle une bulle prise au clavier fait bouger la caméra. */
 const REVEAL_MARGIN = 80;
 const ZOOM_STEP = 1.4;
@@ -490,7 +528,8 @@ export function FamilyTree({
   /** Le serveur calcule l'arbre demandé : celui-ci s'efface sous le chargement. */
   pending?: boolean;
 }) {
-  const fold = useFoldedTree(initial, graph);
+  const pivot = centerId ?? focusId;
+  const fold = useFoldedTree(initial, graph, pivot);
   const { nodes, width, height } = fold.drawing;
   const byId = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const rows = useRows(nodes);
@@ -568,27 +607,53 @@ export function FamilyTree({
     const fromRow = firstVisibleRow(nodes, top, BUBBLE_RADIUS + LABEL_HEIGHT);
     return animateTreeEntry(waves, elements.current, layer.current ?? undefined, fromRow);
   }, [camera]);
-  // Une fiche ouverte (recherche, lien) : la caméra va à sa bulle si elle n'est pas
-  // déjà bien à l'écran. Un tap sur une bulle visible ne fait donc rien bouger.
+  // Une fiche ouverte (recherche, lien) : sa bulle revient si elle était repliée, puis
+  // la caméra va à elle si elle n'est pas déjà bien à l'écran. Un tap sur une bulle
+  // visible ne fait donc rien bouger.
+  const { reveal: revealFolded } = fold;
+  const selectedShown = selectedId ? byId.has(selectedId) : false;
+  /** Fiche déjà traitée : la replier ensuite à la main ne la fait pas revenir. */
+  const selectedSeen = useRef<string>(undefined);
   useEffect(() => {
-    if (camera && selectedId) bringIntoView(camera, nodesById.current.get(selectedId));
-  }, [camera, selectedId]);
+    if (!selectedId || selectedSeen.current === selectedId) return;
+    selectedSeen.current = selectedId;
+    if (!selectedShown) revealFolded([selectedId], undefined);
+  }, [selectedId, selectedShown, revealFolded]);
+  useEffect(() => {
+    if (camera && selectedId && selectedShown) {
+      bringIntoView(camera, nodesById.current.get(selectedId));
+    }
+  }, [camera, selectedId, selectedShown]);
   // Une personne cherchée : le vol d'abord, la fiche ensuite (arrivée, geste qui coupe
-  // le vol, ou bulle déjà à l'écran).
+  // le vol, ou bulle déjà à l'écran). Repliée, elle revient d'abord.
+  const revealed = reveal ? byId.has(reveal.id) || !graph.personIds.includes(reveal.id) : true;
   useEffect(() => {
-    if (!reveal) return;
+    if (reveal && !revealed) revealFolded([reveal.id], undefined);
+  }, [reveal, revealed, revealFolded]);
+  useEffect(() => {
+    if (!reveal || !revealed) return;
     const node = nodesById.current.get(reveal.id);
     if (!camera || !node) return reveal.onArrive();
     bringIntoView(camera, node, reveal.onArrive);
-  }, [camera, reveal]);
+  }, [camera, reveal, revealed]);
   // Un nouveau lien éclairé : la caméra cadre tout son chemin, ancêtres communs compris,
   // hors de la carte et de la colonne des boutons, et recadre quand la carte a pris sa
-  // hauteur. Un pli ensuite ne la déplace pas : les bulles sont relues ici.
+  // hauteur. Un pli ensuite ne la déplace pas : les bulles sont relues ici. Un chemin
+  // passe par des personnes repliées : elles reviennent d'abord, puis la caméra cadre.
+  const pathHidden = highlight
+    ? [...highlight.persons].filter((id) => !byId.has(id) && graph.personIds.includes(id))
+    : [];
+  const pathShown = pathHidden.length === 0;
+  const revealPath = useRef(pathHidden);
+  revealPath.current = pathHidden;
+  useEffect(() => {
+    if (highlight && revealPath.current.length > 0) revealFolded(revealPath.current, focusId);
+  }, [highlight, focusId, revealFolded]);
   useEffect(() => {
     if (!camera) return;
     const free = { top: coveredTop, right: CONTROLS_WIDTH };
     camera.setCover(highlight ? free : NO_COVER);
-    if (!highlight) return;
+    if (!highlight || !pathShown) return;
     const onPath = [...highlight.framed].flatMap((id) => nodesById.current.get(id) ?? []);
     if (onPath.length === 0) return;
     const rect = {
@@ -598,7 +663,7 @@ export function FamilyTree({
       y1: Math.max(...onPath.map((n) => n.y)) + BUBBLE_RADIUS + LABEL_HEIGHT,
     };
     camera.flyTo(cameraFraming(rect, camera.viewport(), camera.limits(), free));
-  }, [camera, highlight, coveredTop]);
+  }, [camera, highlight, coveredTop, pathShown]);
   // Puis le chemin se trace de Toi vers la cible ; posé avant l'affichage, il ne
   // clignote pas allumé d'abord.
   useLayoutEffect(() => {
@@ -608,6 +673,7 @@ export function FamilyTree({
   }, [highlight]);
   const leaving = useRelayout({
     drawing: fold.drawing,
+    anchorId: fold.anchorId,
     camera,
     elements,
     links: linksRef,
@@ -641,7 +707,7 @@ export function FamilyTree({
 
   const quick = useQuickPress(quickActions !== undefined);
   const { onKey: quickKey } = quick;
-  const { folded, branchesOf, setFolded } = fold;
+  const { folded, branchesOf, setFolded, replaceFolded, defaults } = fold;
   const onKeyDown = useCallback(
     (id: string, event: KeyboardEvent<HTMLAnchorElement>) => {
       if (event.altKey || event.ctrlKey || event.metaKey || quickKey(id, event)) return;
@@ -652,7 +718,7 @@ export function FamilyTree({
       const expand = (event.key === '+' || event.key === '=') && keys.some((k) => folded.has(k));
       if (collapse || expand) {
         event.preventDefault();
-        setFolded(keys, collapse);
+        setFolded(keys, collapse, id);
         return;
       }
       const move = MOVES[event.key];
@@ -671,18 +737,54 @@ export function FamilyTree({
   );
 
   // Les plis retenus reviennent une fois la caméra en place, autour de la bulle repère.
+  // Une bulle repère repliée au départ : la caméra la retrouve une fois redessinée.
+  // La bulle de la fiche qu'on quittait, repliée au départ : elle revient, centrée.
   const foldsRestored = useRef(false);
+  const recall = useRef<TreeMemory>(undefined);
+  const pendingStart = useRef<{ id: string; k: number | undefined }>(undefined);
   useEffect(() => {
     if (!camera || foldsRestored.current) return;
     foldsRestored.current = true;
     const remembered = memory.current.value;
-    if (remembered?.view === viewKey && remembered.folded.length > 0) {
-      setFolded(remembered.folded, true);
+    const sameView = remembered?.view === viewKey ? remembered : undefined;
+    if (sameView) {
+      if (!nodesById.current.has(sameView.anchorId)) recall.current = sameView;
+      replaceFolded(sameView.folded, sameView.anchorId);
     }
-  }, [camera, setFolded, viewKey]);
+    // Une fiche ouverte a son propre vol (plus haut) : seul le retour d'une fiche
+    // complète se recentre ici.
+    const back = openedAtStart === selectedId ? undefined : openedAtStart;
+    if (back && !nodesById.current.has(back)) {
+      pendingStart.current = { id: back, k: sameView?.k };
+      revealFolded([back], undefined);
+    }
+  }, [camera, replaceFolded, revealFolded, viewKey, openedAtStart, selectedId]);
+  useEffect(() => {
+    if (!camera) return;
+    const target = pendingStart.current;
+    const node = target ? byId.get(target.id) : undefined;
+    if (target && node) {
+      pendingStart.current = undefined;
+      recall.current = undefined;
+      camera.jump(cameraOn(node, target.k ?? camera.get().k));
+      return;
+    }
+    const remembered = recall.current;
+    if (target || !remembered || !byId.has(remembered.anchorId)) return;
+    recall.current = undefined;
+    const found = recallCamera(remembered, nodes);
+    if (found) camera.jump(found);
+  }, [camera, byId, nodes]);
+  // « Lignées seules » et « Tout afficher » (réglages) : la bulle au centre de l'écran
+  // reste en place.
+  useTreeFoldsRequests((request) => {
+    const anchorId = camera
+      ? rememberCamera(camera.get(), nodes, [], viewKey)?.anchorId
+      : undefined;
+    replaceFolded(request === 'lineages' ? defaults : [], anchorId);
+  });
 
-  // Un pli ne fait pas bouger la caméra : la mémoire suit aussi chaque pli, sans
-  // attendre le prochain arrêt de la caméra.
+  // La mémoire suit aussi chaque pli, sans attendre le prochain arrêt de la caméra.
   useEffect(() => {
     if (!camera) return;
     const remembered = rememberCamera(camera.get(), nodes, [...folded], viewKey);
@@ -700,8 +802,12 @@ export function FamilyTree({
   }, [camera, initial, centerId, focusId]);
 
   const toggleBranch = useCallback(
-    (branch: BranchHandle) => setFolded([branch.id], !folded.has(branch.id)),
+    (branch: BranchHandle) => setFolded([branch.id], !folded.has(branch.id), branch.anchorId),
     [folded, setFolded],
+  );
+  const showSiblings = useCallback(
+    (marker: SiblingMarker) => setFolded(marker.hidden.map(hideKey), false, marker.anchorId),
+    [setFolded],
   );
 
   useLayoutEffect(() => {
@@ -720,13 +826,16 @@ export function FamilyTree({
   }
 
   const shown = view ? nodesInView(nodes, view, activeId ? [activeId] : []) : nodes;
-  const { branches } = fold.drawing;
+  const { branches, markers } = fold.drawing;
   const handles = view ? nodesInView(branches, view, []) : branches;
+  const shownMarkers = view ? nodesInView(markers, view, []) : markers;
+
   const expandedOf = (id: string) => {
     const keys = branchesOf.get(id);
     return keys ? keys.some((k) => !folded.has(k)) : undefined;
   };
   const quickNode = quick.quickId ? byId.get(quick.quickId) : undefined;
+  const quickFolds = quickNode && pivot ? foldActions(graph, folded, pivot, quickNode.id) : [];
   const home =
     me && camera ? () => camera.flyTo(cameraOn(me, Math.max(camera.get().k, 0.75))) : undefined;
 
@@ -735,7 +844,7 @@ export function FamilyTree({
       <section
         ref={viewport}
         aria-label="Canevas de l’arbre"
-        aria-busy={pending || undefined}
+        aria-busy={pending || fold.pending || undefined}
         // Niveau des échelles de départ ; la caméra le tient ensuite à jour.
         data-detail="mid"
         {...quick.canvas}
@@ -788,6 +897,9 @@ export function FamilyTree({
               />
             ))}
           </div>
+          {shownMarkers.map((marker) => (
+            <SiblingMarkerButton key={marker.id} marker={marker} onShow={showSiblings} />
+          ))}
           {handles.map((branch) => (
             <BranchToggle
               key={branch.id}
@@ -806,6 +918,12 @@ export function FamilyTree({
               onClose={quick.close}
             >
               {quickActions(quickNode.id)}
+              <QuickFoldItems
+                actions={quickFolds}
+                onSelect={(action) =>
+                  setFolded(action.keys, action.fold, action.anchorId ?? quickNode.id)
+                }
+              />
             </QuickMenu>
           ) : undefined}
         </div>
@@ -816,6 +934,9 @@ export function FamilyTree({
       {/* Pendant un lien, « Toi » est déjà dans le cadre : « Me retrouver » céderait la
           place au chemin pour rien. */}
       <CanvasControls camera={camera} home={me && !highlight ? home : undefined} />
+      <p role="status" className="absolute top-4 left-4 text-sm text-ink-2 empty:hidden">
+        {fold.failed ? 'L’arbre n’a pas pu se redessiner. Réessaie dans un instant.' : undefined}
+      </p>
     </div>
   );
 }

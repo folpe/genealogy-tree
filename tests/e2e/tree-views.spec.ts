@@ -31,7 +31,9 @@ test('Hugo s’ouvre sur son sablier ; toute la famille et le retour du navigate
   page,
 }) => {
   await signIn(page, HUGO);
-  const tom = page.getByRole('treeitem', { name: /^Tom/ });
+  // Toute la famille s'ouvre lignées seules : les fratries repliées y laissent un repère,
+  // que le sablier, sans fratrie, n'a pas.
+  const siblings = page.getByRole('button', { name: '+2 frères et sœurs de Paul Marchand' });
   // Par défaut, sa famille : Hugo n'est pas en couple, c'est son sablier.
   await expect(page.getByRole('link', { name: 'Sablier' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('link', { name: 'Notre famille' })).toHaveCount(0);
@@ -44,16 +46,16 @@ test('Hugo s’ouvre sur son sablier ; toute la famille et le retour du navigate
   await page.keyboard.press('Escape');
   await expect(panel).toBeHidden();
   await expect(settingsButton(page)).toBeFocused();
-  await expect(tom).toHaveCount(0);
+  await expect(siblings).toHaveCount(0);
   await expect(page.getByRole('treeitem', { name: /^Henri Marchand/ })).toHaveCount(1);
 
   await page.getByRole('link', { name: 'Toute la famille' }).click();
   await expect(page).toHaveURL(/\/tree\?view=all$/);
-  await expect(tom).toHaveCount(1);
+  await expect(siblings).toHaveCount(1);
 
   await page.goBack();
   await expect(page).toHaveURL(/\/tree$/);
-  await expect(tom).toHaveCount(0);
+  await expect(siblings).toHaveCount(0);
 });
 
 test('Luc, en couple, s’ouvre sur notre famille : les deux lignées', async ({ page }) => {
@@ -163,11 +165,12 @@ test('Toute la famille : le tap répond aussitôt, l’arbre se dessine, puis po
   // Le nouvel arbre arrive et pousse : ses bulles s'ouvrent, puis tout est là.
   await expect(page).toHaveURL(/\/tree\?view=all$/);
   await expect(page.getByRole('status').filter({ hasText: 'L’arbre se dessine' })).toHaveCount(0);
-  const tom = page.locator('[data-person="tom"]');
-  await expect(tom).toHaveCount(1);
+  // Le repère des fratries repliées dit que c'est l'autre arbre ; Paul y pousse aussi.
+  await expect(page.locator('[data-marker]').first()).toBeAttached();
+  const paul = page.locator('[data-person="paul"]');
   const grew = () => page.evaluate(() => Array.from<string>(Reflect.get(window, 'grew')));
-  await expect.poll(grew).toContain('tom');
-  await expect.poll(() => tom.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
+  await expect.poll(grew).toContain('paul');
+  await expect.poll(() => paul.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
   await expect(page.getByRole('region', { name: 'Canevas de l’arbre' })).not.toHaveAttribute(
     'aria-busy',
   );

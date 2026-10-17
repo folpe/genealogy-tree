@@ -2,6 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 import { camera, settled, zoom } from './camera';
 import { E2E_ISABELLE_EMAIL } from './e2e.constants';
 import { expect, test } from './fixtures';
+import { showWholeFamily } from './folds';
 import { signIn } from './outbox';
 
 // Caméra du canevas (plan phase 4, lot 4), dans un vrai navigateur : glisser,
@@ -12,7 +13,7 @@ async function openTree(page: Page) {
   await signIn(page, E2E_ISABELLE_EMAIL);
   // Mécanique du canevas, éprouvée sur l'arbre entier (la vue par défaut est la sienne).
   await page.goto('/tree?view=all');
-  await expect(page.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+  await showWholeFamily(page);
   return page.getByRole('region', { name: 'Canevas de l’arbre' });
 }
 
@@ -108,8 +109,9 @@ test('pincer à deux doigts zoome autour des doigts', async ({ page }) => {
 test('« Me retrouver » ramène ma bulle à l’écran', async ({ page }) => {
   const canvas = await openTree(page);
   const me = page.getByRole('treeitem', { name: /c’est toi$/ });
-  // Vers la droite : l'arbre d'Isabelle s'étend surtout à sa gauche.
-  for (let i = 0; i < 4; i += 1) await drag(page, canvas, [20, 300], [300, 20]);
+  // Vers la gauche : l'arbre d'Isabelle s'étend surtout à sa droite (la famille de sa
+  // mère, la mère à droite du père).
+  for (let i = 0; i < 4; i += 1) await drag(page, canvas, [300, 300], [20, 20]);
   await settled(page);
   await expect(me).not.toBeInViewport();
   await page.getByRole('button', { name: 'Me retrouver' }).click();

@@ -1,22 +1,24 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import ELK from 'elkjs/lib/elk.bundled.js';
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { computeTreeLayout } from '@/lib/tree/tree.layout';
 import { treeForViewer } from '../../../tests/fixtures/tree-for-viewer';
 import { FamilyTree } from './family-tree';
 import { drawTree } from './family-tree.helper';
 import type { TreeDrawing } from './tree-drawing';
 
+// Pas de Worker dans jsdom : ELK place les plis dans le thread du test.
+vi.mock('./tree-layout.client', () => ({
+  createLayoutClient: () => ({
+    layout: (graph: Parameters<typeof computeTreeLayout>[0], options: object) =>
+      computeTreeLayout(graph, new ELK(), options),
+    dispose: () => {},
+  }),
+}));
+
 const hugoView = treeForViewer('m-hugo');
-const emptyLayout = {
-  persons: {},
-  unions: {},
-  unknownPartners: {},
-  detachedUnions: [],
-  markers: {},
-  width: 0,
-  height: 0,
-};
+const blank = { markers: [], folded: [], people: {} };
 let drawing: TreeDrawing;
 beforeAll(async () => {
   const photo = { src: '/media/p-luc/256?e=1&s=x', srcSet: '', width: 256, height: 256 };
@@ -116,7 +118,7 @@ describe('FamilyTree', () => {
       links: [],
       unknownPartners: [],
       branches: [],
-      layout: emptyLayout,
+      ...blank,
       width: 302 * 136,
       height: 132,
     };
@@ -139,12 +141,12 @@ describe('FamilyTree', () => {
     expect(within(hugo).getByText('Hugo Marchand')).toBeInTheDocument();
   });
 
-  it('« - » replie la branche de Luc, « + » la rouvre', () => {
+  it('« - » replie la branche de Luc, « + » la rouvre', async () => {
     render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
     const luc = item(/^Luc Marchand/);
     expect(luc).toHaveAttribute('aria-expanded', 'true');
     fireEvent.keyDown(luc, { key: '-' });
-    expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull());
     expect(item(/^Luc Marchand/)).toHaveAttribute('aria-expanded', 'false');
     expect(
       screen.getByRole('button', {
@@ -152,38 +154,39 @@ describe('FamilyTree', () => {
       }),
     ).toBeInTheDocument();
     fireEvent.keyDown(item(/^Luc Marchand/), { key: '+' });
-    expect(item(/c’est toi$/)).toBeInTheDocument();
+    expect(await screen.findByRole('treeitem', { name: /c’est toi$/ })).toBeInTheDocument();
     expect(item(/^Luc Marchand/)).toHaveAttribute('aria-expanded', 'true');
   });
 
-  it('plier ne déplace aucune bulle restante', () => {
+  it('lignées seules au départ : un repère par fratrie repliée, qui la déplie', async () => {
     render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
-    const henri = item(/^Henri Marchand/);
-    const before = henri.getAttribute('style');
-    fireEvent.keyDown(item(/^Léa Marchand/), { key: '-' });
-    fireEvent.keyDown(item(/^Luc Marchand/), { key: '-' });
-    expect(screen.queryByRole('treeitem', { name: /^Jade/ })).toBeNull();
-    expect(item(/^Henri Marchand/).getAttribute('style')).toBe(before);
+    expect(screen.queryByRole('treeitem', { name: /^Marie Lefèvre/ })).toBeNull();
+    const marker = screen.getByRole('button', { name: '+2 frères et sœurs de Paul Marchand' });
+    expect(marker).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(marker);
+    expect(await screen.findByRole('treeitem', { name: /^Marie Lefèvre/ })).toBeInTheDocument();
+    expect(item(/^Claude Marchand/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /de Paul Marchand$/ })).toBeNull();
   });
 
-  it('la poignée plie et déplie sa branche', () => {
+  it('la poignée plie et déplie sa branche', async () => {
     render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
     fireEvent.click(
       screen.getByRole('button', { name: 'Replier la branche de Luc Marchand et Sophie Marchand' }),
     );
-    expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('treeitem', { name: /c’est toi$/ })).toBeNull());
     fireEvent.click(
       screen.getByRole('button', {
         name: /^Déplier la branche de Luc Marchand et Sophie Marchand/,
       }),
     );
-    expect(item(/c’est toi$/)).toBeInTheDocument();
+    expect(await screen.findByRole('treeitem', { name: /c’est toi$/ })).toBeInTheDocument();
   });
 
   it('une bulle sans enfant n’a ni poignée ni état plié', () => {
     render(<FamilyTree drawing={drawing} graph={hugoView.drawn} focusId="hugo" />);
-    expect(item(/^Jade/)).not.toHaveAttribute('aria-expanded');
-    expect(screen.queryByRole('button', { name: /branche de Jade/ })).toBeNull();
+    expect(item(/c’est toi$/)).not.toHaveAttribute('aria-expanded');
+    expect(screen.queryByRole('button', { name: /branche de Hugo/ })).toBeNull();
   });
 
   it('laisse passer les autres touches, Entrée comprise', () => {
@@ -215,7 +218,7 @@ describe('FamilyTree', () => {
       links: [],
       unknownPartners: [],
       branches: [],
-      layout: emptyLayout,
+      ...blank,
       width: 0,
       height: 0,
     };

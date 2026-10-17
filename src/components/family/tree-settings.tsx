@@ -13,10 +13,12 @@ import {
 } from 'react';
 import { Drawer } from 'vaul';
 import { type TreeParams, treeHref } from '@/lib/tree/tree.params';
+import { requestTreeFolds } from './tree-folds';
 import { useTreeLink, useTreeNavigate } from './tree-navigation';
 
-// Réglages de l'arbre (DESIGN.md, section 7, règle 3) : la personne au centre et les
-// unions passées, derrière un seul bouton au bout de la rangée des vues. Feuille vaul
+// Réglages de l'arbre (DESIGN.md, section 7, règle 3) : la personne au centre, les
+// familles affichées (« Lignées seules », « Tout afficher », dans Toute la famille) et
+// les unions passées, derrière un seul bouton au bout de la rangée des vues. Feuille vaul
 // sur le téléphone, comme la fiche ; popover sur ordinateur, où la place ne manque pas
 // mais où un même geste vaut mieux que deux dispositions. Une pastille d'accent sur le
 // bouton dit qu'un réglage s'écarte du départ.
@@ -47,11 +49,14 @@ export function TreeSettings({
   params,
   centerName,
   canReturn,
+  lineages = false,
 }: {
   params: TreeParams;
   /** Personne au centre, si la vue en a une (pas « Toute la famille »). */
   centerName: string | undefined;
   canReturn: boolean;
+  /** Vue aux collatéraux repliables : « Lignées seules » et « Tout afficher ». */
+  lineages?: boolean;
 }) {
   const wide = useWide();
   const [open, setOpen] = useState(false);
@@ -66,6 +71,7 @@ export function TreeSettings({
       params={params}
       centerName={centerName}
       canReturn={canReturn}
+      lineages={lineages}
       past={past}
       showPast={showPast}
       onLeave={() => setOpen(false)}
@@ -163,6 +169,7 @@ function SettingsBody({
   params,
   centerName,
   canReturn,
+  lineages,
   past,
   showPast,
   onLeave,
@@ -170,6 +177,7 @@ function SettingsBody({
   params: TreeParams;
   centerName: string | undefined;
   canReturn: boolean;
+  lineages: boolean;
   past: boolean;
   showPast: (past: boolean) => void;
   /** « Revenir à moi » quitte les réglages : on veut voir l'arbre qui se redessine. */
@@ -201,6 +209,32 @@ function SettingsBody({
               Revenir à moi
             </Link>
           ) : undefined}
+        </div>
+      ) : undefined}
+      {lineages ? (
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-rule border-b py-3">
+          <p className="text-[15px] text-ink">Familles</p>
+          <div className="flex gap-2">
+            {(
+              [
+                ['lineages', 'Lignées seules'],
+                ['all', 'Tout afficher'],
+              ] as const
+            ).map(([request, label]) => (
+              <button
+                key={request}
+                type="button"
+                // L'arbre se redessine sous les réglages refermés : on le voit bouger.
+                onClick={() => {
+                  requestTreeFolds(request);
+                  onLeave();
+                }}
+                className={`inline-flex min-h-11 items-center rounded-full border border-line px-4 font-medium text-ink text-sm hover:bg-surface ${focusRing}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       ) : undefined}
       <div className="flex min-h-14 items-center justify-between gap-4 py-2">

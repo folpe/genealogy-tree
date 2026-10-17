@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { extendedFamily } from '../../../tests/fixtures/extended-family';
 import { selectDisplayedGraph } from '../../server/family/family.display';
 import { foldGraph, hideKey, originKey } from './tree.fold';
-import { defaultFolds, foldActions, hiddenSiblings, lineageOf } from './tree.lineage';
+import { defaultFolds, foldActions, hiddenSiblings, lineageOf, revealing } from './tree.lineage';
 
 // Lignées directes dépliées, collatéraux repliés (retour de Folpe, 2026-10-17).
 
@@ -89,6 +89,8 @@ describe('foldActions', () => {
 
   it('un collatéral : sa branche ; un conjoint venu d’ailleurs : sa famille', () => {
     expect(labels('oncle-p', new Set())).toEqual(['Masquer cette branche']);
+    // La bulle touchée part avec sa branche : c'est son parent qui reste en place.
+    expect(foldActions(drawn, new Set(), 'moi', 'oncle-p')[0]?.anchorId).toBe('gp-p');
     expect(labels('mari-tante-p', new Set([originKey('mari-tante-p')]))).toEqual([
       'Afficher sa famille',
     ]);
@@ -96,5 +98,18 @@ describe('foldActions', () => {
 
   it('les grands-parents sans parents dessinés : leur fratrie seulement, s’il y en a', () => {
     expect(labels('gp-p', defaults)).toEqual([]);
+  });
+});
+
+describe('revealing', () => {
+  it('les plis à lever pour montrer des personnes repliées (chemin de « Notre lien »)', () => {
+    const keys = revealing(drawn, defaults, 'moi', ['cousin-p3']);
+    expect(keys).toEqual([hideKey('tante-p')]);
+    const shown = foldGraph(drawn, new Set([...defaults].filter((k) => !keys.includes(k))), 'moi');
+    expect(shown.personIds).toContain('cousin-p3');
+  });
+
+  it('rien à lever pour une personne déjà affichée', () => {
+    expect(revealing(drawn, defaults, 'moi', ['pere', 'enfant1'])).toEqual([]);
   });
 });

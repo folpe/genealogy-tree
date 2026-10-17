@@ -123,7 +123,13 @@ export function hiddenSiblings(
   return result;
 }
 
-export type FoldAction = { label: string; keys: string[]; fold: boolean };
+export type FoldAction = {
+  label: string;
+  keys: string[];
+  fold: boolean;
+  /** Bulle qui reste en place à l'écran, quand ce n'est pas celle du menu (qui part). */
+  anchorId?: string;
+};
 
 /** Ce que le menu d'une bulle propose de replier ou d'afficher autour d'elle. */
 export function foldActions(
@@ -144,8 +150,9 @@ export function foldActions(
   };
   if (!lineage.has(person)) {
     if (!descend(kin, lineage).has(person)) return family();
-    return hasParents
-      ? [{ label: 'Masquer cette branche', keys: [hideKey(person)], fold: true }]
+    const [parent] = kin.parentsOf.get(person) ?? [];
+    return parent
+      ? [{ label: 'Masquer cette branche', keys: [hideKey(person)], fold: true, anchorId: parent }]
       : [];
   }
   const siblings = folded.has(originKey(person))
@@ -162,4 +169,23 @@ export function foldActions(
       ? [{ label: 'Masquer ses frères et sœurs', keys: shown.map(hideKey), fold: true }]
       : []),
   ];
+}
+
+/**
+ * Les plis à lever pour que ces personnes s'affichent : le chemin de « Notre lien », une
+ * personne cherchée. Chaque pli qui en cache une, à lui seul, est levé.
+ */
+export function revealing(
+  drawn: DisplayedGraph,
+  folded: ReadonlySet<string>,
+  focusId: string | undefined,
+  persons: string[],
+): string[] {
+  const wanted = persons.filter((id) => drawn.personIds.includes(id));
+  const shown = new Set(foldGraph(drawn, folded, focusId).personIds);
+  if (wanted.every((id) => shown.has(id))) return [];
+  return [...folded].filter((key) => {
+    const alone = new Set(foldGraph(drawn, new Set([key]), focusId).personIds);
+    return wanted.some((id) => !alone.has(id));
+  });
 }
