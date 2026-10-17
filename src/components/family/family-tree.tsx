@@ -427,7 +427,6 @@ function CanvasControls({
   );
 }
 
-/** Viseur : « Me retrouver » sur le téléphone, au trait des autres icônes. */
 /** Le temps de lire l'annonce d'un pli posé tout seul. */
 const NOTICE_MS = 5000;
 
@@ -461,6 +460,7 @@ function FoldNoticeRegion({
   );
 }
 
+/** Viseur : « Me retrouver » sur le téléphone, au trait des autres icônes. */
 function LocateIcon() {
   return (
     <svg
