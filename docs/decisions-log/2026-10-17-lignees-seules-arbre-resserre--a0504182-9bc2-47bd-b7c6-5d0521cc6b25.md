@@ -18,13 +18,15 @@ Retour de Folpe du 2026-10-17 sur « Toute la famille » : trop de familles à l
 
 - Au départ, la lignée directe est dépliée (la personne au centre, son ou ses conjoints, tous leurs ascendants, leurs descendants) ; chaque fratrie de la lignée est repliée à chaque génération, avec ses familles, comme la famille d'origine de tout conjoint venu d'ailleurs (`src/lib/tree/tree.lineage.ts`). Chaque fratrie repliée laisse un repère « +N frères et sœurs » au bout de la fratrie, côté extérieur ; le menu d'une bulle replie ou affiche sa famille, sa fratrie, sa branche ; « Lignées seules » et « Tout afficher » dans les réglages. Les plis sont ceux du lecteur, sur son appareil (`localStorage`, `tree-folds.storage.ts`) : une clé par vue, format versionné ; une mémoire d'une autre version ou abîmée est ignorée et l'arbre repart des plis de départ, et sans stockage l'arbre s'affiche normalement. Aucune écriture serveur. La position de la caméra reste propre à l'onglet (`sessionStorage`, `tree-memory.storage.ts`), qui ne retient plus les plis.
 - Le père à gauche, la mère à droite dans chaque couple homme-femme ; sinon l'ordre enregistré. Les fratries restent par ordre de naissance. Un membre de la lignée ne quitte son rang pour le bord de sa fratrie que si ses frères et sœurs croiseraient une famille dépliée : celle de son conjoint, ou celle du conjoint d'un de ses descendants en lignée directe (`src/lib/tree/tree.order.ts`).
+- Zéro croisement sur la lignée directe (décision de Folpe, même jour, comme MyHeritage) : déplier l'un replie l'autre. Dans chaque couple de la lignée dont les deux familles sont affichées, la famille d'origine de l'un et les collatéraux de l'autre que l'ordre range de son côté, quand leur descendance descend jusqu'au couple, se disputent le même intervalle ; les deux à la fois croisent forcément. Le côté qui n'a pas bougé se replie : la dernière action du lecteur gagne (`src/lib/tree/tree.contest.ts`, appliqué à chaque demande de pli dans `use-folded-tree.ts`). Quand les deux apparaissent d'un coup (« Tout afficher », une mémoire d'avant), la famille de la personne au centre reste entière et celle de son conjoint se replie derrière son repère ; plus haut dans la lignée, les collatéraux cèdent à la famille d'origine. « Tout afficher » devient ainsi l'état le plus complet sans croisement, non plus tout déplié. Le pli posé tout seul s'annonce sans bloquer (région d'état du canevas : « Famille de Sophie repliée pour garder l'arbre lisible ») et se retient comme les autres.
+- Un nouveau rendu serveur dans la même vue (une fiche ajoutée) garde les plis du lecteur : ceux qui ne valent plus tombent, une personne ajoutée reste visible, sa branche dépliée.
 - Remplace la règle du 2026-10-13 : l'arbre est dessiné serré sur ce qui est affiché. Chaque pli redemande un placement à ELK dans un Web Worker (retour de `src/workers/elk.worker.ts`, `tree-layout.client.ts` et de `worker-src 'self'`), puis la transition animée existante ; la caméra compense le déplacement de la bulle touchée, qui reste exactement à sa place à l'écran. Le premier dessin, lignées seules, vient toujours du rendu serveur.
 
 ## Consequences
 
 Positive:
 
-- Un arbre lisible d'emblée, sans croisement sur la lignée directe dans les états testés (`tree.crossings.test.ts`), qu'on ouvre famille par famille.
+- Un arbre lisible d'emblée, qu'on ouvre famille par famille, sans croisement sur la lignée directe dans aucun état que le lecteur peut atteindre (`tree.crossings.test.ts` place chaque état atteignable des familles de test).
 - Plus de trous : l'arbre se resserre à chaque pli, la bulle touchée sert de repère.
 
 Negative:
@@ -32,7 +34,8 @@ Negative:
 - Les autres bulles bougent à chaque pli, ce que la règle du 2026-10-13 évitait ; la bulle touchée immobile et l'animation doivent suffire à garder ses repères.
 - Le worker ELK revient (environ 300 ms pour 500 personnes dépliées, hors du thread principal ; l'ordre des familles y coûte 2 ms).
 - Au retour sur l'arbre avec des plis retenus autres que ceux de départ, le serveur rend les plis de départ et le navigateur redessine aussitôt : un glissement visible.
-- Un croisement reste possible quand on déplie à la fois les cousins du côté de la mère et la famille du conjoint : géométrie, pas réglage (documenté dans les tests).
+- On ne voit jamais à la fois les cousins du côté de sa mère (s'ils descendent jusqu'à sa génération) et la famille de son conjoint : déplier l'un replie l'autre, annoncé. Les croisements hors de la lignée directe (entre familles de collatéraux) ne sont pas couverts.
+- Chaque demande de pli calcule l'ordre des familles sur le thread principal, une à quelques fois (2 ms pour 500 personnes chacune).
 
 ## Alternatives considered
 
