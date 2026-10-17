@@ -118,3 +118,54 @@ test('les plis tiennent au retour d’une fiche', async ({ page, isMobile }) => 
   await expect(bubble(page, 'marie')).toHaveCount(1);
   await expect(bubble(page, 'lea')).toHaveCount(0);
 });
+
+test('les plis sont ceux de l’appareil : un nouvel onglet les retrouve', async ({
+  page,
+  isMobile,
+}) => {
+  await openLineages(page, isMobile);
+  await page.getByRole('button', { name: '+2 frères et sœurs de Paul Marchand' }).click();
+  await expect(bubble(page, 'marie')).toHaveCount(1);
+  await redrawn(page);
+  const context = page.context();
+  await page.close();
+  // Un autre onglet du même navigateur : rien de l'onglet fermé (sessionStorage) ne suit.
+  const next = await context.newPage();
+  await next.goto('/tree?view=all');
+  await expect(next.locator('[data-camera-layer]')).toHaveAttribute('data-camera-ready', 'true');
+  await expect(bubble(next, 'marie')).toHaveCount(1);
+  await expect(bubble(next, 'claude')).toHaveCount(1);
+  await expect(bubble(next, 'lea')).toHaveCount(0);
+});
+
+test('mouvement réduit : un pli pose l’arbre d’un coup, la caméra saute sans voler', async ({
+  page,
+  isMobile,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openLineages(page, isMobile);
+  const paul = bubble(page, 'paul');
+  const before = await boxOf(paul);
+  // Chaque transformation du calque et de la bulle, d'image en image, pendant le pli.
+  await page.evaluate(() => {
+    const seen: string[] = [];
+    Reflect.set(window, 'foldFrames', seen);
+    const layer = document.querySelector<HTMLElement>('[data-camera-layer]');
+    const start = performance.now();
+    const tick = () => {
+      const bubbleTransform =
+        document.querySelector<HTMLElement>('[data-person="paul"]')?.style.transform;
+      seen.push(`${layer?.style.transform}|${bubbleTransform ?? ''}`);
+      if (performance.now() - start < 1500) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await page.getByRole('button', { name: '+2 frères et sœurs de Paul Marchand' }).click();
+  await expect(bubble(page, 'marie')).toHaveCount(1);
+  await page.waitForTimeout(1600);
+  const frames = await page.evaluate(() => Array.from<string>(Reflect.get(window, 'foldFrames')));
+  // Deux états seulement : avant et après le saut, aucune image intermédiaire.
+  expect(new Set(frames).size).toBeLessThanOrEqual(2);
+  expect(frames.every((frame) => frame.endsWith('|'))).toBe(true);
+  await stays(paul, before);
+});

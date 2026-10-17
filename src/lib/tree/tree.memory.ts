@@ -4,7 +4,8 @@ import type { Point } from './tree.metrics';
 // Retrouver l'arbre comme on l'a laissé, au retour d'une fiche. On retient la bulle
 // la plus proche du centre de l'écran et l'écart à elle, plutôt que des coordonnées :
 // la position reste juste si le placement a changé entre-temps (données mises à
-// jour, branches repliées autrement).
+// jour, branches repliées autrement). Les plis se retiennent à part, par appareil
+// (`tree-folds.storage.ts`).
 
 export type TreeMemory = {
   anchorId: string;
@@ -12,8 +13,6 @@ export type TreeMemory = {
   dx: number;
   dy: number;
   k: number;
-  /** Branches pliées. */
-  folded: string[];
   /** Vue où la position a été prise (son URL) : elle ne revient que dans cette vue. */
   view: string;
 };
@@ -21,7 +20,6 @@ export type TreeMemory = {
 export function rememberCamera(
   camera: Camera,
   nodes: (Point & { id: string })[],
-  folded: string[],
   view: string,
 ): TreeMemory | undefined {
   const center = worldAt(camera, { x: 0, y: 0 });
@@ -40,7 +38,6 @@ export function rememberCamera(
     dx: center.x - anchor.x,
     dy: center.y - anchor.y,
     k: camera.k,
-    folded,
     view,
   };
 }
@@ -67,12 +64,11 @@ export function parseMemory(raw: string | undefined): TreeMemory | undefined {
     return undefined;
   }
   if (!isRecord(value)) return undefined;
-  const { anchorId, dx, dy, k, folded, view } = value;
+  const { anchorId, dx, dy, k, view } = value;
   if (typeof anchorId !== 'string' || typeof view !== 'string') return undefined;
   if (![dx, dy, k].every((n) => typeof n === 'number' && Number.isFinite(n))) return undefined;
   if (typeof k !== 'number' || k <= 0 || typeof dx !== 'number' || typeof dy !== 'number') {
     return undefined;
   }
-  if (!Array.isArray(folded) || !folded.every((key) => typeof key === 'string')) return undefined;
-  return { anchorId, dx, dy, k, folded, view };
+  return { anchorId, dx, dy, k, view };
 }

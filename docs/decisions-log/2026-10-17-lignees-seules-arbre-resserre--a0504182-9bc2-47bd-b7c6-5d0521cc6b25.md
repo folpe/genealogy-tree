@@ -16,7 +16,7 @@ Retour de Folpe du 2026-10-17 sur « Toute la famille » : trop de familles à l
 
 ## Decision
 
-- Au départ, la lignée directe est dépliée (la personne au centre, son ou ses conjoints, tous leurs ascendants, leurs descendants) ; chaque fratrie de la lignée est repliée à chaque génération, avec ses familles, comme la famille d'origine de tout conjoint venu d'ailleurs (`src/lib/tree/tree.lineage.ts`). Chaque fratrie repliée laisse un repère « +N frères et sœurs » au bout de la fratrie, côté extérieur ; le menu d'une bulle replie ou affiche sa famille, sa fratrie, sa branche ; « Lignées seules » et « Tout afficher » dans les réglages. L'état est celui du lecteur, dans l'onglet (`sessionStorage`, `tree-memory.storage.ts`), sans écriture serveur.
+- Au départ, la lignée directe est dépliée (la personne au centre, son ou ses conjoints, tous leurs ascendants, leurs descendants) ; chaque fratrie de la lignée est repliée à chaque génération, avec ses familles, comme la famille d'origine de tout conjoint venu d'ailleurs (`src/lib/tree/tree.lineage.ts`). Chaque fratrie repliée laisse un repère « +N frères et sœurs » au bout de la fratrie, côté extérieur ; le menu d'une bulle replie ou affiche sa famille, sa fratrie, sa branche ; « Lignées seules » et « Tout afficher » dans les réglages. Les plis sont ceux du lecteur, sur son appareil (`localStorage`, `tree-folds.storage.ts`) : une clé par vue, format versionné ; une mémoire d'une autre version ou abîmée est ignorée et l'arbre repart des plis de départ, et sans stockage l'arbre s'affiche normalement. Aucune écriture serveur. La position de la caméra reste propre à l'onglet (`sessionStorage`, `tree-memory.storage.ts`), qui ne retient plus les plis.
 - Le père à gauche, la mère à droite dans chaque couple homme-femme ; sinon l'ordre enregistré. Les fratries restent par ordre de naissance. Un membre de la lignée ne quitte son rang pour le bord de sa fratrie que si ses frères et sœurs croiseraient une famille dépliée : celle de son conjoint, ou celle du conjoint d'un de ses descendants en lignée directe (`src/lib/tree/tree.order.ts`).
 - Remplace la règle du 2026-10-13 : l'arbre est dessiné serré sur ce qui est affiché. Chaque pli redemande un placement à ELK dans un Web Worker (retour de `src/workers/elk.worker.ts`, `tree-layout.client.ts` et de `worker-src 'self'`), puis la transition animée existante ; la caméra compense le déplacement de la bulle touchée, qui reste exactement à sa place à l'écran. Le premier dessin, lignées seules, vient toujours du rendu serveur.
 
@@ -31,6 +31,7 @@ Negative:
 
 - Les autres bulles bougent à chaque pli, ce que la règle du 2026-10-13 évitait ; la bulle touchée immobile et l'animation doivent suffire à garder ses repères.
 - Le worker ELK revient (environ 300 ms pour 500 personnes dépliées, hors du thread principal ; l'ordre des familles y coûte 2 ms).
+- Au retour sur l'arbre avec des plis retenus autres que ceux de départ, le serveur rend les plis de départ et le navigateur redessine aussitôt : un glissement visible.
 - Un croisement reste possible quand on déplie à la fois les cousins du côté de la mère et la famille du conjoint : géométrie, pas réglage (documenté dans les tests).
 
 ## Alternatives considered

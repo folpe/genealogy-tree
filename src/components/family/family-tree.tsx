@@ -38,6 +38,7 @@ import type { DisplayedGraph } from '@/server/family/family.display';
 import { PersonBubble } from './person-bubble';
 import type { BranchHandle, SiblingMarker, TreeDrawing, TreeNode } from './tree-drawing';
 import { useTreeFoldsRequests } from './tree-folds';
+import { readFolds, writeFolds } from './tree-folds.storage';
 import {
   readTreeMemory,
   TREE_ENTRY_ATTRIBUTE,
@@ -575,10 +576,10 @@ export function FamilyTree({
     (state: Camera, size: Size) => {
       if (nodes.length > VIRTUALIZE_ABOVE) setView(visibleWorld(state, size));
       else setView(undefined);
-      const remembered = rememberCamera(state, nodes, [...fold.folded], viewKey);
+      const remembered = rememberCamera(state, nodes, viewKey);
       if (remembered) writeTreeMemory(remembered);
     },
-    [nodes, fold.folded, viewKey],
+    [nodes, viewKey],
   );
   const camera = useTreeCamera({ viewport, layer, content, start, restore, onSettle });
   const nodesById = useRef(byId);
@@ -737,8 +738,10 @@ export function FamilyTree({
   );
 
   // Les plis retenus reviennent une fois la caméra en place, autour de la bulle repère.
-  // Une bulle repère repliée au départ : la caméra la retrouve une fois redessinée.
-  // La bulle de la fiche qu'on quittait, repliée au départ : elle revient, centrée.
+  // Les plis retenus sur l'appareil pour cette vue reviennent une fois la caméra en
+  // place (`tree-folds.storage.ts`). Une bulle repère repliée au départ : la caméra la
+  // retrouve une fois redessinée. La bulle de la fiche qu'on quittait, repliée au
+  // départ : elle revient, centrée.
   const foldsRestored = useRef(false);
   const recall = useRef<TreeMemory>(undefined);
   const pendingStart = useRef<{ id: string; k: number | undefined }>(undefined);
@@ -747,10 +750,9 @@ export function FamilyTree({
     foldsRestored.current = true;
     const remembered = memory.current.value;
     const sameView = remembered?.view === viewKey ? remembered : undefined;
-    if (sameView) {
-      if (!nodesById.current.has(sameView.anchorId)) recall.current = sameView;
-      replaceFolded(sameView.folded, sameView.anchorId);
-    }
+    if (sameView && !nodesById.current.has(sameView.anchorId)) recall.current = sameView;
+    const stored = readFolds(viewKey);
+    if (stored) replaceFolded(stored, sameView?.anchorId);
     // Une fiche ouverte a son propre vol (plus haut) : seul le retour d'une fiche
     // complète se recentre ici.
     const back = openedAtStart === selectedId ? undefined : openedAtStart;
@@ -778,18 +780,24 @@ export function FamilyTree({
   // « Lignées seules » et « Tout afficher » (réglages) : la bulle au centre de l'écran
   // reste en place.
   useTreeFoldsRequests((request) => {
-    const anchorId = camera
-      ? rememberCamera(camera.get(), nodes, [], viewKey)?.anchorId
-      : undefined;
+    const anchorId = camera ? rememberCamera(camera.get(), nodes, viewKey)?.anchorId : undefined;
     replaceFolded(request === 'lineages' ? defaults : [], anchorId);
   });
 
   // La mémoire suit aussi chaque pli, sans attendre le prochain arrêt de la caméra.
   useEffect(() => {
     if (!camera) return;
-    const remembered = rememberCamera(camera.get(), nodes, [...folded], viewKey);
+    const remembered = rememberCamera(camera.get(), nodes, viewKey);
     if (remembered) writeTreeMemory(remembered);
-  }, [camera, nodes, folded, viewKey]);
+  }, [camera, nodes, viewKey]);
+  // Chaque pli demandé se retient sur l'appareil ; pas ceux du départ, avant que les
+  // plis retenus ne soient relus.
+  const foldsWritten = useRef(folded);
+  useEffect(() => {
+    if (foldsWritten.current === folded) return;
+    foldsWritten.current = folded;
+    writeFolds(viewKey, [...folded]);
+  }, [folded, viewKey]);
 
   // Nouvelle vue (ou nouvelles données) servie par le serveur : la caméra rejoint la
   // personne au centre ; les bulles glissent vers leur nouvelle place (useRelayout).

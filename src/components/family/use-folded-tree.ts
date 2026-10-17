@@ -62,11 +62,12 @@ const fresh = (initial: TreeDrawing): State => ({
   failed: false,
 });
 
-export function useFoldedTree(
+/** Demandes de placement au worker : cache par état de pliage, seule la dernière compte. */
+function useLayoutRequests(
   initial: TreeDrawing,
   graph: DisplayedGraph,
   focusId: string | undefined,
-): FoldedTree {
+) {
   const [state, setState] = useState<State>(() => fresh(initial));
   const cache = useRef(new Map<string, TreeDrawing>());
   const latest = useRef(0);
@@ -76,17 +77,6 @@ export function useFoldedTree(
   /** Dessin à l'écran, pour repartir de lui après un échec. */
   const displayed = useRef(state.drawing);
   displayed.current = state.drawing;
-  const keys = useMemo(() => branchKeys(graph), [graph]);
-  const byPerson = useMemo(() => branchesOf(graph), [graph]);
-  const defaults = useMemo(() => (focusId ? defaultFolds(graph, focusId) : []), [graph, focusId]);
-  /** Une clé qui vaut encore dans ce graphe (une personne a pu partir). */
-  const valid = useCallback(
-    (key: string) => {
-      const person = key.replace(/^(hide|origin):/, '');
-      return keys.has(key) || (person !== key && graph.personIds.includes(person));
-    },
-    [keys, graph],
-  );
 
   const request = useCallback(
     (next: ReadonlySet<string>, anchorId: string | undefined, force = false) => {
@@ -124,60 +114,87 @@ export function useFoldedTree(
     },
     [graph, focusId, initial.people],
   );
+  /** Repart d'un nouveau rendu serveur : ses plis, son dessin ; une réponse attendue ne vaut plus. */
+  const reset = useCallback((next: TreeDrawing) => {
+    cache.current = new Map([[keyOf(next.folded), next]]);
+    requested.current = new Set(next.folded);
+    latest.current += 1;
+    setState(fresh(next));
+  }, []);
+  useEffect(() => () => client.current?.dispose(), []);
+  return { state, setState, requested, cache, request, reset };
+}
 
-  // Nouveau rendu serveur (données changées) : ses plis de départ, sauf si l'on avait
-  // déplié ou replié autre chose, qu'on garde (une fiche ajoutée chez un oncle déplié).
+type Requests = ReturnType<typeof useLayoutRequests>;
+
+/**
+ * Nouveau rendu serveur (données changées) : ses plis de départ, sauf si l'on avait
+ * déplié ou replié autre chose, qu'on garde (une fiche ajoutée chez un oncle déplié).
+ */
+function useServerResync(
+  initial: TreeDrawing,
+  valid: (key: string) => boolean,
+  requests: Requests,
+) {
+  const { requested, cache, request, reset, setState } = requests;
   const shown = useRef(initial);
   useEffect(() => {
     if (shown.current === initial) return;
     const before = shown.current;
     shown.current = initial;
-    cache.current = new Map([[keyOf(initial.folded), initial]]);
     const kept = new Set([...requested.current].filter(valid));
-    if (
-      keyOf(requested.current) === keyOf(before.folded) ||
-      keyOf(kept) === keyOf(initial.folded)
-    ) {
-      requested.current = new Set(initial.folded);
-      latest.current += 1;
-      setState(fresh(initial));
-      return;
-    }
+    const untouched = keyOf(requested.current) === keyOf(before.folded);
+    if (untouched || keyOf(kept) === keyOf(initial.folded)) return reset(initial);
+    cache.current = new Map([[keyOf(initial.folded), initial]]);
     setState((s) => ({ ...s, initial }));
     request(kept, undefined, true);
-  }, [initial, valid, request]);
-  useEffect(() => {
-    cache.current.set(keyOf(initial.folded), initial);
-  }, [initial]);
-  useEffect(() => () => client.current?.dispose(), []);
+  }, [initial, valid, requested, cache, request, reset, setState]);
+}
+
+export function useFoldedTree(
+  initial: TreeDrawing,
+  graph: DisplayedGraph,
+  focusId: string | undefined,
+): FoldedTree {
+  const requests = useLayoutRequests(initial, graph, focusId);
+  const { state, requested, request } = requests;
+  const keys = useMemo(() => branchKeys(graph), [graph]);
+  const byPerson = useMemo(() => branchesOf(graph), [graph]);
+  const defaults = useMemo(() => (focusId ? defaultFolds(graph, focusId) : []), [graph, focusId]);
+  /** Une clé qui vaut encore dans ce graphe (une personne a pu partir). */
+  const valid = useCallback(
+    (key: string) => {
+      const person = key.replace(/^(hide|origin):/, '');
+      return keys.has(key) || (person !== key && graph.personIds.includes(person));
+    },
+    [keys, graph],
+  );
+  useServerResync(initial, valid, requests);
 
   const setFolded = useCallback(
     (changed: string[], fold: boolean, anchorId: string | undefined) => {
       const next = new Set(requested.current);
-      for (const key of changed) {
-        if (!valid(key)) continue;
+      for (const key of changed.filter(valid)) {
         if (fold) next.add(key);
         else next.delete(key);
       }
       request(next, anchorId);
     },
-    [valid, request],
+    [valid, request, requested],
   );
   const replaceFolded = useCallback(
     (all: readonly string[], anchorId: string | undefined) =>
       request(new Set(all.filter(valid)), anchorId),
     [valid, request],
   );
-
   const reveal = useCallback(
     (persons: string[], anchorId: string | undefined) => {
       const lifted = new Set(revealing(graph, requested.current, focusId, persons));
       if (lifted.size === 0) return;
       request(new Set([...requested.current].filter((k) => !lifted.has(k))), anchorId);
     },
-    [graph, focusId, request],
+    [graph, focusId, request, requested],
   );
-
   const hiddenBelow = useCallback(
     (key: string) => graph.personIds.length - foldGraph(graph, new Set([key])).personIds.length,
     [graph],

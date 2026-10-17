@@ -27,9 +27,11 @@ beforeAll(async () => {
 
 const item = (name: RegExp) => screen.getByRole('treeitem', { name });
 
-// Le canevas retient position et plis pour l'onglet : chaque test part d'un onglet neuf.
+// Le canevas retient sa position pour l'onglet, ses plis pour l'appareil : chaque test
+// part d'un onglet et d'un appareil neufs.
 beforeEach(() => {
   window.sessionStorage.clear();
+  window.localStorage.clear();
 });
 
 describe('FamilyTree', () => {
