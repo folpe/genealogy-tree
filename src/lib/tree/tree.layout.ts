@@ -41,26 +41,20 @@ type Slot =
 type Block = { id: string; slots: Slot[]; unionSlots: Map<string, [number, number]> };
 
 /**
- * Couples soudés : composantes du graphe des partenaires, posées en chaîne. Une union
- * entre voisins directs reçoit un point (un couple remarié en garde un seul pour ses
- * deux unions) ; toute autre union de la composante est détachée.
+ * Couples soudés : composantes du graphe des partenaires, chacune en chaîne depuis une
+ * extrémité ; une personne hors chaîne suit à la fin.
  */
-function buildBlocks(drawn: DisplayedGraph): { blocks: Block[]; detached: Set<string> } {
+export function partnerChains(drawn: DisplayedGraph): string[][] {
   const placedIds = new Set(drawn.personIds);
   const partners = new Map<string, Set<string>>(drawn.personIds.map((id) => [id, new Set()]));
-  const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
-  const unionsOfPair = new Map<string, string[]>();
   for (const union of drawn.unions) {
     const [a, b] = union.partnerIds;
     if (typeof b !== 'string' || !placedIds.has(a) || !placedIds.has(b)) continue;
     partners.get(a)?.add(b);
     partners.get(b)?.add(a);
-    const key = pairKey(a, b);
-    unionsOfPair.set(key, [...(unionsOfPair.get(key) ?? []), union.id]);
   }
-
   const seen = new Set<string>();
-  const blocks: Block[] = [];
+  const chains: string[][] = [];
   for (const start of drawn.personIds) {
     if (seen.has(start)) continue;
     const component = [start];
@@ -73,7 +67,6 @@ function buildBlocks(drawn: DisplayedGraph): { blocks: Block[]; detached: Set<st
         }
       }
     }
-    // Chaîne depuis une extrémité ; une personne hors chaîne suit à la fin.
     const end = component.find((id) => (partners.get(id)?.size ?? 0) <= 1) ?? start;
     const order: string[] = [];
     for (let current: string | undefined = end; current && !order.includes(current); ) {
@@ -81,19 +74,38 @@ function buildBlocks(drawn: DisplayedGraph): { blocks: Block[]; detached: Set<st
       current = [...(partners.get(current) ?? [])].find((other) => !order.includes(other));
     }
     for (const id of component) if (!order.includes(id)) order.push(id);
+    chains.push(order);
+  }
+  return chains;
+}
 
+/**
+ * Un bloc par couple soudé (`partnerChains`). Une union entre voisins directs reçoit un
+ * point (un couple remarié en garde un seul pour ses deux unions) ; toute autre union
+ * de la composante est détachée.
+ */
+function buildBlocks(drawn: DisplayedGraph): { blocks: Block[]; detached: Set<string> } {
+  const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+  const unionsOfPair = new Map<string, string[]>();
+  for (const union of drawn.unions) {
+    const [a, b] = union.partnerIds;
+    if (typeof b !== 'string') continue;
+    const key = pairKey(a, b);
+    unionsOfPair.set(key, [...(unionsOfPair.get(key) ?? []), union.id]);
+  }
+  const blocks: Block[] = partnerChains(drawn).map((order, index) => {
     const unionSlots = new Map<string, [number, number]>();
     for (let i = 0; i + 1 < order.length; i += 1) {
       for (const unionId of unionsOfPair.get(pairKey(order[i] ?? '', order[i + 1] ?? '')) ?? []) {
         unionSlots.set(unionId, [i, i + 1]);
       }
     }
-    blocks.push({
-      id: `bloc-${blocks.length}`,
-      slots: order.map((id) => ({ kind: 'person', id })),
+    return {
+      id: `bloc-${index}`,
+      slots: order.map((id) => ({ kind: 'person' as const, id })),
       unionSlots,
-    });
-  }
+    };
+  });
 
   // Parent inconnu : un emplacement réservé du côté libre du parent connu.
   const blockOf = new Map<string, Block>();

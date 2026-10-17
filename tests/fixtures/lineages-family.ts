@@ -59,3 +59,32 @@ export function lineagesFamily(): FamilyGraph {
   couple('u-moi', 'elle', 'moi', ['enfant']);
   return g;
 }
+
+/**
+ * La même, avec les parents des parents d'« elle », et du côté de son père un frère et
+ * un neveu. Le cas symétrique : ses cousins à elle se rangent du côté de moi.
+ */
+export function lineagesFamilyBothSides(): FamilyGraph {
+  const g = lineagesFamily();
+  const born = (id: string, gender: Gender, year: number) =>
+    g.persons.push(aPerson(id, { gender, birth: { date: yearOnly(year) } }));
+  born('agp-e', 'homme', 1920);
+  born('agm-e', 'femme', 1922);
+  born('oncle-e', 'homme', 1946);
+  born('cousin-e', 'homme', 1976);
+  born('bgp-e', 'homme', 1924);
+  born('bgm-e', 'femme', 1926);
+  g.unions.push(anUnion('u-agp-e', 'agm-e', 'agp-e'), anUnion('u-bgp-e', 'bgm-e', 'bgp-e'));
+  g.parentChildren.push(
+    aChildOf('bgm-e', 'gm-e', { unionId: 'u-bgp-e' }),
+    aChildOf('bgp-e', 'gm-e', { unionId: 'u-bgp-e' }),
+  );
+  for (const child of ['oncle-e', 'gp-e']) {
+    g.parentChildren.push(
+      aChildOf('agm-e', child, { unionId: 'u-agp-e' }),
+      aChildOf('agp-e', child, { unionId: 'u-agp-e' }),
+    );
+  }
+  g.parentChildren.push(aChildOf('oncle-e', 'cousin-e'));
+  return g;
+}

@@ -1,10 +1,11 @@
 import ELK from 'elkjs/lib/elk.bundled.js';
 import { describe, expect, it } from 'vitest';
 import { aChildOf, anUnion, aPerson } from '../../../tests/fixtures/builders';
-import { lineagesFamily } from '../../../tests/fixtures/lineages-family';
+import { lineagesFamily, lineagesFamilyBothSides } from '../../../tests/fixtures/lineages-family';
 import { marchandFamily } from '../../../tests/fixtures/marchand-family';
-import { selectDisplayedGraph } from '../../server/family/family.display';
+import { type DisplayedGraph, selectDisplayedGraph } from '../../server/family/family.display';
 import type { FamilyGraph } from '../../server/family/family.types';
+import { settleFolds } from './tree.contest';
 import { countCrossings, lineageCrossings } from './tree.crossings';
 import { foldGraph, hideKey, originKey } from './tree.fold';
 import { computeTreeLayout, type ElkLike } from './tree.layout';
@@ -156,15 +157,17 @@ describe('lisibilité du placement', () => {
   });
 });
 
+/** Croisements sur la lignée directe, placement ELK compris, dans cet état de pliage. */
+async function lineageCrossingsOf(drawn: DisplayedGraph, folded: Iterable<string>) {
+  const keys = new Set(folded);
+  const shown = foldGraph(drawn, keys, 'moi');
+  const markers = [...hiddenSiblings(drawn, keys, 'moi').keys()];
+  const layout = await computeTreeLayout(shown, elk, { focusId: 'moi', markers });
+  return lineageCrossings(shown, layout, lineageOf(shown, 'moi'));
+}
+
 describe('aucun croisement sur la lignée directe, pliée ou dépliée', () => {
   const drawn = selectDisplayedGraph(lineagesFamily(), { focusId: 'moi' });
-  const crossingsOf = async (folded: string[]) => {
-    const keys = new Set(folded);
-    const shown = foldGraph(drawn, keys, 'moi');
-    const markers = [...hiddenSiblings(drawn, keys, 'moi').keys()];
-    const layout = await computeTreeLayout(shown, elk, { focusId: 'moi', markers });
-    return lineageCrossings(shown, layout, lineageOf(shown, 'moi'));
-  };
   const maternal = [hideKey('tante-b'), hideKey('oncle-b')];
   const states: [string, string[]][] = [
     ['lignées seules', defaultFolds(drawn, 'moi')],
@@ -178,15 +181,76 @@ describe('aucun croisement sur la lignée directe, pliée ou dépliée', () => {
   ];
   for (const [name, folded] of states) {
     it(name, async () => {
-      expect(await crossingsOf(folded)).toBe(0);
+      expect(await lineageCrossingsOf(drawn, folded)).toBe(0);
     });
   }
 
-  it('toléré : les cousins du côté de ma mère, avec sa famille à elle dépliée', async () => {
-    // Géométrie, pas réglage : la mère est à droite du père, ses neveux à droite de ma
-    // fratrie, et elle est soudée à moi ; la famille d'elle, plus à droite encore, ne
-    // peut descendre jusqu'à elle sans passer par-dessus eux. Lignées seules par défaut,
-    // ce cas ne se présente que si l'on déplie les deux.
-    expect(await crossingsOf([])).toBeGreaterThan(0);
+  it('« Tout afficher » : sa famille à elle se replie, plus de croisement', async () => {
+    // Géométrie : la mère est à droite du père, ses neveux à droite de ma fratrie, et
+    // elle est soudée à moi ; la famille d'elle, plus à droite encore, ne peut
+    // descendre jusqu'à elle sans passer par-dessus eux. Tout déplié croiserait :
+    // l'une des deux familles se replie (tree.contest.ts).
+    expect(await lineageCrossingsOf(drawn, [])).toBeGreaterThan(0);
+    const { folded } = settleFolds(drawn, 'moi', defaultFolds(drawn, 'moi'), []);
+    expect(await lineageCrossingsOf(drawn, folded)).toBe(0);
   });
+});
+
+/**
+ * Tous les états de pliage qu'atteint le lecteur depuis « Lignées seules » : chaque pli
+ * et chaque dépli proposés (une fratrie, un collatéral, une famille d'origine),
+ * « Lignées seules », « Tout afficher », dans n'importe quel ordre, chacun réglé par
+ * `settleFolds`. Deux états qui affichent la même chose n'en font qu'un.
+ */
+function reachableStates(drawn: DisplayedGraph): string[][] {
+  const defaults = defaultFolds(drawn, 'moi');
+  const lineage = lineageOf(drawn, 'moi');
+  const toggles = [...new Set([...defaults, ...[...lineage].map(originKey)])];
+  const shownBy = (folded: string[]) => {
+    const keys = new Set(folded);
+    const markers = [...hiddenSiblings(drawn, keys, 'moi')].map(([branch, hidden]) =>
+      [branch, ...hidden.sort()].join(','),
+    );
+    return [...foldGraph(drawn, keys, 'moi').personIds.sort(), '|', ...markers.sort()].join(' ');
+  };
+  const states = new Map([[shownBy(defaults), defaults]]);
+  for (const pending = [defaults]; pending.length > 0; ) {
+    const current = pending.pop() ?? [];
+    const asked = [
+      defaults,
+      [],
+      ...toggles.map((key) =>
+        current.includes(key) ? current.filter((k) => k !== key) : [...current, key],
+      ),
+    ];
+    for (const next of asked) {
+      const { folded } = settleFolds(drawn, 'moi', current, next);
+      const shown = shownBy(folded);
+      if (states.has(shown)) continue;
+      states.set(shown, folded);
+      pending.push(folded);
+    }
+  }
+  return [...states.values()];
+}
+
+describe('zéro croisement sur la lignée directe, quoi que déplie le lecteur', () => {
+  // Chaque état distinct à l'écran, placé par ELK. La famille aux deux côtés compte
+  // quelque 1 500 états : un sur dix, pris à intervalle régulier, suffit à la couvrir.
+  for (const [name, graph, every] of [
+    ['famille des lignées', lineagesFamily(), 1],
+    ['avec la famille d’elle des deux côtés', lineagesFamilyBothSides(), 10],
+  ] satisfies [string, FamilyGraph, number][]) {
+    it(name, async () => {
+      const drawn = selectDisplayedGraph(graph, { focusId: 'moi' });
+      const states = reachableStates(drawn);
+      const crossed: string[] = [];
+      for (const [index, folded] of states.entries()) {
+        if (index % every !== 0) continue;
+        if ((await lineageCrossingsOf(drawn, folded)) > 0) crossed.push(folded.sort().join(' '));
+      }
+      expect(states.length).toBeGreaterThan(300);
+      expect(crossed).toEqual([]);
+    }, 120_000);
+  }
 });

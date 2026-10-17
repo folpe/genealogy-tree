@@ -27,9 +27,15 @@ export type Arrangement = {
   order: string[];
   /** Partenaires de chaque couple, de gauche à droite. */
   persons: Map<string, string[]>;
+  /**
+   * Côté de chaque frère et sœur d'un membre de la lignée, par rapport à lui : la place
+   * que sa fratrie lui laisse (tree.contest.ts en déduit les familles qui se disputent
+   * le même intervalle).
+   */
+  sides: Map<string, Side>;
 };
 
-type Side = 'left' | 'right';
+export type Side = 'left' | 'right';
 /** Blocs rangés, par rangée (0 : la personne au centre, 1 : ses parents, -1 : ses enfants). */
 type Region = Map<number, string[]>;
 /**
@@ -59,6 +65,7 @@ type Ctx = {
   blood: Set<string>;
   visited: Set<string>;
   persons: Map<string, string[]>;
+  sides: Map<string, Side>;
   deferred: { origin: string; side: Side }[];
 };
 
@@ -97,6 +104,7 @@ export function arrangeFamilies(
     blood: bloodOf(g, lineage),
     visited: new Set(),
     persons: new Map(),
+    sides: new Map(),
     deferred: [],
   };
   let placed =
@@ -116,7 +124,7 @@ export function arrangeFamilies(
     }
   }
   for (const id of g.blocks.keys()) if (!ctx.persons.has(id)) orient(ctx, id, undefined);
-  return { order, persons: ctx.persons };
+  return { order, persons: ctx.persons, sides: ctx.sides };
 }
 
 /** La personne au centre : ses ascendants de part et d'autre, sa descendance sous elle. */
@@ -180,6 +188,8 @@ function ancestry(ctx: Ctx, person: string, chain: Blocked, side: Side | undefin
   const kids = ctx.g.childrenOf(parents);
   const siblings = kids.filter((k) => k !== person && !ctx.visited.has(ctx.g.blockOf(k)));
   const { before, after, markerSide } = spill(ctx, person, kids, siblings, blocked);
+  for (const s of before) ctx.sides.set(s, 'left');
+  for (const s of after) ctx.sides.set(s, 'right');
   const markers = markerRegion(ctx, parents);
   const left = join(
     up.left,
